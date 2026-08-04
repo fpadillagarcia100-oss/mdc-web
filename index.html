@@ -6,6 +6,9 @@
 <title>MDC — Maquinaria de Chiapas</title>
 <meta name="description" content="MDC Maquinaria de Chiapas: venta y renta de maquinaria pesada. Excavadoras, retroexcavadoras, bulldozers, compactadores y grúas con garantía y financiamiento.">
 <meta name="theme-color" content="#1A1A1A">
+<!-- Defensa en profundidad: aunque alguien lograra inyectar contenido, no puede
+     cargar scripts externos, incrustar iframes ni sacar datos a otro servidor. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231A1A1A'/><text y='68' x='50' font-size='42' text-anchor='middle' fill='%23F5C400' font-family='sans-serif' font-weight='bold'>MDC</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -376,6 +379,58 @@ footer a:hover{color:var(--y);text-decoration:underline}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:6px}
 .footer-legal{max-width:1280px;margin:24px auto 0;padding-top:16px;border-top:1px solid #333;font-size:11px;color:#777}
 
+/* ══ PÁGINAS (Ayuda, Sucursales, Vender, Cuenta, Privacidad) ══ */
+.page-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:650;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.page-overlay.open{display:flex}
+.page-panel{background:var(--white);border-radius:10px;width:100%;max-width:720px;margin:auto;position:relative;overflow:hidden}
+.page-head{background:var(--dark);color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px}
+.page-head h2{font-size:17px;font-weight:600}
+.page-head .close{margin-left:auto;background:none;border:1px solid #555;color:#ddd;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:20px;line-height:1;flex-shrink:0}
+.page-head .close:hover{border-color:var(--y);color:var(--y)}
+.page-body{padding:22px;max-height:calc(100vh - 180px);overflow-y:auto}
+.page-intro{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px}
+.page-body h3{font-size:14px;margin:20px 0 8px}
+.page-body h3:first-child{margin-top:0}
+.page-body p{font-size:13px;line-height:1.7;color:var(--muted)}
+
+/* FAQ */
+.faq{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.faq details{border-bottom:1px solid var(--border)}
+.faq details:last-child{border-bottom:none}
+.faq summary{padding:14px 16px;cursor:pointer;font-weight:600;font-size:13px;list-style:none;display:flex;align-items:center;gap:10px;color:var(--dark)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::before{content:'+';color:var(--y);font-weight:700;font-size:17px;width:14px;flex-shrink:0}
+.faq details[open] summary::before{content:'−'}
+.faq summary:hover{background:#FAFAFA}
+.faq .ans{padding:0 16px 14px 40px;font-size:13px;color:var(--muted);line-height:1.7}
+
+/* Sucursales */
+.branch{border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.branch h3{font-size:14px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.branch h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--y);flex-shrink:0}
+.branch p{font-size:13px;color:var(--muted);line-height:1.7}
+.branch .links{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.branch .links a{font-size:12px;color:var(--text);text-decoration:none;border:1px solid var(--border2);border-radius:6px;padding:6px 12px}
+.branch .links a:hover{border-color:var(--dark);background:#FAFAFA}
+
+/* Cuenta y solicitudes */
+.acct-card{background:#F8F8F8;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.8}
+.acct-card strong{color:var(--dark)}
+.req-item{border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:12px;line-height:1.6}
+.req-item .when{color:var(--light);font-size:11px}
+.privacy-note{background:#F1F6FF;border:1px solid #CFE0FA;border-radius:8px;padding:12px 14px;font-size:12px;color:#1B3B66;line-height:1.6;margin-top:16px}
+.send-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.send-row .btn-primary,.send-row .btn-ghost{flex:1;min-width:170px;padding:12px 16px;font-size:14px}
+.cart-recap{border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:13px}
+.cart-recap li{list-style:none;padding:4px 0;display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border)}
+.cart-recap li:last-child{border-bottom:none;font-weight:700;color:var(--dark)}
+
+/* Trampa para bots: invisible para personas, irresistible para robots de spam. */
+.hp-field{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+
+footer button{color:#aaa;background:none;border:none;padding:0;font-size:13px;cursor:pointer;text-align:left;font-family:inherit}
+footer button:hover{color:var(--y);text-decoration:underline}
+
 /* ── RESPONSIVE ── */
 @media(max-width:1080px){.hero-art{display:none}}
 @media(max-width:900px){
@@ -430,9 +485,9 @@ footer a:hover{color:var(--y);text-decoration:underline}
   <div class="topbar-inner">
     <span id="topbarMsg"></span>
     <div class="topbar-links">
-      <a href="#">Ayuda</a>
-      <a href="#">Vende tu equipo</a>
-      <a href="#">Sucursales</a>
+      <button type="button" data-goto="ayuda">Ayuda</button>
+      <button type="button" data-goto="vender">Vende tu equipo</button>
+      <button type="button" data-goto="sucursales">Sucursales</button>
       <button type="button" id="adminEntry" title="Acceso administrador">🔒 Admin</button>
     </div>
   </div>
@@ -441,7 +496,7 @@ footer a:hover{color:var(--y);text-decoration:underline}
 <!-- HEADER -->
 <header>
   <div class="header-inner">
-    <a class="logo" href="#" id="logoSlot"></a>
+    <a class="logo" href="#catalogo" id="logoSlot" data-action="home" title="Ver todo el catálogo"></a>
     <div class="search-wrap">
       <label class="sr-only" for="searchCat">Categoría de búsqueda</label>
       <select class="search-cat" id="searchCat"></select>
@@ -450,8 +505,8 @@ footer a:hover{color:var(--y);text-decoration:underline}
       <button class="search-btn" type="button" id="searchBtn" aria-label="Buscar">🔍</button>
     </div>
     <div class="header-actions">
-      <a class="hbtn" href="#">👤 <span class="label">Ingresar</span></a>
-      <a class="hbtn primary" href="#">Publicar equipo</a>
+      <button class="hbtn" type="button" data-goto="cuenta">👤 <span class="label" id="acctLabel">Ingresar</span></button>
+      <button class="hbtn primary" type="button" data-goto="vender">Publicar equipo</button>
       <button class="hbtn cart-btn" type="button" id="cartToggle" aria-expanded="false" aria-controls="cartDrawer">
         🛒 <span class="label">Cotización</span>
         <span class="cart-badge" id="cartBadge" hidden>0</span>
@@ -474,7 +529,7 @@ footer a:hover{color:var(--y);text-decoration:underline}
       <p class="hero-p" id="heroP"></p>
       <div class="hero-btns">
         <a class="hbtn-lg yel" href="#catalogo">Ver ofertas del día</a>
-        <a class="hbtn-lg out" href="#">Solicitar financiamiento</a>
+        <a class="hbtn-lg out" id="financeBtn" href="#" target="_blank" rel="noopener">Solicitar financiamiento</a>
       </div>
       <div class="hero-badges">
         <div class="badge">✅ <span>Garantía</span> de fábrica</div>
@@ -536,6 +591,15 @@ footer a:hover{color:var(--y);text-decoration:underline}
       <h4>Contacto</h4>
       <ul id="footContact"></ul>
     </div>
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <ul>
+        <li><button type="button" data-goto="ayuda">Centro de ayuda</button></li>
+        <li><button type="button" data-goto="sucursales">Sucursales</button></li>
+        <li><button type="button" data-goto="vender">Vende tu equipo</button></li>
+        <li><button type="button" data-goto="privacidad">Aviso de privacidad</button></li>
+      </ul>
+    </div>
   </div>
   <div class="footer-legal">Precios de referencia en MXN, no constituyen una oferta comercial.</div>
 </footer>
@@ -584,6 +648,17 @@ footer a:hover{color:var(--y);text-decoration:underline}
       <button class="admin-tab" role="tab" data-tab="backup" aria-selected="false">💾 Respaldo</button>
     </div>
     <div class="admin-body" id="adminBody"></div>
+  </div>
+</div>
+
+<!-- ══ PÁGINAS DE CONTENIDO ══ -->
+<div class="page-overlay" id="pageOverlay">
+  <div class="page-panel" role="dialog" aria-modal="true" aria-labelledby="pageTitle" id="pagePanel">
+    <div class="page-head">
+      <h2 id="pageTitle"></h2>
+      <button class="close" type="button" id="pageClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="page-body" id="pageBody"></div>
   </div>
 </div>
 
@@ -702,8 +777,15 @@ const DEFAULT_SETTINGS = {
   hours:'Lun–Vie 8:00–18:00 · Sáb 9:00–14:00',
   address:'Tuxtla Gutiérrez, Chiapas',
   footerAbout:'Venta y renta de maquinaria pesada en Chiapas. Equipos verificados, garantía real y financiamiento a la medida de tu obra.',
-  pin:'2580'
+  branches:[
+    {name:'Matriz Tuxtla Gutiérrez',address:'Blvd. Belisario Domínguez 1250, Tuxtla Gutiérrez, Chiapas',phone:'961 123 4567',hours:'Lun–Vie 8:00–18:00 · Sáb 9:00–14:00'},
+    {name:'Sucursal Tapachula',address:'Carretera Costera km 4, Tapachula, Chiapas',phone:'962 123 4567',hours:'Lun–Vie 8:00–18:00'},
+    {name:'Sucursal San Cristóbal',address:'Carretera Panamericana 890, San Cristóbal de las Casas, Chiapas',phone:'967 123 4567',hours:'Lun–Vie 9:00–17:00'}
+  ],
+  // El PIN se guarda hasheado, nunca en claro. Ver ensurePinHash().
+  pinHash:null
 };
+const FIRST_PIN = '2580';
 
 const DEFAULT_PRODUCTS = [
   {id:1,name:'Excavadora CAT 320 GC',brand:'CAT',cat:'Excavación',cond:'Nuevo',price:2850000,original:3100000,finance:'18 MSI',leasing:true,shipping:true,location:'Tuxtla Gutiérrez',year:2025,specs:['20 ton','148 HP','6.5 m alcance'],desc:'Excavadora hidráulica de cadenas con sistema de gestión inteligente. Ideal para obra urbana y movimiento de tierra de mediana escala.',svgKey:'excavadora',img:null,hot:true},
@@ -731,7 +813,8 @@ const FINANCE_OPTS = [{value:'msi',label:'Con MSI disponible'},{value:'leasing',
 const CONDS = ['Nuevo','Usado','Renta'];
 const COND_LABELS = {Nuevo:'Nuevo',Usado:'Usado certificado',Renta:'En renta'};
 const PER_PAGE = 9;
-const K = {products:'mdc_v1_products', settings:'mdc_v1_settings', cart:'mdc_v1_cart', favs:'mdc_v1_favs'};
+const K = {products:'mdc_v1_products', settings:'mdc_v1_settings', cart:'mdc_v1_cart',
+           favs:'mdc_v1_favs', account:'mdc_v1_account', requests:'mdc_v1_requests'};
 
 /* ══════════════════ ALMACENAMIENTO ══════════════════ */
 const store = {
@@ -883,6 +966,8 @@ function applyBranding(){
     <li>${esc(settings.address)}</li>
     <li>${esc(settings.hours)}</li>`;
   $('#footCats').innerHTML = baseCats().map(c=>`<li><a href="#catalogo" data-cat="${esc(c)}">${esc(c)}</a></li>`).join('');
+  $('#financeBtn').href = waLink(
+    `Hola ${settings.brandMain}${settings.brandAccent}, quiero información sobre las opciones de financiamiento y arrendamiento para maquinaria.`);
 }
 
 /* ══════════════════ RENDER: FILTROS ══════════════════ */
@@ -1200,7 +1285,9 @@ function closeAll(){
   });
   $('#modalOverlay').classList.remove('open');
   $('#adminOverlay').classList.remove('open');
+  $('#pageOverlay').classList.remove('open');
   $('#overlay').classList.remove('open');
+  currentPage = null;
   $('#cartToggle').setAttribute('aria-expanded','false');
   $('#filtersToggle').setAttribute('aria-expanded','false');
   lockScroll(false);
@@ -1310,12 +1397,417 @@ function removeChip(type,value){
 }
 
 /* ══════════════════════════════════════════════════════════
+   PÁGINAS DE CONTENIDO Y FORMULARIOS
+   ══════════════════════════════════════════════════════════ */
+let account = store.read(K.account, null);
+let currentPage = null;
+let formOpenedAt = 0;
+
+const saveAccount = () => store.write(K.account, account);
+function updateAcctLabel(){
+  const el = $('#acctLabel');
+  if(el) el.textContent = account && account.name ? account.name.split(' ')[0] : 'Ingresar';
+}
+
+/* ── Validación ── */
+const PHONE_RE = /^\d{10}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+
+/**
+ * Lee y valida un conjunto de campos. Marca en rojo los inválidos.
+ * @returns {object|null} valores si todo pasó, null si hubo errores.
+ */
+function readAndValidate(defs){
+  const out = {};
+  let ok = true, firstBad = null;
+  defs.forEach(d=>{
+    const el = $('#'+d.id);
+    if(!el) return;
+    const wrap = el.closest('.field');
+    if(wrap) wrap.classList.remove('err');
+    const v = el.value.trim();
+    let bad = false;
+    if(d.required && !v) bad = true;
+    else if(v && d.type==='tel' && !PHONE_RE.test(v.replace(/\D/g,''))) bad = true;
+    else if(v && d.type==='email' && !EMAIL_RE.test(v)) bad = true;
+    if(bad){ ok = false; if(wrap) wrap.classList.add('err'); if(!firstBad) firstBad = el }
+    out[d.id] = v;
+  });
+  if(!ok){ showToast('Revisa los campos marcados en rojo', true); if(firstBad) firstBad.focus() }
+  return ok ? out : null;
+}
+
+/** Filtro anti-spam sin depender de un servidor: trampa oculta + tiempo mínimo. */
+function botCheck(){
+  const hp = $('#hp_empresa');
+  if(hp && hp.value){
+    // Un bot llenó el campo invisible. Fingimos éxito para no darle pistas.
+    showToast('Solicitud enviada');
+    closeAll();
+    return 'bot';
+  }
+  // formOpenedAt en 0 significa "ya reintentó": no volvemos a medir el tiempo.
+  if(formOpenedAt && performance.now() - formOpenedAt < 1000){
+    formOpenedAt = 0;
+    showToast('Verifica tus datos y vuelve a enviar', true);
+    return 'fast';
+  }
+  return 'ok';
+}
+
+const waLink = txt => `https://wa.me/${settings.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(txt)}`;
+const mailLink = (subject, body) =>
+  `mailto:${settings.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+function saveRequest(type, summary){
+  const reqs = store.read(K.requests, []);
+  reqs.unshift({type, summary, at: new Date().toISOString()});
+  store.write(K.requests, reqs.slice(0, 30));
+}
+
+function deliver(channel, subject, body){
+  saveRequest(subject, body.split('\n')[0]);
+  if(channel==='wa') window.open(waLink(body), '_blank', 'noopener');
+  else window.location.href = mailLink(subject, body);
+  showToast('Solicitud lista para enviar');
+  setTimeout(closeAll, 600);
+}
+
+const HP = `<input class="hp-field" type="text" id="hp_empresa" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true">`;
+
+/* ── Definición de páginas ── */
+const PAGES = {
+  ayuda:       {title:'❓ Centro de ayuda',        html:()=>ayudaHTML()},
+  sucursales:  {title:'📍 Nuestras sucursales',    html:()=>sucursalesHTML()},
+  vender:      {title:'📤 Publica tu equipo',      html:()=>venderHTML()},
+  cuenta:      {title:'👤 Mi cuenta',              html:()=>cuentaHTML()},
+  privacidad:  {title:'🔐 Aviso de privacidad',    html:()=>privacidadHTML()},
+  cotizar:     {title:'📋 Solicitar cotización',   html:()=>cotizarHTML()}
+};
+
+function openPage(kind){
+  const def = PAGES[kind];
+  if(!def) return;
+  closeAll();
+  lastFocused = document.activeElement;
+  currentPage = kind;
+  $('#pageTitle').textContent = def.title;
+  $('#pageBody').innerHTML = def.html();
+  $('#pageOverlay').classList.add('open');
+  lockScroll(true);
+  openPanel = $('#pagePanel');
+  formOpenedAt = performance.now();
+  const f = $('#pageBody').querySelector(FOCUSABLE) || $('#pageClose');
+  f.focus();
+}
+
+/* ── Ayuda ── */
+const FAQ = [
+  ['¿Cómo pido una cotización?','Agrega los equipos que te interesen con el botón «+ Agregar a cotización». Cuando termines, abre el carrito 🛒 arriba a la derecha y presiona «Solicitar cotización formal». Te pedimos tus datos y nos llega la solicitud por WhatsApp o correo. Respondemos en menos de 24 horas hábiles.'],
+  ['¿Los precios que veo son finales?','No. Son precios de referencia en pesos mexicanos y no incluyen IVA. El precio final depende de accesorios, condiciones de entrega y el esquema de pago que elijas. Por eso siempre confirmamos con una cotización formal.'],
+  ['¿Qué necesito para el financiamiento a meses sin intereses?','Identificación oficial, comprobante de domicilio, y para persona moral el acta constitutiva y poder del representante legal. Los MSI aplican con tarjetas participantes; también manejamos arrendamiento puro y crédito simple para montos mayores.'],
+  ['¿Cómo funciona la renta?','La renta es mensual e incluye mantenimiento preventivo, seguro y, en los equipos marcados, operador certificado. Se requiere depósito en garantía y contrato. Para obras cortas consulta la disponibilidad de renta semanal.'],
+  ['¿Qué garantía tienen los equipos?','Los equipos nuevos traen 12 meses de garantía de fábrica. Los usados certificados pasan una inspección de más de 100 puntos y salen con 6 meses de garantía en tren motriz e hidráulico. Los equipos en renta están cubiertos durante todo el contrato.'],
+  ['¿Hacen entregas a pie de obra?','Sí. Los equipos marcados con 🚚 incluyen el envío dentro de Chiapas. Fuera del estado cotizamos la maniobra y el traslado por separado, según distancia y peso del equipo.'],
+  ['¿Puedo vender o consignar mi maquinaria?','Sí. Usa la opción «Vende tu equipo»: llena la ficha con marca, modelo, año y horas de uso. Un valuador te contacta, agenda la inspección y te damos una oferta en firme o lo tomamos a consignación.'],
+  ['¿Aceptan mi equipo a cuenta?','Sí, recibimos maquinaria a cuenta como parte del pago. El avalúo se hace en sitio y el monto se aplica directo al precio del equipo nuevo.']
+];
+
+const ayudaHTML = () => `
+  <p class="page-intro">Resolvemos las dudas más frecuentes. Si no encuentras la tuya, escríbenos: contestamos rápido.</p>
+  <div class="faq">
+    ${FAQ.map(([q,a])=>`<details><summary>${esc(q)}</summary><div class="ans">${esc(a)}</div></details>`).join('')}
+  </div>
+  <h3>¿Sigues con dudas?</h3>
+  <div class="branch">
+    <p>📞 <a href="tel:${esc(settings.phone.replace(/\s/g,''))}" style="color:inherit">${esc(settings.phone)}</a><br>
+       ✉️ <a href="mailto:${esc(settings.email)}" style="color:inherit">${esc(settings.email)}</a><br>
+       🕘 ${esc(settings.hours)}</p>
+    <div class="links">
+      <a href="${waLink('Hola '+settings.brandMain+settings.brandAccent+', tengo una duda sobre sus equipos.')}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>
+      <a href="#" data-goto="sucursales">📍 Ver sucursales</a>
+    </div>
+  </div>`;
+
+/* ── Sucursales ── */
+const sucursalesHTML = () => `
+  <p class="page-intro">Visítanos en cualquiera de nuestras ubicaciones. Todas cuentan con patio de exhibición y taller de servicio.</p>
+  ${(settings.branches||[]).map(b=>`
+    <div class="branch">
+      <h3><span class="dot"></span>${esc(b.name)}</h3>
+      <p>📍 ${esc(b.address)}<br>
+         📞 <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}" style="color:inherit">${esc(b.phone)}</a><br>
+         🕘 ${esc(b.hours)}</p>
+      <div class="links">
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}" target="_blank" rel="noopener">🗺️ Cómo llegar</a>
+        <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}">📞 Llamar</a>
+        <a href="${waLink('Hola, quiero información de la sucursal '+b.name+'.')}" target="_blank" rel="noopener">💬 WhatsApp</a>
+      </div>
+    </div>`).join('') || '<p>Aún no hay sucursales registradas.</p>'}`;
+
+/* ── Vende tu equipo ── */
+const venderHTML = () => `
+  <p class="page-intro">Compramos, consignamos y recibimos maquinaria a cuenta. Llena la ficha y un valuador te contacta para agendar la inspección.</p>
+  <form id="sellForm" novalidate>
+    ${HP}
+    <div class="form-grid">
+      <div class="field"><label for="v-name">Tu nombre *</label>
+        <input type="text" id="v-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+        <span class="errmsg">Escribe tu nombre.</span></div>
+      <div class="field"><label for="v-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
+        <input type="text" id="v-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+        <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+      <div class="field full"><label for="v-email">Correo <span class="hint">(opcional)</span></label>
+        <input type="text" id="v-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+        <span class="errmsg">Ese correo no parece válido.</span></div>
+
+      <div class="field"><label for="v-type">Tipo de equipo</label>
+        <select id="v-type">${baseCats().map(c=>`<option>${esc(c)}</option>`).join('')}<option>Otro</option></select></div>
+      <div class="field"><label for="v-cond">Condición</label>
+        <select id="v-cond"><option>Funcionando</option><option>Requiere reparación menor</option><option>Requiere reparación mayor</option></select></div>
+
+      <div class="field"><label for="v-brand">Marca y modelo *</label>
+        <input type="text" id="v-brand" placeholder="CAT 320 GC">
+        <span class="errmsg">Indica marca y modelo.</span></div>
+      <div class="field"><label for="v-year">Año</label>
+        <input type="number" id="v-year" min="1970" max="2100" placeholder="2019"></div>
+
+      <div class="field"><label for="v-hours">Horas de uso</label>
+        <input type="text" id="v-hours" inputmode="numeric" placeholder="3200"></div>
+      <div class="field"><label for="v-price">Precio esperado (MXN)</label>
+        <input type="text" id="v-price" inputmode="numeric" placeholder="850000"></div>
+
+      <div class="field full"><label for="v-notes">Comentarios</label>
+        <textarea id="v-notes" placeholder="Mantenimientos, accesorios incluidos, detalles a considerar…"></textarea></div>
+    </div>
+    <div class="send-row">
+      <button class="btn-primary" type="submit" data-send="wa">💬 Enviar por WhatsApp</button>
+      <button class="btn-ghost" type="button" data-send="mail">✉️ Enviar por correo</button>
+    </div>
+  </form>
+  <div class="privacy-note">Usamos tus datos únicamente para contactarte sobre este equipo.
+    Consulta el <button type="button" data-goto="privacidad" style="background:none;border:none;color:#1565C0;text-decoration:underline;cursor:pointer;font:inherit;padding:0">aviso de privacidad</button>.</div>`;
+
+function sellPayload(){
+  const v = readAndValidate([
+    {id:'v-name', required:true},
+    {id:'v-phone', required:true, type:'tel'},
+    {id:'v-email', type:'email'},
+    {id:'v-brand', required:true}
+  ]);
+  if(!v) return null;
+  const g = id => $('#'+id).value.trim();
+  return `Hola ${settings.brandMain}${settings.brandAccent}, quiero vender/consignar mi equipo:
+
+Equipo: ${g('v-brand')}
+Tipo: ${g('v-type')}
+Año: ${g('v-year') || 'no especificado'}
+Horas de uso: ${g('v-hours') || 'no especificado'}
+Condición: ${g('v-cond')}
+Precio esperado: ${g('v-price') ? '$'+g('v-price')+' MXN' : 'a valuar'}
+
+Mis datos:
+${v['v-name']} · Tel. ${v['v-phone']}${v['v-email'] ? ' · '+v['v-email'] : ''}
+${g('v-notes') ? '\nComentarios: '+g('v-notes') : ''}`;
+}
+
+/* ── Solicitar cotización ── */
+function cotizarHTML(){
+  const lines = cartLines();
+  if(!lines.length) return `<p class="page-intro">Tu cotización está vacía. Agrega equipos del catálogo para solicitar precios.</p>`;
+  const buy = lines.filter(i=>i.cond!=='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const rent = lines.filter(i=>i.cond==='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const total = `${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}`;
+  return `
+    <p class="page-intro">Confirma tus datos y te enviamos la cotización formal con precios vigentes, tiempos de entrega y opciones de financiamiento.</p>
+    <ul class="cart-recap">
+      ${lines.map(i=>`<li><span>${i.qty}× ${esc(i.name)}</span><span>${fmtFull(i.price*i.qty)}${i.cond==='Renta'?'/mes':''}</span></li>`).join('')}
+      <li><span>Total estimado</span><span>${total}</span></li>
+    </ul>
+    <form id="quoteForm" novalidate>
+      ${HP}
+      <div class="form-grid">
+        <div class="field"><label for="c-name">Tu nombre *</label>
+          <input type="text" id="c-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <span class="errmsg">Escribe tu nombre.</span></div>
+        <div class="field"><label for="c-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
+          <input type="text" id="c-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+        <div class="field"><label for="c-email">Correo <span class="hint">(opcional)</span></label>
+          <input type="text" id="c-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <span class="errmsg">Ese correo no parece válido.</span></div>
+        <div class="field"><label for="c-company">Empresa u obra <span class="hint">(opcional)</span></label>
+          <input type="text" id="c-company" placeholder="Constructora del Sureste"></div>
+        <div class="field full"><label for="c-notes">Comentarios</label>
+          <textarea id="c-notes" placeholder="Fechas en que lo necesitas, lugar de entrega, forma de pago…"></textarea></div>
+        <label class="check full"><input type="checkbox" id="c-save"${account?' checked':''}> Guardar mis datos en este dispositivo para la próxima vez</label>
+      </div>
+      <div class="send-row">
+        <button class="btn-primary" type="submit" data-send="wa">💬 Enviar por WhatsApp</button>
+        <button class="btn-ghost" type="button" data-send="mail">✉️ Enviar por correo</button>
+      </div>
+    </form>
+    <div class="privacy-note">Tus datos se usan sólo para atender esta cotización.
+      Consulta el <button type="button" data-goto="privacidad" style="background:none;border:none;color:#1565C0;text-decoration:underline;cursor:pointer;font:inherit;padding:0">aviso de privacidad</button>.</div>`;
+}
+
+function quotePayload(){
+  const v = readAndValidate([
+    {id:'c-name', required:true},
+    {id:'c-phone', required:true, type:'tel'},
+    {id:'c-email', type:'email'}
+  ]);
+  if(!v) return null;
+
+  if($('#c-save').checked){
+    account = {name:v['c-name'], phone:v['c-phone'], email:v['c-email']};
+    saveAccount(); updateAcctLabel();
+  }
+  const lines = cartLines();
+  const buy = lines.filter(i=>i.cond!=='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const rent = lines.filter(i=>i.cond==='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const company = $('#c-company').value.trim(), notes = $('#c-notes').value.trim();
+
+  return `Hola ${settings.brandMain}${settings.brandAccent}, solicito cotización formal de:
+
+${lines.map(i=>`• ${i.qty}× ${i.name} — ${fmtFull(i.price)}${i.cond==='Renta'?'/mes':''}`).join('\n')}
+
+Total estimado: ${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}
+
+Mis datos:
+${v['c-name']}${company ? ' · '+company : ''}
+Tel. ${v['c-phone']}${v['c-email'] ? ' · '+v['c-email'] : ''}${notes ? '\n\nComentarios: '+notes : ''}`;
+}
+
+/* ── Mi cuenta ── */
+function cuentaHTML(){
+  const reqs = store.read(K.requests, []);
+  const favs = products.filter(p=>favorites.has(p.id));
+
+  const form = `
+    <form id="acctForm" novalidate>
+      <div class="form-grid">
+        <div class="field full"><label for="a-name">Nombre *</label>
+          <input type="text" id="a-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <span class="errmsg">Escribe tu nombre.</span></div>
+        <div class="field"><label for="a-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
+          <input type="text" id="a-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+        <div class="field"><label for="a-email">Correo <span class="hint">(opcional)</span></label>
+          <input type="text" id="a-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <span class="errmsg">Ese correo no parece válido.</span></div>
+      </div>
+      <div class="send-row"><button class="btn-primary" type="submit">Guardar mis datos</button></div>
+    </form>`;
+
+  return `
+    <p class="page-intro">Guarda tus datos para no volver a escribirlos en cada cotización.</p>
+    ${account ? `
+      <div class="acct-card">
+        <strong>${esc(account.name)}</strong><br>
+        📞 ${esc(account.phone)}${account.email?`<br>✉️ ${esc(account.email)}`:''}
+      </div>` : ''}
+    ${form}
+
+    <h3>♥ Equipos guardados (${favs.length})</h3>
+    ${favs.length
+      ? favs.map(p=>`<div class="req-item"><strong>${esc(p.name)}</strong> — ${fmtCompact(p.price)}${p.cond==='Renta'?'/mes':''}</div>`).join('')
+      : '<p>Aún no guardas equipos. Usa el ♡ en cualquier tarjeta del catálogo.</p>'}
+
+    <h3>📋 Mis solicitudes (${reqs.length})</h3>
+    ${reqs.length
+      ? reqs.map(r=>`<div class="req-item"><strong>${esc(r.type)}</strong><br>${esc(r.summary)}<div class="when">${new Date(r.at).toLocaleString('es-MX')}</div></div>`).join('')
+      : '<p>Aquí aparecerán las cotizaciones y publicaciones que envíes.</p>'}
+
+    <div class="privacy-note">
+      <strong>Esto no es una cuenta de usuario.</strong> Tus datos, favoritos y solicitudes se guardan
+      únicamente en este navegador y en este dispositivo: no viajan a ningún servidor y no los podemos ver.
+      Si usas otra computadora o borras los datos del navegador, empiezas de cero.
+      ${account?`<br><br><button class="btn-ghost" type="button" data-action="acct-clear">Borrar mis datos de este dispositivo</button>`:''}
+    </div>`;
+}
+
+/* ── Aviso de privacidad ── */
+const privacidadHTML = () => `
+  <div class="adm-note"><strong>Plantilla base.</strong> Este texto cubre lo que exige la Ley Federal de
+    Protección de Datos Personales en Posesión de los Particulares, pero debe revisarlo un abogado y
+    completarse con tu razón social y domicilio fiscal reales antes de publicarlo.</div>
+
+  <h3>Responsable</h3>
+  <p>${esc(settings.sellerName)}, con domicilio en ${esc(settings.address)}, es responsable del tratamiento
+     de tus datos personales.</p>
+
+  <h3>¿Qué datos recabamos?</h3>
+  <p>Nombre, teléfono, correo electrónico y, en su caso, el nombre de tu empresa u obra. Los obtenemos
+     directamente de ti cuando solicitas una cotización o publicas un equipo en venta.</p>
+
+  <h3>¿Para qué los usamos?</h3>
+  <p>Únicamente para contactarte, elaborar y dar seguimiento a tu cotización, valuar la maquinaria que
+     ofreces y cumplir obligaciones fiscales derivadas de una compraventa o arrendamiento. No vendemos
+     ni compartimos tus datos con terceros para fines publicitarios.</p>
+
+  <h3>Derechos ARCO</h3>
+  <p>Puedes solicitar el Acceso, Rectificación, Cancelación u Oposición al tratamiento de tus datos,
+     así como revocar tu consentimiento, escribiendo a
+     <a href="mailto:${esc(settings.email)}" style="color:#1565C0">${esc(settings.email)}</a>.
+     Responderemos en un plazo máximo de 20 días hábiles.</p>
+
+  <h3>Cambios a este aviso</h3>
+  <p>Cualquier modificación se publicará en esta misma página.</p>
+
+  <div class="privacy-note">Este sitio no utiliza cookies de rastreo ni publicidad. La información que
+    guardamos (tus datos de contacto, favoritos y solicitudes) permanece en el almacenamiento local de
+    tu navegador y nunca se envía a nuestros servidores.</div>`;
+
+/* ══════════════════════════════════════════════════════════
    PANEL DE ADMINISTRACIÓN
    ══════════════════════════════════════════════════════════ */
 let adminTab = 'products';
 let adminQuery = '';
 let editingId = null;   // null = listado, 0 = nuevo, n = editando ese id
 let draftImg;           // undefined = sin cambios, null = borrada, string = nueva
+
+/* ── PIN ──────────────────────────────────────────────────
+   Guardar el PIN hasheado evita que se lea en claro desde localStorage o desde
+   un respaldo exportado. NO convierte esto en seguridad real: la comparación
+   sigue ocurriendo en el navegador del visitante, así que quien sepa lo que hace
+   puede saltársela. La protección de verdad llega cuando exista un servidor.   */
+async function hashPin(pin){
+  try{
+    if(window.crypto && crypto.subtle){
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('mdc:'+pin));
+      return 'sha256:'+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch{/* contexto sin crypto.subtle: usamos el respaldo de abajo */}
+  let h = 2166136261;
+  for(let i=0;i<pin.length;i++){ h ^= pin.charCodeAt(i); h = Math.imul(h, 16777619) }
+  return 'fnv:'+(h>>>0).toString(16);
+}
+
+async function ensurePinHash(){
+  if(settings.pin){                       // migración desde versiones que lo guardaban en claro
+    settings.pinHash = await hashPin(settings.pin);
+    delete settings.pin;
+    saveSettings();
+  } else if(!settings.pinHash){
+    settings.pinHash = await hashPin(FIRST_PIN);
+    saveSettings();
+  }
+}
+
+const LOCK_MS = 60000, MAX_TRIES = 5;
+const pinLockedFor = () => Math.max(0, Number(sessionStorage.getItem('mdc_pin_lock')||0) - Date.now());
+
+function registerPinFailure(){
+  const tries = Number(sessionStorage.getItem('mdc_pin_tries')||0) + 1;
+  if(tries >= MAX_TRIES){
+    sessionStorage.setItem('mdc_pin_lock', String(Date.now()+LOCK_MS));
+    sessionStorage.setItem('mdc_pin_tries','0');
+    return 0;
+  }
+  sessionStorage.setItem('mdc_pin_tries', String(tries));
+  return MAX_TRIES - tries;
+}
 
 /** Redimensiona y comprime una imagen a data URI. Los SVG se leen tal cual. */
 async function fileToDataURL(file, maxW = 1000, quality = 0.82){
@@ -1368,11 +1860,31 @@ function renderLogin(){
       <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
       <div class="err" id="pinErr"></div>
       <button class="btn-primary" type="button" id="pinBtn" style="width:100%;margin-top:10px;padding:12px">Entrar</button>
-      <p style="margin-top:14px;font-size:11px">PIN inicial: <strong>2580</strong> — puedes cambiarlo en la pestaña Respaldo.</p>
+      <p style="margin-top:14px;font-size:11px">PIN inicial: <strong>${FIRST_PIN}</strong> — cámbialo en la pestaña Respaldo.</p>
     </div>`;
-  const input = $('#pinInput');
-  const submit = ()=>{
-    if(input.value === settings.pin){
+
+  const input = $('#pinInput'), btn = $('#pinBtn'), err = $('#pinErr');
+
+  const refreshLock = ()=>{
+    const left = pinLockedFor();
+    if(left > 0){
+      input.disabled = btn.disabled = true;
+      err.textContent = `Demasiados intentos. Espera ${Math.ceil(left/1000)} s.`;
+      setTimeout(refreshLock, 1000);
+    } else if(input.disabled){
+      input.disabled = btn.disabled = false;
+      err.textContent = '';
+      input.focus();
+    }
+  };
+  refreshLock();
+
+  const submit = async ()=>{
+    if(pinLockedFor() > 0) return;
+    await ensurePinHash();          // por si el hash aún no se había calculado
+    const attempt = await hashPin(input.value);
+    if(attempt === settings.pinHash){
+      sessionStorage.setItem('mdc_pin_tries','0');
       isAdmin = true;
       sessionStorage.setItem('mdc_admin','1');
       document.body.classList.add('is-admin');
@@ -1380,11 +1892,13 @@ function renderLogin(){
       renderAdmin(); render();
       showToast('Modo administrador activado');
     } else {
-      $('#pinErr').textContent = 'PIN incorrecto.';
-      input.value = ''; input.focus();
+      const left = registerPinFailure();
+      input.value = '';
+      if(left === 0) refreshLock();
+      else { err.textContent = `PIN incorrecto. Te quedan ${left} intentos.`; input.focus() }
     }
   };
-  $('#pinBtn').addEventListener('click', submit);
+  btn.addEventListener('click', submit);
   input.addEventListener('keydown', e=>{ if(e.key==='Enter') submit() });
 }
 
@@ -1741,6 +2255,27 @@ function siteHTML(){
         ${f('hours','Horario')}
         ${f('footerAbout','Descripción del pie de página')}
       </div>
+    </div>
+    <div class="adm-section">
+      <h3>Sucursales</h3>
+      <p class="sub">Aparecen en la página «Sucursales». El botón «Cómo llegar» se arma solo con la dirección que escribas.</p>
+      ${(settings.branches||[]).map((b,i)=>`
+        <div class="branch" style="margin-bottom:14px">
+          <div class="form-grid">
+            <div class="field"><label>Nombre</label>
+              <input type="text" data-branch="${i}" data-bfield="name" value="${esc(b.name)}"></div>
+            <div class="field"><label>Teléfono</label>
+              <input type="text" data-branch="${i}" data-bfield="phone" value="${esc(b.phone)}"></div>
+            <div class="field full"><label>Dirección</label>
+              <input type="text" data-branch="${i}" data-bfield="address" value="${esc(b.address)}"></div>
+            <div class="field full"><label>Horario</label>
+              <input type="text" data-branch="${i}" data-bfield="hours" value="${esc(b.hours)}"></div>
+          </div>
+          <div class="links" style="margin-top:12px">
+            <button class="btn-danger" type="button" data-branch-del="${i}">Eliminar sucursal</button>
+          </div>
+        </div>`).join('')}
+      <button class="btn-primary" type="button" data-action="branch-add">+ Agregar sucursal</button>
     </div>`;
 }
 
@@ -1775,13 +2310,24 @@ function backupHTML(){
 
     <div class="adm-section">
       <h3>PIN de acceso</h3>
-      <p class="sub">Barrera básica para evitar ediciones accidentales. <strong>No es seguridad real:</strong> cualquiera que abra el código fuente de la página puede verlo.</p>
-      <div class="form-grid">
+      <p class="sub">Se guarda hasheado, así que no aparece en claro ni en el navegador ni en tus respaldos,
+        y se bloquea 60 segundos tras 5 intentos fallidos. Aun así, <strong>no es seguridad real:</strong>
+        la comprobación ocurre en el navegador del visitante. La protección de verdad llega con el servidor.</p>
+      <form id="pinChangeForm" class="form-grid" novalidate>
         <div class="field">
-          <label for="s-pin">PIN actual</label>
-          <input type="text" id="s-pin" data-set="pin" maxlength="8" value="${esc(settings.pin)}">
+          <label for="p-new">Nuevo PIN <span class="hint">(4 a 8 dígitos)</span></label>
+          <input type="password" id="p-new" maxlength="8" inputmode="numeric" autocomplete="new-password">
+          <span class="errmsg">Usa entre 4 y 8 dígitos.</span>
         </div>
-      </div>
+        <div class="field">
+          <label for="p-confirm">Confirmar</label>
+          <input type="password" id="p-confirm" maxlength="8" inputmode="numeric" autocomplete="new-password">
+          <span class="errmsg">No coincide.</span>
+        </div>
+        <div class="field full">
+          <button class="btn-primary" type="submit" style="justify-self:start">Cambiar PIN</button>
+        </div>
+      </form>
     </div>
 
     <div class="adm-section">
@@ -1814,6 +2360,7 @@ async function importBackup(file){
     favorites = new Set([...favorites].filter(id=>products.some(p=>p.id===id)));
     saveProducts(); saveSettings(); saveCart(); saveFavs();
     navSignature = '';
+    await ensurePinHash();   // un respaldo viejo puede no traer el PIN hasheado
     applyBranding(); renderAdmin(); render(); renderCart();
     showToast(`Respaldo importado: ${products.length} equipos`);
   }catch{
@@ -1821,16 +2368,17 @@ async function importBackup(file){
   }
 }
 
-function resetAll(){
+async function resetAll(){
   if(!confirm('Se borrarán TODOS tus equipos, fotos y ajustes, y se volverá al catálogo de ejemplo.\n\n¿Seguro que quieres continuar?')) return;
   if(!confirm('Última confirmación: esta acción no se puede deshacer.')) return;
   products = normalizeProducts(DEFAULT_PRODUCTS);
-  settings = {...DEFAULT_SETTINGS};
+  settings = {...DEFAULT_SETTINGS, branches: DEFAULT_SETTINGS.branches.map(b=>({...b}))};
   cart = []; favorites = new Set();
   saveProducts(); saveSettings(); saveCart(); saveFavs();
   navSignature = '';
+  await ensurePinHash();   // vuelve a dejar el PIN en 2580, ya hasheado
   applyBranding(); renderAdmin(); render(); renderCart();
-  showToast('Todo restablecido a valores de fábrica');
+  showToast('Todo restablecido · el PIN volvió a ser '+FIRST_PIN);
 }
 
 /* ── Carga de imágenes ── */
@@ -1886,6 +2434,25 @@ function logoutAdmin(){
 document.addEventListener('click', e => {
   const t = e.target;
 
+  /* — Páginas de contenido — */
+  const goto = t.closest('[data-goto]');
+  if(goto){ e.preventDefault(); openPage(goto.dataset.goto); return }
+
+  const sendMail = t.closest('[data-send="mail"]');
+  if(sendMail){ e.preventDefault(); submitCurrentForm('mail'); return }
+
+  const branchDel = t.closest('[data-branch-del]');
+  if(branchDel){
+    const i = Number(branchDel.dataset.branchDel);
+    const b = settings.branches[i];
+    if(b && confirm(`¿Eliminar la sucursal "${b.name}"?`)){
+      settings.branches.splice(i,1);
+      saveSettings(); renderAdmin();
+      showToast('Sucursal eliminada');
+    }
+    return;
+  }
+
   /* — Admin — */
   const admOpen = t.closest('[data-admin-open]');
   if(admOpen){ editingId = null; draftImg = undefined; openAdmin(admOpen.dataset.adminOpen); return }
@@ -1906,6 +2473,7 @@ document.addEventListener('click', e => {
   if(act){
     const a = act.dataset.action;
     if(a==='clear-filters'){ clearFilters(); return }
+    if(a==='home'){ e.preventDefault(); clearFilters(); $('#catalogo').scrollIntoView({block:'start'}); return }
     if(a==='admin-new'){ editingId = 0; draftImg = undefined; openAdmin('products'); return }
     if(a==='admin-cancel'){ editingId = null; draftImg = undefined; renderAdmin(); return }
     if(a==='img-remove'){ draftImg = null; renderAdmin(); return }
@@ -1915,6 +2483,18 @@ document.addEventListener('click', e => {
     if(a==='export'){ exportBackup(); return }
     if(a==='import'){ $('#importInput').click(); return }
     if(a==='reset'){ resetAll(); return }
+    if(a==='branch-add'){
+      settings.branches = [...(settings.branches||[]), {name:'Nueva sucursal',address:'',phone:'',hours:''}];
+      saveSettings(); renderAdmin();
+      showToast('Sucursal agregada'); return;
+    }
+    if(a==='acct-clear'){
+      if(!confirm('Se borrarán tus datos de contacto y el historial de solicitudes de este dispositivo.\n\n¿Continuar?')) return;
+      account = null;
+      try{ localStorage.removeItem(K.account); localStorage.removeItem(K.requests) }catch{}
+      updateAcctLabel(); openPage('cuenta');
+      showToast('Datos borrados de este dispositivo'); return;
+    }
   }
 
   /* — Catálogo — */
@@ -1983,6 +2563,14 @@ document.addEventListener('change', e => {
   if(e.target.id==='searchCat'){ state.cat = e.target.value; state.page = 1; render(); return }
   if(e.target.id==='importInput'){ const f = e.target.files[0]; if(f) importBackup(f); e.target.value=''; return }
 
+  /* Sucursales: se guardan al salir del campo */
+  const branchField = e.target.closest('[data-branch]');
+  if(branchField){
+    const b = settings.branches[Number(branchField.dataset.branch)];
+    if(b){ b[branchField.dataset.bfield] = branchField.value.trim(); saveSettings() }
+    return;
+  }
+
   /* Ajustes del sitio: se guardan al salir del campo */
   const setter = e.target.closest('[data-set]');
   if(setter){
@@ -1990,6 +2578,59 @@ document.addEventListener('change', e => {
     const val = setter.value.trim();
     settings[key] = (key==='pin' && !val) ? DEFAULT_SETTINGS.pin : val;
     saveSettings(); applyBranding();
+  }
+});
+
+/* ── Envío de formularios ── */
+function submitCurrentForm(channel){
+  const subject = currentPage === 'vender' ? 'Publicación de equipo'
+                : currentPage === 'cotizar' ? 'Solicitud de cotización' : null;
+  if(!subject) return;
+
+  // Validar SIEMPRE antes del filtro anti-bot: si no, el usuario recibiría un
+  // "vuelve a enviar" genérico en lugar de ver qué campo tiene mal.
+  const body = currentPage === 'vender' ? sellPayload() : quotePayload();
+  if(!body) return;
+
+  if(botCheck() !== 'ok') return;
+  deliver(channel, subject, body);
+}
+
+document.addEventListener('submit', async e => {
+  const id = e.target.id;
+  if(!['sellForm','quoteForm','acctForm','pinChangeForm'].includes(id)) return;
+  e.preventDefault();
+
+  if(id==='sellForm' || id==='quoteForm'){ submitCurrentForm('wa'); return }
+
+  if(id==='acctForm'){
+    const v = readAndValidate([
+      {id:'a-name', required:true},
+      {id:'a-phone', required:true, type:'tel'},
+      {id:'a-email', type:'email'}
+    ]);
+    if(!v) return;
+    account = {name:v['a-name'], phone:v['a-phone'], email:v['a-email']};
+    saveAccount(); updateAcctLabel(); openPage('cuenta');
+    showToast('Datos guardados en este dispositivo');
+    return;
+  }
+
+  if(id==='pinChangeForm'){
+    const nuevo = $('#p-new'), conf = $('#p-confirm');
+    [nuevo, conf].forEach(el=>el.closest('.field').classList.remove('err'));
+    if(!/^\d{4,8}$/.test(nuevo.value)){
+      nuevo.closest('.field').classList.add('err'); nuevo.focus();
+      showToast('El PIN debe tener entre 4 y 8 dígitos', true); return;
+    }
+    if(nuevo.value !== conf.value){
+      conf.closest('.field').classList.add('err'); conf.focus();
+      showToast('Los PIN no coinciden', true); return;
+    }
+    settings.pinHash = await hashPin(nuevo.value);
+    delete settings.pin;
+    saveSettings(); renderAdmin();
+    showToast('PIN actualizado');
   }
 });
 
@@ -2028,10 +2669,12 @@ $('#adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverl
 $('#adminEntry').addEventListener('click', ()=>{ editingId = null; draftImg = undefined; openAdmin('products') });
 $('#adminLogout').addEventListener('click', logoutAdmin);
 
+$('#pageClose').addEventListener('click', closeAll);
+$('#pageOverlay').addEventListener('click', e => { if(e.target.id==='pageOverlay') closeAll() });
+
 $('#checkoutBtn').addEventListener('click', ()=>{
   if(!cart.length){ showToast('Agrega equipos primero'); return }
-  showToast('Solicitud enviada · un asesor te contactará en menos de 24 h');
-  setTimeout(closeAll, 1200);
+  openPage('cotizar');
 });
 $('#waBtn').addEventListener('click', e => { if(!cart.length){ e.preventDefault(); showToast('Agrega equipos primero') } });
 
@@ -2050,9 +2693,12 @@ document.addEventListener('keydown', e => {
 if(isAdmin) document.body.classList.add('is-admin');
 cart = cart.filter(c=>products.some(p=>p.id===c.id));
 favorites = new Set([...favorites].filter(id=>products.some(p=>p.id===id)));
+if(!Array.isArray(settings.branches)) settings.branches = DEFAULT_SETTINGS.branches.map(b=>({...b}));
 applyBranding();
+updateAcctLabel();
 render();
 renderCart();
+ensurePinHash();
 </script>
 </body>
 </html>
