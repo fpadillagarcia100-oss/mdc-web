@@ -1,0 +1,323 @@
+/**
+ * pages.js — Páginas de contenido: ayuda, sucursales, publicar equipo, cuenta,
+ * aviso de privacidad y solicitud de cotización.
+ *
+ * Parte de MDC · Maquinaria de Chiapas.
+ */
+'use strict';
+
+/* ══════════════════════════════════════════════════════════
+   PÁGINAS DE CONTENIDO Y FORMULARIOS
+   ══════════════════════════════════════════════════════════ */
+let account = store.read(K.account, null);
+let currentPage = null;
+let formOpenedAt = 0;
+
+const saveAccount = () => store.write(K.account, account);
+function updateAcctLabel(){
+  const el = $('#acctLabel');
+  if(el) el.textContent = account && account.name ? account.name.split(' ')[0] : 'Ingresar';
+}
+
+const waLink = txt => `https://wa.me/${settings.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(txt)}`;
+const mailLink = (subject, body) =>
+  `mailto:${settings.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+function saveRequest(type, summary){
+  const reqs = store.read(K.requests, []);
+  reqs.unshift({type, summary, at: new Date().toISOString()});
+  store.write(K.requests, reqs.slice(0, 30));
+}
+
+function deliver(channel, subject, body){
+  saveRequest(subject, body.split('\n')[0]);
+  if(channel==='wa') window.open(waLink(body), '_blank', 'noopener');
+  else window.location.href = mailLink(subject, body);
+  showToast('Solicitud lista para enviar');
+  setTimeout(closeAll, 600);
+}
+
+
+/* ── Definición de páginas ── */
+const PAGES = {
+  ayuda:       {title:'❓ Centro de ayuda',        html:()=>ayudaHTML()},
+  sucursales:  {title:'📍 Nuestras sucursales',    html:()=>sucursalesHTML()},
+  vender:      {title:'📤 Publica tu equipo',      html:()=>venderHTML()},
+  cuenta:      {title:'👤 Mi cuenta',              html:()=>cuentaHTML()},
+  privacidad:  {title:'🔐 Aviso de privacidad',    html:()=>privacidadHTML()},
+  cotizar:     {title:'📋 Solicitar cotización',   html:()=>cotizarHTML()}
+};
+
+function openPage(kind){
+  const def = PAGES[kind];
+  if(!def) return;
+  closeAll();
+  lastFocused = document.activeElement;
+  currentPage = kind;
+  $('#pageTitle').textContent = def.title;
+  $('#pageBody').innerHTML = def.html();
+  $('#pageOverlay').classList.add('open');
+  lockScroll(true);
+  openPanel = $('#pagePanel');
+  formOpenedAt = performance.now();
+  const f = $('#pageBody').querySelector(FOCUSABLE) || $('#pageClose');
+  f.focus();
+}
+
+/* ── Ayuda ── */
+const FAQ = [
+  ['¿Cómo pido una cotización?','Agrega los equipos que te interesen con el botón «+ Agregar a cotización». Cuando termines, abre el carrito 🛒 arriba a la derecha y presiona «Solicitar cotización formal». Te pedimos tus datos y nos llega la solicitud por WhatsApp o correo. Respondemos en menos de 24 horas hábiles.'],
+  ['¿Los precios que veo son finales?','No. Son precios de referencia en pesos mexicanos y no incluyen IVA. El precio final depende de accesorios, condiciones de entrega y el esquema de pago que elijas. Por eso siempre confirmamos con una cotización formal.'],
+  ['¿Qué necesito para el financiamiento a meses sin intereses?','Identificación oficial, comprobante de domicilio, y para persona moral el acta constitutiva y poder del representante legal. Los MSI aplican con tarjetas participantes; también manejamos arrendamiento puro y crédito simple para montos mayores.'],
+  ['¿Cómo funciona la renta?','La renta es mensual e incluye mantenimiento preventivo, seguro y, en los equipos marcados, operador certificado. Se requiere depósito en garantía y contrato. Para obras cortas consulta la disponibilidad de renta semanal.'],
+  ['¿Qué garantía tienen los equipos?','Los equipos nuevos traen 12 meses de garantía de fábrica. Los usados certificados pasan una inspección de más de 100 puntos y salen con 6 meses de garantía en tren motriz e hidráulico. Los equipos en renta están cubiertos durante todo el contrato.'],
+  ['¿Hacen entregas a pie de obra?','Sí. Los equipos marcados con 🚚 incluyen el envío dentro de Chiapas. Fuera del estado cotizamos la maniobra y el traslado por separado, según distancia y peso del equipo.'],
+  ['¿Puedo vender o consignar mi maquinaria?','Sí. Usa la opción «Vende tu equipo»: llena la ficha con marca, modelo, año y horas de uso. Un valuador te contacta, agenda la inspección y te damos una oferta en firme o lo tomamos a consignación.'],
+  ['¿Aceptan mi equipo a cuenta?','Sí, recibimos maquinaria a cuenta como parte del pago. El avalúo se hace en sitio y el monto se aplica directo al precio del equipo nuevo.']
+];
+
+const ayudaHTML = () => `
+  <p class="page-intro">Resolvemos las dudas más frecuentes. Si no encuentras la tuya, escríbenos: contestamos rápido.</p>
+  <div class="faq">
+    ${FAQ.map(([q,a])=>`<details><summary>${esc(q)}</summary><div class="ans">${esc(a)}</div></details>`).join('')}
+  </div>
+  <h3>¿Sigues con dudas?</h3>
+  <div class="branch">
+    <p>📞 <a href="tel:${esc(settings.phone.replace(/\s/g,''))}" style="color:inherit">${esc(settings.phone)}</a><br>
+       ✉️ <a href="mailto:${esc(settings.email)}" style="color:inherit">${esc(settings.email)}</a><br>
+       🕘 ${esc(settings.hours)}</p>
+    <div class="links">
+      <a href="${waLink('Hola '+settings.brandMain+settings.brandAccent+', tengo una duda sobre sus equipos.')}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>
+      <a href="#" data-goto="sucursales">📍 Ver sucursales</a>
+    </div>
+  </div>`;
+
+/* ── Sucursales ── */
+const sucursalesHTML = () => `
+  <p class="page-intro">Visítanos en cualquiera de nuestras ubicaciones. Todas cuentan con patio de exhibición y taller de servicio.</p>
+  ${(settings.branches||[]).map(b=>`
+    <div class="branch">
+      <h3><span class="dot"></span>${esc(b.name)}</h3>
+      <p>📍 ${esc(b.address)}<br>
+         📞 <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}" style="color:inherit">${esc(b.phone)}</a><br>
+         🕘 ${esc(b.hours)}</p>
+      <div class="links">
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}" target="_blank" rel="noopener">🗺️ Cómo llegar</a>
+        <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}">📞 Llamar</a>
+        <a href="${waLink('Hola, quiero información de la sucursal '+b.name+'.')}" target="_blank" rel="noopener">💬 WhatsApp</a>
+      </div>
+    </div>`).join('') || '<p>Aún no hay sucursales registradas.</p>'}`;
+
+/* ── Vende tu equipo ── */
+const venderHTML = () => `
+  <p class="page-intro">Compramos, consignamos y recibimos maquinaria a cuenta. Llena la ficha y un valuador te contacta para agendar la inspección.</p>
+  <form id="sellForm" novalidate>
+    ${HP}
+    <div class="form-grid">
+      <div class="field"><label for="v-name">Tu nombre *</label>
+        <input type="text" id="v-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+        <span class="errmsg">Escribe tu nombre.</span></div>
+      <div class="field"><label for="v-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
+        <input type="text" id="v-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+        <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+      <div class="field full"><label for="v-email">Correo <span class="hint">(opcional)</span></label>
+        <input type="text" id="v-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+        <span class="errmsg">Ese correo no parece válido.</span></div>
+
+      <div class="field"><label for="v-type">Tipo de equipo</label>
+        <select id="v-type">${baseCats().map(c=>`<option>${esc(c)}</option>`).join('')}<option>Otro</option></select></div>
+      <div class="field"><label for="v-cond">Condición</label>
+        <select id="v-cond"><option>Funcionando</option><option>Requiere reparación menor</option><option>Requiere reparación mayor</option></select></div>
+
+      <div class="field"><label for="v-brand">Marca y modelo *</label>
+        <input type="text" id="v-brand" placeholder="CAT 320 GC">
+        <span class="errmsg">Indica marca y modelo.</span></div>
+      <div class="field"><label for="v-year">Año</label>
+        <input type="number" id="v-year" min="1970" max="2100" placeholder="2019"></div>
+
+      <div class="field"><label for="v-hours">Horas de uso</label>
+        <input type="text" id="v-hours" inputmode="numeric" placeholder="3200"></div>
+      <div class="field"><label for="v-price">Precio esperado (MXN)</label>
+        <input type="text" id="v-price" inputmode="numeric" placeholder="850000"></div>
+
+      <div class="field full"><label for="v-notes">Comentarios</label>
+        <textarea id="v-notes" placeholder="Mantenimientos, accesorios incluidos, detalles a considerar…"></textarea></div>
+    </div>
+    <div class="send-row">
+      <button class="btn-primary" type="submit" data-send="wa">💬 Enviar por WhatsApp</button>
+      <button class="btn-ghost" type="button" data-send="mail">✉️ Enviar por correo</button>
+    </div>
+  </form>
+  <div class="privacy-note">Usamos tus datos únicamente para contactarte sobre este equipo.
+    Consulta el <button type="button" data-goto="privacidad" style="background:none;border:none;color:#1565C0;text-decoration:underline;cursor:pointer;font:inherit;padding:0">aviso de privacidad</button>.</div>`;
+
+function sellPayload(){
+  const v = readAndValidate([
+    {id:'v-name', required:true},
+    {id:'v-phone', required:true, type:'tel'},
+    {id:'v-email', type:'email'},
+    {id:'v-brand', required:true}
+  ]);
+  if(!v) return null;
+  const g = id => $('#'+id).value.trim();
+  return `Hola ${settings.brandMain}${settings.brandAccent}, quiero vender/consignar mi equipo:
+
+Equipo: ${g('v-brand')}
+Tipo: ${g('v-type')}
+Año: ${g('v-year') || 'no especificado'}
+Horas de uso: ${g('v-hours') || 'no especificado'}
+Condición: ${g('v-cond')}
+Precio esperado: ${g('v-price') ? '$'+g('v-price')+' MXN' : 'a valuar'}
+
+Mis datos:
+${v['v-name']} · Tel. ${v['v-phone']}${v['v-email'] ? ' · '+v['v-email'] : ''}
+${g('v-notes') ? '\nComentarios: '+g('v-notes') : ''}`;
+}
+
+/* ── Solicitar cotización ── */
+function cotizarHTML(){
+  const lines = cartLines();
+  if(!lines.length) return `<p class="page-intro">Tu cotización está vacía. Agrega equipos del catálogo para solicitar precios.</p>`;
+  const buy = lines.filter(i=>i.cond!=='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const rent = lines.filter(i=>i.cond==='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const total = `${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}`;
+  return `
+    <p class="page-intro">Confirma tus datos y te enviamos la cotización formal con precios vigentes, tiempos de entrega y opciones de financiamiento.</p>
+    <ul class="cart-recap">
+      ${lines.map(i=>`<li><span>${i.qty}× ${esc(i.name)}</span><span>${fmtFull(i.price*i.qty)}${i.cond==='Renta'?'/mes':''}</span></li>`).join('')}
+      <li><span>Total estimado</span><span>${total}</span></li>
+    </ul>
+    <form id="quoteForm" novalidate>
+      ${HP}
+      <div class="form-grid">
+        <div class="field"><label for="c-name">Tu nombre *</label>
+          <input type="text" id="c-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <span class="errmsg">Escribe tu nombre.</span></div>
+        <div class="field"><label for="c-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
+          <input type="text" id="c-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+        <div class="field"><label for="c-email">Correo <span class="hint">(opcional)</span></label>
+          <input type="text" id="c-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <span class="errmsg">Ese correo no parece válido.</span></div>
+        <div class="field"><label for="c-company">Empresa u obra <span class="hint">(opcional)</span></label>
+          <input type="text" id="c-company" placeholder="Constructora del Sureste"></div>
+        <div class="field full"><label for="c-notes">Comentarios</label>
+          <textarea id="c-notes" placeholder="Fechas en que lo necesitas, lugar de entrega, forma de pago…"></textarea></div>
+        <label class="check full"><input type="checkbox" id="c-save"${account?' checked':''}> Guardar mis datos en este dispositivo para la próxima vez</label>
+      </div>
+      <div class="send-row">
+        <button class="btn-primary" type="submit" data-send="wa">💬 Enviar por WhatsApp</button>
+        <button class="btn-ghost" type="button" data-send="mail">✉️ Enviar por correo</button>
+      </div>
+    </form>
+    <div class="privacy-note">Tus datos se usan sólo para atender esta cotización.
+      Consulta el <button type="button" data-goto="privacidad" style="background:none;border:none;color:#1565C0;text-decoration:underline;cursor:pointer;font:inherit;padding:0">aviso de privacidad</button>.</div>`;
+}
+
+function quotePayload(){
+  const v = readAndValidate([
+    {id:'c-name', required:true},
+    {id:'c-phone', required:true, type:'tel'},
+    {id:'c-email', type:'email'}
+  ]);
+  if(!v) return null;
+
+  if($('#c-save').checked){
+    account = {name:v['c-name'], phone:v['c-phone'], email:v['c-email']};
+    saveAccount(); updateAcctLabel();
+  }
+  const lines = cartLines();
+  const buy = lines.filter(i=>i.cond!=='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const rent = lines.filter(i=>i.cond==='Renta').reduce((s,i)=>s+i.price*i.qty,0);
+  const company = $('#c-company').value.trim(), notes = $('#c-notes').value.trim();
+
+  return `Hola ${settings.brandMain}${settings.brandAccent}, solicito cotización formal de:
+
+${lines.map(i=>`• ${i.qty}× ${i.name} — ${fmtFull(i.price)}${i.cond==='Renta'?'/mes':''}`).join('\n')}
+
+Total estimado: ${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}
+
+Mis datos:
+${v['c-name']}${company ? ' · '+company : ''}
+Tel. ${v['c-phone']}${v['c-email'] ? ' · '+v['c-email'] : ''}${notes ? '\n\nComentarios: '+notes : ''}`;
+}
+
+/* ── Mi cuenta ── */
+function cuentaHTML(){
+  const reqs = store.read(K.requests, []);
+  const favs = products.filter(p=>favorites.has(p.id));
+
+  const form = `
+    <form id="acctForm" novalidate>
+      <div class="form-grid">
+        <div class="field full"><label for="a-name">Nombre *</label>
+          <input type="text" id="a-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <span class="errmsg">Escribe tu nombre.</span></div>
+        <div class="field"><label for="a-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
+          <input type="text" id="a-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+        <div class="field"><label for="a-email">Correo <span class="hint">(opcional)</span></label>
+          <input type="text" id="a-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <span class="errmsg">Ese correo no parece válido.</span></div>
+      </div>
+      <div class="send-row"><button class="btn-primary" type="submit">Guardar mis datos</button></div>
+    </form>`;
+
+  return `
+    <p class="page-intro">Guarda tus datos para no volver a escribirlos en cada cotización.</p>
+    ${account ? `
+      <div class="acct-card">
+        <strong>${esc(account.name)}</strong><br>
+        📞 ${esc(account.phone)}${account.email?`<br>✉️ ${esc(account.email)}`:''}
+      </div>` : ''}
+    ${form}
+
+    <h3>♥ Equipos guardados (${favs.length})</h3>
+    ${favs.length
+      ? favs.map(p=>`<div class="req-item"><strong>${esc(p.name)}</strong> — ${fmtCompact(p.price)}${p.cond==='Renta'?'/mes':''}</div>`).join('')
+      : '<p>Aún no guardas equipos. Usa el ♡ en cualquier tarjeta del catálogo.</p>'}
+
+    <h3>📋 Mis solicitudes (${reqs.length})</h3>
+    ${reqs.length
+      ? reqs.map(r=>`<div class="req-item"><strong>${esc(r.type)}</strong><br>${esc(r.summary)}<div class="when">${new Date(r.at).toLocaleString('es-MX')}</div></div>`).join('')
+      : '<p>Aquí aparecerán las cotizaciones y publicaciones que envíes.</p>'}
+
+    <div class="privacy-note">
+      <strong>Esto no es una cuenta de usuario.</strong> Tus datos, favoritos y solicitudes se guardan
+      únicamente en este navegador y en este dispositivo: no viajan a ningún servidor y no los podemos ver.
+      Si usas otra computadora o borras los datos del navegador, empiezas de cero.
+      ${account?`<br><br><button class="btn-ghost" type="button" data-action="acct-clear">Borrar mis datos de este dispositivo</button>`:''}
+    </div>`;
+}
+
+/* ── Aviso de privacidad ── */
+const privacidadHTML = () => `
+  <div class="adm-note"><strong>Plantilla base.</strong> Este texto cubre lo que exige la Ley Federal de
+    Protección de Datos Personales en Posesión de los Particulares, pero debe revisarlo un abogado y
+    completarse con tu razón social y domicilio fiscal reales antes de publicarlo.</div>
+
+  <h3>Responsable</h3>
+  <p>${esc(settings.sellerName)}, con domicilio en ${esc(settings.address)}, es responsable del tratamiento
+     de tus datos personales.</p>
+
+  <h3>¿Qué datos recabamos?</h3>
+  <p>Nombre, teléfono, correo electrónico y, en su caso, el nombre de tu empresa u obra. Los obtenemos
+     directamente de ti cuando solicitas una cotización o publicas un equipo en venta.</p>
+
+  <h3>¿Para qué los usamos?</h3>
+  <p>Únicamente para contactarte, elaborar y dar seguimiento a tu cotización, valuar la maquinaria que
+     ofreces y cumplir obligaciones fiscales derivadas de una compraventa o arrendamiento. No vendemos
+     ni compartimos tus datos con terceros para fines publicitarios.</p>
+
+  <h3>Derechos ARCO</h3>
+  <p>Puedes solicitar el Acceso, Rectificación, Cancelación u Oposición al tratamiento de tus datos,
+     así como revocar tu consentimiento, escribiendo a
+     <a href="mailto:${esc(settings.email)}" style="color:#1565C0">${esc(settings.email)}</a>.
+     Responderemos en un plazo máximo de 20 días hábiles.</p>
+
+  <h3>Cambios a este aviso</h3>
+  <p>Cualquier modificación se publicará en esta misma página.</p>
+
+  <div class="privacy-note">Este sitio no utiliza cookies de rastreo ni publicidad. La información que
+    guardamos (tus datos de contacto, favoritos y solicitudes) permanece en el almacenamiento local de
+    tu navegador y nunca se envía a nuestros servidores.</div>`;

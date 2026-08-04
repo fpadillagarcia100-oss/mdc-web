@@ -20,6 +20,47 @@ que los edita.
 
 Ambos se resuelven con un backend (ver *Siguientes pasos*).
 
+## Estructura
+
+```
+mdc-web/
+├── index.html              Sólo marcado. Ni estilos ni scripts en línea.
+├── assets/
+│   ├── css/styles.css      Hoja de estilos completa
+│   └── js/
+│       ├── icons.js        Ilustraciones SVG de respaldo
+│       ├── config.js       Ajustes por defecto y catálogo semilla
+│       ├── utils.js        Atajos del DOM y formato
+│       ├── security.js     Escapado, validación, anti-spam y PIN
+│       ├── storage.js      Persistencia y normalización de datos
+│       ├── state.js        Estado de filtros y orden
+│       ├── branding.js     Logo, colores y textos configurables
+│       ├── catalog.js      Filtros, tarjetas y paginación
+│       ├── cart.js         Carrito de cotización
+│       ├── ui.js           Cajones, modal, foco y avisos
+│       ├── pages.js        Ayuda, sucursales, cuenta, privacidad
+│       ├── admin.js        Panel de administración
+│       └── main.js         Eventos y arranque
+├── tests/smoke.test.js     27 pruebas automatizadas
+├── SECURITY.md             Qué protege el sitio y qué no
+└── README.md
+```
+
+**El orden de los `<script>` en `index.html` importa.** Son scripts clásicos que
+comparten ámbito global: `main.js` va al final porque asume que todo lo demás ya
+existe. Si agregas un archivo, colócalo respetando sus dependencias.
+
+## Pruebas
+
+```powershell
+npm install     # sólo la primera vez
+npm test
+```
+
+Levanta el sitio completo en un navegador simulado y verifica el catálogo, las
+páginas, la validación de formularios, el carrito y las defensas del PIN.
+Córrelo antes de cada commit.
+
 ## Cómo verlo
 
 **Local:** abre `index.html` con doble clic.
@@ -54,20 +95,18 @@ Funciona bien y el lead sí llega, pero nada queda registrado del lado de la emp
 
 ## Seguridad
 
-Lo que sí está hecho:
+Resumen; el detalle completo está en **[SECURITY.md](SECURITY.md)**.
 
-- El PIN se guarda **hasheado** (SHA-256 vía WebCrypto), nunca en claro — tampoco en los respaldos.
-- **Bloqueo de 60 segundos** tras 5 intentos fallidos.
-- **CSP** que impide cargar scripts externos, incrustar iframes o sacar datos a otro servidor.
-- Todo lo que se pinta en pantalla pasa por escapado de HTML.
-- Validación de teléfono y correo, con **trampa oculta anti-spam** en los formularios.
+- PIN **hasheado con SHA-256**, con bloqueo de 60 s tras 5 intentos fallidos.
+- **CSP sin `unsafe-inline`** para scripts: nada de código externo, iframes ni exfiltración.
+- Escapado de HTML en todo lo que se pinta en pantalla.
+- Validación de teléfono y correo, más trampa oculta anti-spam.
+- Los datos del visitante nunca salen de su dispositivo.
 
-Lo que **no** está hecho, y no puede estarlo sin servidor:
-
-> La comprobación del PIN ocurre en el navegador del visitante. Quien sepa lo que hace
-> puede saltársela y editar el catálogo local. Esto **evita ediciones accidentales**, no
-> ataques. La autorización real exige validarse en un servidor, en cada operación de
-> escritura. Es la razón principal para migrar a Next.js + Supabase.
+> **El límite:** todo corre en el navegador del visitante. El PIN se compara ahí
+> mismo, así que quien sepa lo que hace puede saltárselo. Esto **evita ediciones
+> accidentales, no ataques.** La autorización real exige un servidor que valide
+> cada escritura — es el motivo principal para migrar a Next.js + Supabase.
 
 ## Panel de administración
 
