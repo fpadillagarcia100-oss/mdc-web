@@ -1,0 +1,31 @@
+# ── Secretos ──
+# Nunca subas llaves de API, contraseñas ni cadenas de conexión.
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+
+# ── Dependencias (cuando migremos a Next.js) ──
+node_modules/
+.next/
+dist/
+build/
+
+# ── Sistema operativo ──
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ── Editores ──
+.vscode/*
+!.vscode/settings.json
+.idea/
+*.swp
+
+# ── Temporales ──
+*.log
+*.tmp
+~$*
