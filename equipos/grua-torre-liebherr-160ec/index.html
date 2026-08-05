@@ -147,7 +147,7 @@
   </div>
 
   
-<section class="calc" data-calc data-precio="6800000" aria-labelledby="calcTitulo">
+<section class="calc" data-calc data-precio="6800000" data-msi="18" aria-labelledby="calcTitulo">
   <h3 id="calcTitulo">🧮 Simula tu financiamiento</h3>
 
   <div class="calc-campos">
@@ -191,8 +191,9 @@
        acompañada de los supuestos que la produjeron. -->
   <p class="calc-supuestos" data-calc-out="supuestos"></p>
 
-  <p class="calc-msi">💳 Este equipo también tiene <strong>18 meses sin intereses</strong>:
-    $377,778 al mes, sin enganche y sin pagar intereses.</p>
+  <!-- Se llena en refrescarCalculadora: en la página de financiamiento el
+       equipo cambia, y con él los meses sin intereses. -->
+  <p class="calc-msi" data-calc-msi hidden></p>
 
   <p class="calc-nota">Cálculo estimado con fines informativos. No es una oferta de
     crédito ni incluye seguro, comisión por apertura ni IVA sobre intereses.

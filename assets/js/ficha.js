@@ -58,7 +58,7 @@ function simularCredito(precio, { enganche, plazo, tasa }) {
 function calculadoraHTML(precio, opts = {}) {
   const msi = opts.msi ? parseInt(opts.msi, 10) : 0;
   return `
-<section class="calc" data-calc data-precio="${precio}" aria-labelledby="calcTitulo">
+<section class="calc" data-calc data-precio="${precio}" data-msi="${msi || ''}" aria-labelledby="calcTitulo">
   <h3 id="calcTitulo">🧮 Simula tu financiamiento</h3>
 
   <div class="calc-campos">
@@ -102,8 +102,9 @@ function calculadoraHTML(precio, opts = {}) {
        acompañada de los supuestos que la produjeron. -->
   <p class="calc-supuestos" data-calc-out="supuestos"></p>
 
-  ${msi ? `<p class="calc-msi">💳 Este equipo también tiene <strong>${msi} meses sin intereses</strong>:
-    ${pesos.format(Math.round(precio / msi))} al mes, sin enganche y sin pagar intereses.</p>` : ''}
+  <!-- Se llena en refrescarCalculadora: en la página de financiamiento el
+       equipo cambia, y con él los meses sin intereses. -->
+  <p class="calc-msi" data-calc-msi hidden></p>
 
   <p class="calc-nota">Cálculo estimado con fines informativos. No es una oferta de
     crédito ni incluye seguro, comisión por apertura ni IVA sobre intereses.
@@ -144,6 +145,19 @@ function refrescarCalculadora(root) {
   pon('total', pesos.format(r.total));
   pon('supuestos', `Calculado con ${datos.enganche}% de enganche, ${datos.plazo} meses ` +
     `y una tasa anual estimada de ${datos.tasa}%.`);
+
+  /* Meses sin intereses. Se escribe como texto, nunca como HTML: el dato viene
+     del catálogo y acabaría inyectando lo que trajera. */
+  const msiEl = root.querySelector('[data-calc-msi]');
+  if (msiEl) {
+    const msi = parseInt(root.dataset.msi, 10);
+    const hay = Number.isFinite(msi) && msi > 0 && precio > 0;
+    msiEl.hidden = !hay;
+    msiEl.textContent = hay
+      ? `💳 Este equipo también tiene ${msi} meses sin intereses: ` +
+        `${pesos.format(Math.round(precio / msi))} al mes, sin enganche y sin pagar intereses.`
+      : '';
+  }
 }
 
 /* ══════════════════ CABLEADO ══════════════════ */

@@ -638,3 +638,17 @@ body.con-cmp{padding-bottom:78px}
 
   a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#555;word-break:break-all}
 }
+
+/* ── Página de financiamiento ── */
+.fin-intro{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+.fin-selector{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
+.fin-selector .field label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.fin-selector select,.fin-selector input{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:13px;background:var(--white)}
+.fin-acciones{margin-top:16px}
+.fin-acciones .btn-primary{width:100%;padding:12px}
+.fin-opciones{margin-top:26px}
+.fin-opciones h3{font-size:15px;font-weight:700;margin-bottom:12px}
+.fin-op{border-left:3px solid var(--y);background:#FAFAFA;padding:12px 14px;margin-bottom:10px;border-radius:0 6px 6px 0}
+.fin-op strong{display:block;font-size:13px;margin-bottom:4px}
+.fin-op p{font-size:12px;color:var(--muted);line-height:1.65}
+@media(max-width:600px){ .fin-selector{grid-template-columns:1fr} }

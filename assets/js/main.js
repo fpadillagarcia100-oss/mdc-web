@@ -61,6 +61,11 @@ document.addEventListener('click', e => {
     if(a==='logo-remove'){ settings.logo = null; saveSettings(); applyBranding(); renderAdmin(); return }
     if(a==='hero-remove'){ settings.heroImage = null; saveSettings(); applyBranding(); renderAdmin(); return }
     if(a==='accent-reset'){ settings.accent = DEFAULT_SETTINGS.accent; saveSettings(); applyBranding(); renderAdmin(); return }
+    if(a==='fin-wa'){
+      const msg = financiamientoPayload();
+      if(msg) window.open(waLink(msg), '_blank', 'noopener');
+      return;
+    }
     if(a==='cmp-clear'){ clearCompare(); return }
     if(a==='cmp-open'){ openPage('comparar'); return }
     if(a==='export'){ exportBackup(); return }
@@ -133,7 +138,15 @@ document.addEventListener('click', e => {
   }
 });
 
+/* El selector de la página de financiamiento vive FUERA de la calculadora, así
+   que ficha.js no lo escucha: hay que conectarlo aquí. */
+document.addEventListener('input', e => {
+  if(e.target.closest('[data-fin]')) actualizarFinanciamiento();
+});
+
 document.addEventListener('change', e => {
+  if(e.target.closest('[data-fin]')){ actualizarFinanciamiento(); return }
+
   const cb = e.target.closest('[data-filter]');
   if(cb){
     const group = cb.dataset.filter;

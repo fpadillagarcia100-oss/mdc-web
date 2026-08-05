@@ -46,8 +46,114 @@ const PAGES = {
   cuenta:      {title:'👤 Mi cuenta',              html:()=>cuentaHTML()},
   privacidad:  {title:'🔐 Aviso de privacidad',    html:()=>privacidadHTML()},
   cotizar:     {title:'📋 Solicitar cotización',   html:()=>cotizarHTML()},
-  comparar:    {title:'⇄ Comparar equipos',        html:()=>compararHTML()}
+  comparar:    {title:'⇄ Comparar equipos',        html:()=>compararHTML()},
+  financiamiento:{title:'🧮 Financiamiento',       html:()=>financiamientoHTML()}
 };
+
+/* ── Financiamiento ── */
+
+/** Equipos que se pueden financiar: los de venta. Una renta no se financia. */
+const financiables = () => products.filter(p => p.cond !== 'Renta');
+
+function financiamientoHTML(){
+  const eq = financiables();
+  const base = eq[0] ? eq[0].price : 1000000;
+
+  return `
+    <p class="fin-intro">Calcula tu pago mensual antes de hablar con nosotros.
+      Elige un equipo o escribe un monto, y ajusta el enganche y el plazo hasta
+      que los números te acomoden.</p>
+
+    <div class="fin-selector">
+      <div class="field">
+        <label for="finEquipo">Equipo</label>
+        <select id="finEquipo" data-fin>
+          ${eq.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmtFull(p.price)}</option>`).join('')}
+          <option value="otro">Otro monto…</option>
+        </select>
+      </div>
+      <div class="field" id="finMontoCampo" ${eq.length?'hidden':''}>
+        <label for="finMonto">Monto a financiar (MXN)</label>
+        <input type="number" id="finMonto" data-fin min="0" step="10000" value="${base}">
+      </div>
+    </div>
+
+    ${calculadoraHTML(base, {msi: eq[0] ? eq[0].finance : null})}
+
+    <div class="fin-acciones">
+      <button class="btn-primary" type="button" data-action="fin-wa">💬 Enviar esta simulación por WhatsApp</button>
+    </div>
+
+    <div class="fin-opciones">
+      <h3>Tres formas de pagar tu equipo</h3>
+      <div class="fin-op">
+        <strong>💳 Meses sin intereses</strong>
+        <p>Pagas el precio de lista repartido en mensualidades iguales, sin un peso
+          de intereses. Es la opción más barata cuando el equipo la tiene disponible;
+          en el catálogo aparece marcada en cada ficha.</p>
+      </div>
+      <div class="fin-op">
+        <strong>🏦 Crédito simple</strong>
+        <p>Das un enganche y financias el resto a plazo con una tasa. Es lo que
+          calcula el simulador de arriba. El equipo queda a tu nombre desde el
+          primer día.</p>
+      </div>
+      <div class="fin-op">
+        <strong>📄 Arrendamiento puro</strong>
+        <p>Pagas por usar el equipo sin comprarlo. La renta suele ser deducible al
+          100%, así que conviene revisarlo con tu contador antes de decidir.
+          Los equipos que lo permiten están marcados en el catálogo.</p>
+      </div>
+    </div>
+
+    <p class="calc-nota">Las cifras son estimadas y sirven para orientarte. No son
+      una oferta de crédito: la tasa, el plazo y la aprobación los determina la
+      institución financiera según tu historial.</p>`;
+}
+
+/** Aplica al simulador el equipo (o el monto libre) que se eligió arriba. */
+function actualizarFinanciamiento(){
+  const root = $('#pageBody [data-calc]');
+  if(!root) return;
+  const sel = $('#finEquipo'), campo = $('#finMontoCampo'), monto = $('#finMonto');
+  const otro = !sel || sel.value === 'otro';
+  if(campo) campo.hidden = !otro;
+
+  let precio, msi = '';
+  if(otro){
+    precio = Math.max(0, Number(monto && monto.value) || 0);
+  } else {
+    const p = products.find(x => String(x.id) === sel.value);
+    precio = p ? p.price : 0;
+    msi = p && p.finance ? p.finance : '';
+    if(monto) monto.value = precio;   // deja el monto listo por si cambia a "otro"
+  }
+
+  root.dataset.precio = precio;
+  root.dataset.msi = msi ? parseInt(msi, 10) : '';
+  refrescarCalculadora(root);
+}
+
+/** Arma el mensaje con los números que el cliente acaba de simular. */
+function financiamientoPayload(){
+  const root = $('#pageBody [data-calc]');
+  if(!root) return null;
+  const sel = $('#finEquipo');
+  const equipo = sel && sel.value !== 'otro'
+    ? (products.find(p=>String(p.id)===sel.value) || {}).name
+    : null;
+  const dato = campo => (root.querySelector(`[data-calc-out="${campo}"]`) || {}).textContent || '—';
+
+  return [
+    equipo ? `Simulación de financiamiento — ${equipo}` : 'Simulación de financiamiento',
+    `Monto: ${fmtFull(Number(root.dataset.precio) || 0)}`,
+    `Enganche: ${dato('enganche')} (${dato('pagoInicial')})`,
+    `Mensualidad estimada: ${dato('mensual')} ${dato('plazoTxt')}`,
+    `Total estimado: ${dato('total')}`,
+    '',
+    '¿Me pueden confirmar si califico y cuál sería la tasa real?'
+  ].join('\n');
+}
 
 /* ── Comparador ── */
 function compararHTML(){
@@ -119,6 +225,9 @@ function openPage(kind){
   currentPage = kind;
   $('#pageTitle').textContent = def.title;
   $('#pageBody').innerHTML = def.html();
+  // La calculadora nace ahora, después de DOMContentLoaded: su primer pintado
+  // no lo hace ficha.js.
+  if(kind === 'financiamiento') actualizarFinanciamiento();
   $('#pageOverlay').classList.add('open');
   lockScroll(true);
   openPanel = $('#pagePanel');

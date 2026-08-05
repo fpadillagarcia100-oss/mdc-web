@@ -35,6 +35,6 @@ function applyBranding(){
     <li>${esc(settings.address)}</li>
     <li>${esc(settings.hours)}</li>`;
   $('#footCats').innerHTML = baseCats().map(c=>`<li><a href="#catalogo" data-cat="${esc(c)}">${esc(c)}</a></li>`).join('');
-  $('#financeBtn').href = waLink(
-    `Hola ${settings.brandMain}${settings.brandAccent}, quiero información sobre las opciones de financiamiento y arrendamiento para maquinaria.`);
+  /* El botón ya no salta directo a WhatsApp: abre el simulador. El cliente
+     llega a escribirnos con una cifra concreta en vez de un "¿cuánto sale?". */
 }

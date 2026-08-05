@@ -226,9 +226,13 @@ test('El simulador se declara estimado y no una oferta de crédito', () => {
   assert.ok(/estimado/i.test(html));
 });
 
-test('Los meses sin intereses se calculan sin intereses', () => {
-  const html = run(`calculadoraHTML(360000, {msi:'12 MSI'})`);
-  assert.ok(html.includes('$30,000'), 'debe mostrar 360,000 / 12 = 30,000 al mes');
+test('Los meses sin intereses viajan con la calculadora', () => {
+  // El texto ya no se hornea en el HTML: se calcula al pintar, porque en la
+  // página de financiamiento el equipo cambia. Aquí verificamos el dato de
+  // entrada; que el texto salga bien lo comprueba smoke.test.js.
+  assert.ok(run(`calculadoraHTML(360000, {msi:'12 MSI'})`).includes('data-msi="12"'));
+  assert.ok(run(`calculadoraHTML(360000, {})`).includes('data-msi=""'),
+    'sin MSI no debe inventar un plazo');
 });
 
 /* ── Utilidades de marca ── */

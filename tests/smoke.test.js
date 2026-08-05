@@ -226,6 +226,54 @@ const submit = form =>
     && /\.calc-nota\s*{\s*display\s*:\s*block/.test(impresion));
   $('#modalClose').click();
 
+  /* ── Página de financiamiento ── */
+  $('[data-goto="financiamiento"]').click();
+  check('Financiamiento tiene su propia entrada en el menú',
+    $('#pageOverlay').classList.contains('open') && $('#finEquipo') !== null);
+
+  const finCalc = $('#pageBody [data-calc]');
+  check('El simulador arranca con el primer equipo de venta',
+    Number(finCalc.dataset.precio) === ev('products.find(p => p.cond !== "Renta").price'));
+  check('Muestra una mensualidad de entrada',
+    /\$[\d,]+/.test($('#pageBody [data-calc-out="mensual"]').textContent));
+
+  // Sólo se financian equipos de venta: una renta no se financia.
+  const rentas = ev('products.filter(p => p.cond === "Renta").length');
+  const opciones = $$('#finEquipo option').length;
+  check('Los equipos en renta no aparecen para financiar',
+    opciones === ev('products.length') - rentas + 1, `${opciones} opciones, ${rentas} rentas fuera`);
+
+  // Cambiar de equipo debe mover el monto Y los meses sin intereses.
+  const conMsi = ev('JSON.stringify((products.find(p => p.cond !== "Renta" && p.finance) || {}))');
+  const eqMsi = JSON.parse(conMsi);
+  if(eqMsi.id){
+    $('#finEquipo').value = String(eqMsi.id);
+    $('#finEquipo').dispatchEvent(new window.Event('change', { bubbles: true }));
+    check('Cambiar de equipo actualiza el monto',
+      Number(finCalc.dataset.precio) === eqMsi.price);
+    check('Los meses sin intereses corresponden al equipo elegido',
+      $('#pageBody [data-calc-msi]').hidden === false
+      && $('#pageBody [data-calc-msi]').textContent.includes(String(parseInt(eqMsi.finance, 10))),
+      $('#pageBody [data-calc-msi]').textContent.slice(0, 60));
+  }
+
+  $('#finEquipo').value = 'otro';
+  $('#finEquipo').dispatchEvent(new window.Event('change', { bubbles: true }));
+  check('"Otro monto" descubre el campo libre', $('#finMontoCampo').hidden === false);
+  $('#finMonto').value = '500000';
+  $('#finMonto').dispatchEvent(new window.Event('input', { bubbles: true }));
+  check('Un monto libre recalcula el simulador',
+    Number(finCalc.dataset.precio) === 500000);
+
+  abierto = null;
+  $('[data-action="fin-wa"]').click();
+  const msg = abierto ? decodeURIComponent(abierto) : '';
+  check('La simulación se manda por WhatsApp con las cifras',
+    msg.includes('wa.me') && /Mensualidad estimada: \$[\d,]+/.test(msg));
+  check('El mensaje se presenta como simulación, no como solicitud de crédito',
+    /Simulaci[oó]n/i.test(msg));
+  $('#pageClose').click();
+
   /* ── Comparador ── */
   const ids = ev('JSON.stringify(products.slice(0,4).map(p => p.id))');
   const [a1, a2, a3, a4] = JSON.parse(ids);

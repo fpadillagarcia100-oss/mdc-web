@@ -34,14 +34,35 @@
 
     Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'"
 
-# El HTML debe revalidarse siempre: si no, un cambio tuyo tardaría horas en
-# verse. Los archivos versionables sí se pueden cachear un rato.
+# El HTML debe revalidarse siempre: si no, un cambio tuyo tardaría horas en verse.
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# Las fichas de equipo se regeneran en cada despliegue: mismo trato.
 [[headers]]
-  for = "/assets/*"
+  for = "/equipos/*"
   [headers.values]
-    Cache-Control = "public, max-age=3600"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# El código TAMBIÉN debe revalidarse. Los nombres de archivo no llevan versión
+# (es styles.css, no styles.a1b2c3.css), así que cachearlo una hora significa
+# que durante una hora la gente sigue viendo el sitio viejo — y tú también,
+# aunque el despliegue ya haya terminado. Con ETag la revalidación cuesta un
+# 304 de unos bytes, no la descarga completa.
+[[headers]]
+  for = "/assets/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/assets/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Las imágenes sí se cachean: pesan, y cuando cambian lo hacen con otro nombre.
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
