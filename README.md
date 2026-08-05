@@ -77,8 +77,13 @@ En local, córrelas antes de cada commit.
 
 ## Antes de publicar
 
-- [ ] Cambiar `mdcmaquinaria.com` por el dominio real en `index.html`
-      (canónica y Open Graph), `robots.txt` y `sitemap.xml`
+- [x] ~~Dominio~~ — **mdcmaquinaria.com**, registrado en Namecheap el 5 ago 2026,
+      con privacidad WHOIS incluida. Ya está puesto en `index.html`,
+      `robots.txt` y `sitemap.xml`
+- [ ] Apuntar los nameservers de Namecheap a Netlify
+- [ ] Activar renovación automática y 2FA en la cuenta de Namecheap
+- [ ] Contratar correo para `ventas@mdcmaquinaria.com` (Zoho Mail tiene plan
+      gratuito) — el dominio por sí solo no da buzón
 - [ ] Poner el **número real de WhatsApp** en 🌐 *Textos del sitio* —
       sin él los formularios no le llegan a nadie
 - [ ] Direcciones y teléfonos reales de las sucursales

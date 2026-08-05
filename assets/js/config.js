@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS = {
   sellerName:'MDC Maquinaria de Chiapas',
   phone:'961 123 4567',
   whatsapp:'5219611234567',
-  email:'ventas@mdcmaquinaria.mx',
+  email:'ventas@mdcmaquinaria.com',
   hours:'Lun–Vie 8:00–18:00 · Sáb 9:00–14:00',
   address:'Tuxtla Gutiérrez, Chiapas',
   footerAbout:'Venta y renta de maquinaria pesada en Chiapas. Equipos verificados, garantía real y financiamiento a la medida de tu obra.',
