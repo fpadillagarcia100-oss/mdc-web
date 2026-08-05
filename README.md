@@ -4,9 +4,8 @@ Catálogo web de venta y renta de maquinaria pesada.
 
 ## Estado actual
 
-Prototipo funcional en un solo archivo (`index.html`), sin servidor. Todo el
-catálogo, imágenes, logo y ajustes se guardan en el `localStorage` del navegador
-que los edita.
+Sitio estático, sin servidor. Todo el catálogo, imágenes, logo y ajustes se
+guardan en el `localStorage` del navegador que los edita.
 
 **Esto implica dos límites importantes:**
 
@@ -41,7 +40,17 @@ mdc-web/
 │       ├── pages.js        Ayuda, sucursales, cuenta, privacidad
 │       ├── admin.js        Panel de administración
 │       └── main.js         Eventos y arranque
-├── tests/smoke.test.js     27 pruebas automatizadas
+│   └── img/og.png          Vista previa al compartir el link
+├── tests/
+│   ├── unit.test.js        Lógica de negocio (precios, filtros, validación)
+│   └── smoke.test.js       El sitio completo en un navegador simulado
+├── tools/
+│   ├── check-csp.js        Vigila que no vuelva JavaScript en línea
+│   ├── og-image.html       Diseño de la imagen de vista previa
+│   └── make-og.js          La regenera con el navegador instalado
+├── .github/workflows/ci.yml
+├── netlify.toml            Cabeceras de seguridad y caché
+├── robots.txt · sitemap.xml
 ├── SECURITY.md             Qué protege el sitio y qué no
 └── README.md
 ```
@@ -54,12 +63,37 @@ existe. Si agregas un archivo, colócalo respetando sus dependencias.
 
 ```powershell
 npm install     # sólo la primera vez
-npm test
+npm test        # las tres suites
 ```
 
-Levanta el sitio completo en un navegador simulado y verifica el catálogo, las
-páginas, la validación de formularios, el carrito y las defensas del PIN.
-Córrelo antes de cada commit.
+| Comando | Qué verifica |
+|---|---|
+| `npm run test:unit` | Precios, descuentos, escapado, validación y normalización de datos |
+| `npm run test:smoke` | El sitio real en un navegador simulado: catálogo, páginas, formularios, carrito y PIN |
+| `npm run test:csp` | Que nadie haya metido JavaScript en línea, lo que anularía el CSP |
+
+Corren solas en cada push gracias a `.github/workflows/ci.yml`.
+En local, córrelas antes de cada commit.
+
+## Antes de publicar
+
+- [ ] Cambiar `mdcmaquinaria.com` por el dominio real en `index.html`
+      (canónica y Open Graph), `robots.txt` y `sitemap.xml`
+- [ ] Poner el **número real de WhatsApp** en 🌐 *Textos del sitio* —
+      sin él los formularios no le llegan a nadie
+- [ ] Direcciones y teléfonos reales de las sucursales
+- [ ] Completar el aviso de privacidad con la razón social y el domicilio fiscal
+- [ ] Activar `Strict-Transport-Security` en `netlify.toml` **sólo** cuando el
+      dominio ya sirva bien por HTTPS (es difícil de revertir)
+
+## Imagen al compartir
+
+Al mandar el link por WhatsApp se muestra una tarjeta con logo y descripción, no
+la URL pelona. El diseño está en `tools/og-image.html`; si lo editas:
+
+```powershell
+npm run og
+```
 
 ## Cómo verlo
 
@@ -99,6 +133,9 @@ Resumen; el detalle completo está en **[SECURITY.md](SECURITY.md)**.
 
 - PIN **hasheado con SHA-256**, con bloqueo de 60 s tras 5 intentos fallidos.
 - **CSP sin `unsafe-inline`** para scripts: nada de código externo, iframes ni exfiltración.
+- **Cabeceras HTTP** en `netlify.toml` (`X-Frame-Options`, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy`, HSTS), más fuertes que el `<meta>`
+  porque el navegador las aplica antes de leer el HTML.
 - Escapado de HTML en todo lo que se pinta en pantalla.
 - Validación de teléfono y correo, más trampa oculta anti-spam.
 - Los datos del visitante nunca salen de su dispositivo.

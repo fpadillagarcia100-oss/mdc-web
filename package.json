@@ -1,11 +1,15 @@
 {
   "name": "mdc-web",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "MDC · Maquinaria de Chiapas — catálogo de venta y renta de maquinaria pesada",
   "scripts": {
     "dev": "python -m http.server 8000",
-    "test": "node tests/smoke.test.js"
+    "test": "npm run test:unit && npm run test:smoke && npm run test:csp",
+    "test:unit": "node tests/unit.test.js",
+    "test:smoke": "node tests/smoke.test.js",
+    "test:csp": "node tools/check-csp.js",
+    "og": "node tools/make-og.js"
   },
   "devDependencies": {
     "jsdom": "^30.0.1"

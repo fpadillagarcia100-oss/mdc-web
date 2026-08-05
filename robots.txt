@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Cambiar por el dominio real al comprarlo.
+Sitemap: https://mdcmaquinaria.com/sitemap.xml

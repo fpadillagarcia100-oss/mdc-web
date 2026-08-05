@@ -14,6 +14,67 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
+
+<!-- ── Vista previa al compartir (WhatsApp, Facebook, LinkedIn) ──
+     IMPORTANTE: og:url y og:image deben ser URLs absolutas; con rutas
+     relativas las redes no muestran nada. Al comprar el dominio hay que
+     cambiar las cuatro apariciones de mdcmaquinaria.com en este archivo,
+     en robots.txt y en sitemap.xml. -->
+<link rel="canonical" href="https://mdcmaquinaria.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MDC · Maquinaria de Chiapas">
+<meta property="og:locale" content="es_MX">
+<meta property="og:url" content="https://mdcmaquinaria.com/">
+<meta property="og:title" content="MDC — Venta y renta de maquinaria pesada en Chiapas">
+<meta property="og:description" content="Excavadoras, retroexcavadoras, bulldozers, compactadores y grúas. Equipos nuevos y certificados con garantía, entrega en obra y hasta 18 meses sin intereses.">
+<meta property="og:image" content="https://mdcmaquinaria.com/assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="MDC Maquinaria de Chiapas — venta y renta de maquinaria pesada">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- ── Datos estructurados para Google ──
+     Describe la empresa y sus sucursales. Los equipos individuales todavía no
+     se pueden marcar aquí porque viven en el navegador, no en el HTML: eso
+     llega con el backend, y es la mayor ganancia de SEO pendiente. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AutoPartsStore",
+  "name": "MDC · Maquinaria de Chiapas",
+  "description": "Venta y renta de maquinaria pesada para construcción en Chiapas.",
+  "url": "https://mdcmaquinaria.com/",
+  "image": "https://mdcmaquinaria.com/assets/img/og.png",
+  "email": "ventas@mdcmaquinaria.mx",
+  "telephone": "+52-961-123-4567",
+  "priceRange": "$$$",
+  "areaServed": { "@type": "State", "name": "Chiapas" },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Blvd. Belisario Domínguez 1250",
+    "addressLocality": "Tuxtla Gutiérrez",
+    "addressRegion": "Chiapas",
+    "addressCountry": "MX"
+  },
+  "openingHoursSpecification": [
+    { "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+      "opens": "08:00", "closes": "18:00" },
+    { "@type": "OpeningHoursSpecification",
+      "dayOfWeek": "Saturday", "opens": "09:00", "closes": "14:00" }
+  ],
+  "department": [
+    { "@type": "AutoPartsStore", "name": "Sucursal Tapachula",
+      "telephone": "+52-962-123-4567",
+      "address": { "@type": "PostalAddress", "streetAddress": "Carretera Costera km 4",
+        "addressLocality": "Tapachula", "addressRegion": "Chiapas", "addressCountry": "MX" } },
+    { "@type": "AutoPartsStore", "name": "Sucursal San Cristóbal",
+      "telephone": "+52-967-123-4567",
+      "address": { "@type": "PostalAddress", "streetAddress": "Carretera Panamericana 890",
+        "addressLocality": "San Cristóbal de las Casas", "addressRegion": "Chiapas", "addressCountry": "MX" } }
+  ]
+}
+</script>
 <script src="assets/js/icons.js" defer></script>
 <script src="assets/js/config.js" defer></script>
 <script src="assets/js/utils.js" defer></script>

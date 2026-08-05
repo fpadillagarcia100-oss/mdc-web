@@ -1,0 +1,34 @@
+# Integración continua: las pruebas corren solas en cada push y en cada pull
+# request. Si algo se rompe, GitHub marca el commit en rojo antes de que llegue
+# a producción — que es justo cuando sale barato arreglarlo.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Pruebas
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lógica de negocio
+        run: npm run test:unit
+
+      - name: Integración en navegador
+        run: npm run test:smoke
+
+      - name: Integridad del CSP
+        run: npm run test:csp

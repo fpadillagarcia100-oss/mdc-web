@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Por ahora sólo hay una URL: todo el sitio es una sola página y las secciones
+  se abren con JavaScript, así que Google no puede indexarlas por separado.
+
+  Cuando exista el backend, cada equipo tendrá su propia dirección
+  (/equipos/excavadora-cat-320-gc) y este archivo se generará solo. Ese es el
+  cambio que de verdad mueve la aguja para aparecer en búsquedas.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://mdcmaquinaria.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

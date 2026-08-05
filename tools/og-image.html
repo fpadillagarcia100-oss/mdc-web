@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!--
+  Fuente de la imagen de vista previa (Open Graph) que se ve al compartir el
+  sitio en WhatsApp, Facebook o LinkedIn.
+
+  Para regenerarla después de editarla:
+      npm run og
+
+  Genera assets/img/og.png a 1200×630, que es la medida que esperan las redes.
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    width:1200px;height:630px;overflow:hidden;position:relative;
+    background:linear-gradient(135deg,#1A1A1A 0%,#2C2C2C 100%);
+    font-family:'Segoe UI',system-ui,sans-serif;color:#fff;
+    display:flex;align-items:center;padding:0 80px;
+  }
+  /* Mismo rayado diagonal que el banner del sitio */
+  body::after{
+    content:'';position:absolute;right:0;top:0;bottom:0;width:52%;
+    background:repeating-linear-gradient(-45deg,transparent,transparent 26px,rgba(245,196,0,.05) 26px,rgba(245,196,0,.05) 52px);
+  }
+  .bar{position:absolute;left:0;top:0;bottom:0;width:14px;background:#F5C400}
+  .text{position:relative;z-index:2;max-width:640px}
+  .logo{font-size:78px;font-weight:800;letter-spacing:-3px;line-height:1;margin-bottom:6px}
+  .logo span{color:#F5C400}
+  .full{font-size:22px;letter-spacing:5px;text-transform:uppercase;color:#9a9a9a;margin-bottom:34px}
+  h1{font-size:44px;font-weight:700;line-height:1.2;margin-bottom:18px}
+  h1 em{color:#F5C400;font-style:normal}
+  .badges{display:flex;gap:12px;margin-top:34px}
+  .badge{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+    padding:10px 18px;border-radius:26px;font-size:17px;color:#ddd;
+  }
+  .art{position:absolute;right:70px;top:50%;transform:translateY(-50%);z-index:2;opacity:.95}
+  .art svg{width:430px;height:auto}
+</style>
+</head>
+<body>
+  <div class="bar"></div>
+  <div class="text">
+    <div class="logo">MD<span>C</span></div>
+    <div class="full">Maquinaria de Chiapas</div>
+    <h1>Venta y renta de<br><em>maquinaria pesada</em></h1>
+    <div class="badges">
+      <div class="badge">✅ Garantía</div>
+      <div class="badge">🚚 Entrega en obra</div>
+      <div class="badge">🏦 18 MSI</div>
+    </div>
+  </div>
+  <div class="art">
+    <svg viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="78" width="100" height="18" rx="9" fill="#F5C400" opacity=".9"/>
+      <rect x="18" y="80" width="84" height="14" rx="7" fill="#E0E0E0"/>
+      <circle cx="24" cy="87" r="7" fill="#555"/><circle cx="24" cy="87" r="4" fill="#F5C400"/>
+      <circle cx="96" cy="87" r="7" fill="#555"/><circle cx="96" cy="87" r="4" fill="#F5C400"/>
+      <rect x="20" y="50" width="90" height="32" rx="3" fill="#444"/>
+      <rect x="20" y="50" width="90" height="6" fill="#F5C400" opacity=".8"/>
+      <rect x="70" y="28" width="44" height="26" rx="3" fill="#555"/>
+      <rect x="75" y="32" width="34" height="16" rx="2" fill="#222" opacity=".7"/>
+      <line x1="66" y1="55" x2="130" y2="28" stroke="#F5C400" stroke-width="7" stroke-linecap="round"/>
+      <line x1="130" y1="28" x2="158" y2="48" stroke="#888" stroke-width="5" stroke-linecap="round"/>
+      <path d="M158 48 L172 58 L162 70 L148 64 Z" fill="#F5C400"/>
+    </svg>
+  </div>
+</body>
+</html>
