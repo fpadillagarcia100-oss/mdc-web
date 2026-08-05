@@ -89,7 +89,13 @@ function fichaHTML(eq, catalogo, iconos) {
   const marca = a.marca_principal + a.marca_acento;
   const url = `${SITIO}/equipos/${eq.slug}/`;
   const esRenta = eq.cond === 'Renta';
-  const imagen = eq.img && eq.img.startsWith('http') ? eq.img : `${SITIO}/assets/img/og.png`;
+  const fotos = Array.isArray(eq.imgs) && eq.imgs.length ? eq.imgs : (eq.img ? [eq.img] : []);
+
+  /* Para compartir y para Google hacen falta URLs absolutas y alcanzables: una
+     foto incrustada como data URI no le sirve a ninguno de los dos. */
+  const absoluta = f => f.startsWith('http') ? f : f.startsWith('/') ? SITIO + f : null;
+  const publicas = fotos.map(absoluta).filter(Boolean);
+  const imagen = publicas[0] || `${SITIO}/assets/img/og.png`;
 
   const titulo = `${eq.name} — ${esRenta ? 'renta' : 'venta'} en ${eq.location} | ${marca}`;
   const resumen = `${eq.name} ${eq.cond.toLowerCase()} en ${eq.location}. ` +
@@ -124,7 +130,7 @@ function fichaHTML(eq, catalogo, iconos) {
     description: eq.desc,
     sku: eq.slug,
     category: eq.cat,
-    image: imagen,
+    image: publicas.length ? publicas : imagen,
     brand: { '@type': 'Brand', name: eq.brand },
     offers: oferta,
     additionalProperty: eq.specs.map(s => ({
@@ -135,9 +141,21 @@ function fichaHTML(eq, catalogo, iconos) {
   const mensajeWa = `Hola ${marca}, me interesa el ${eq.name} (${url}). ¿Me pueden dar más información?`;
   const wa = `https://wa.me/${String(a.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWa)}`;
 
-  const medio = eq.img
-    ? `<img src="${esc(eq.img)}" alt="${esc(eq.name)}">`
-    : (iconos[eq.svgKey] || iconos.excavadora);
+  /* Galería sin una línea de JavaScript: un carril con scroll-snap y
+     miniaturas que son anclas. El CSP de estas fichas prohíbe scripts, y una
+     galería que dependiera de JS simplemente no se vería. */
+  const medio = !fotos.length
+    ? (iconos[eq.svgKey] || iconos.excavadora)
+    : fotos.length === 1
+      ? `<img src="${esc(fotos[0])}" alt="${esc(eq.name)}">`
+      : `<div class="fgal">
+    <div class="fgal-track">
+      ${fotos.map((f, n) => `<img id="foto-${n + 1}" src="${esc(f)}" alt="${esc(eq.name)} — foto ${n + 1} de ${fotos.length}">`).join('\n      ')}
+    </div>
+    <div class="fgal-thumbs">
+      ${fotos.map((f, n) => `<a href="#foto-${n + 1}" aria-label="Ver la foto ${n + 1}"><img src="${esc(f)}" alt="" loading="lazy"></a>`).join('\n      ')}
+    </div>
+  </div>`;
 
   const descuento = eq.original && eq.original > eq.price
     ? Math.round((1 - eq.price / eq.original) * 100) : 0;
@@ -191,7 +209,7 @@ ${JSON.stringify(datos, null, 2)}
   </nav>
 
   <div class="ficha-grid">
-    <div class="ficha-media">${medio}</div>
+    <div class="ficha-media${fotos.length > 1 ? ' galeria' : ''}">${medio}</div>
 
     <div class="ficha-info">
       <p class="ficha-cat">${esc(eq.cat)} · ${esc(eq.brand)}</p>

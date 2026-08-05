@@ -143,6 +143,46 @@ const submit = form =>
     (window.localStorage.getItem('mdc_v1_account') || '').includes('Ana López'));
   check('El encabezado muestra el nombre', $('#acctLabel').textContent === 'Ana');
 
+  /* ── Galería de fotos ──
+     El catálogo semilla no trae fotos, así que le inyectamos tres al primer
+     equipo y recorremos la galería como lo haría un cliente. */
+  // products se declara con "let", así que no cuelga de window: hay que entrar
+  // al ámbito global de la página para tocarlo.
+  const ev = code => window.eval(code);
+  const fotos = ['data:image/webp;base64,AAA', 'data:image/webp;base64,BBB', 'data:image/webp;base64,CCC'];
+  ev(`products[0].imgs = ${JSON.stringify(fotos)}; products[0].img = products[0].imgs[0]; render()`);
+  const equipo = { id: ev('products[0].id'), imgs: fotos };
+
+  check('La tarjeta anuncia cuántas fotos hay',
+    ($('.pcard-fotos') || {}).textContent === '📷 3');
+
+  ev(`openModal(${equipo.id})`);
+  check('La ficha abre con la portada', $('.gal-main').getAttribute('src') === equipo.imgs[0]);
+  check('Hay una miniatura por foto', $$('.gal-thumb').length === 3);
+  check('El contador arranca en 1', $('.gal-count').textContent === '1 / 3');
+
+  $('[data-gal="1"]').click();
+  check('La flecha avanza a la segunda foto', $('.gal-main').getAttribute('src') === equipo.imgs[1]);
+  check('La miniatura activa acompaña a la foto',
+    $$('.gal-thumb')[1].getAttribute('aria-selected') === 'true');
+
+  $('[data-gal-go="2"]').click();
+  check('La miniatura salta directo a esa foto', $('.gal-main').getAttribute('src') === equipo.imgs[2]);
+
+  // El caso que rompe una galería mal hecha: pasar de la última a la primera.
+  $('[data-gal="1"]').click();
+  check('Después de la última vuelve a la primera',
+    $('.gal-main').getAttribute('src') === equipo.imgs[0] && $('.gal-count').textContent === '1 / 3');
+  $('[data-gal="-1"]').click();
+  check('Antes de la primera va a la última',
+    $('.gal-main').getAttribute('src') === equipo.imgs[2] && $('.gal-count').textContent === '3 / 3');
+
+  $('#modalClose').click();
+  ev('products[1].imgs = []; products[1].img = null; openModal(products[1].id)');
+  check('Un equipo sin fotos muestra el ícono, no una galería rota',
+    $('#modalImg').querySelector('svg') !== null && $('#modalImg').querySelector('.gal') === null);
+  $('#modalClose').click();
+
   /* ── Seguridad del PIN ── */
   const ajustes = JSON.parse(window.localStorage.getItem('mdc_v1_settings') || '{}');
   check('El PIN NO se guarda en claro',

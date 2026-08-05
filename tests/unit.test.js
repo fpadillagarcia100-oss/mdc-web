@@ -126,6 +126,46 @@ test('El catálogo por defecto pasa su propia normalización', () => {
   assert.strictEqual(run('normalizeProducts(DEFAULT_PRODUCTS).length'), 18);
 });
 
+/* ── Galería de fotos ── */
+test('Un equipo con varias fotos las conserva todas', () => {
+  const p = JSON.parse(run(`JSON.stringify(normalizeProducts([
+    {name:'X', imgs:['data:image/webp;base64,AA','data:image/jpeg;base64,BB','data:image/png;base64,CC']}
+  ])[0])`));
+  assert.strictEqual(p.imgs.length, 3);
+  assert.strictEqual(p.img, 'data:image/webp;base64,AA', 'la portada es la primera foto');
+});
+
+test('Un respaldo viejo de una sola foto se convierte en galería', () => {
+  // Los respaldos hechos antes de la galería traen "img", no "imgs".
+  const p = JSON.parse(run(`JSON.stringify(normalizeProducts([
+    {name:'X', img:'data:image/webp;base64,AA'}
+  ])[0])`));
+  assert.deepStrictEqual(p.imgs, ['data:image/webp;base64,AA']);
+  assert.strictEqual(p.img, 'data:image/webp;base64,AA');
+});
+
+test('Una foto maliciosa no entra a la galería', () => {
+  const p = JSON.parse(run(`JSON.stringify(normalizeProducts([
+    {name:'X', imgs:['javascript:alert(1)','//otrodominio.com/rastreo.gif','data:text/html,<script>',
+                     'https://otrodominio.com/foto.jpg','data:image/webp;base64,AA','/assets/img/real.jpg']}
+  ])[0])`));
+  assert.deepStrictEqual(p.imgs, ['data:image/webp;base64,AA','/assets/img/real.jpg'],
+    'sólo sobreviven fotos incrustadas y archivos del propio sitio');
+});
+
+test('La galería se corta en el tope de fotos', () => {
+  const n = run(`normalizeProducts([{name:'X',
+    imgs: Array.from({length: MAX_FOTOS + 5}, () => 'data:image/webp;base64,AA')}])[0].imgs.length`);
+  assert.strictEqual(n, run('MAX_FOTOS'));
+});
+
+test('Sin fotos, la galería es un arreglo vacío y no null', () => {
+  // El resto del código hace p.imgs.length sin preguntar: un null reventaría.
+  const p = JSON.parse(run(`JSON.stringify(normalizeProducts([{name:'X'}])[0])`));
+  assert.deepStrictEqual(p.imgs, []);
+  assert.strictEqual(p.img, null);
+});
+
 /* ── Utilidades de marca ── */
 test('Oscurecer un color devuelve hexadecimal válido', () => {
   assert.match(run(`darken('#F5C400')`), /^#[0-9a-f]{6}$/);

@@ -11,7 +11,7 @@
 let adminTab = 'products';
 let adminQuery = '';
 let editingId = null;   // null = listado, 0 = nuevo, n = editando ese id
-let draftImg;           // undefined = sin cambios, null = borrada, string = nueva
+let draftImgs;          // undefined = sin cambios; arreglo = galería en edición
 
 /** Redimensiona y comprime una imagen a data URI. Los SVG se leen tal cual. */
 async function fileToDataURL(file, maxW = 1000, quality = 0.82){
@@ -158,7 +158,7 @@ function productListHTML(){
           <td><div class="adm-thumb-wrap">${p.img?`<img class="adm-thumb" src="${esc(p.img)}" alt="">`:(svgs[p.svgKey]||'')}</div></td>
           <td>
             <div style="font-weight:600">${esc(p.name)}</div>
-            <div style="font-size:11px;color:var(--light)">${esc(p.brand)} · ${p.year}${p.hot?' · 🔥 destacado':''}${p.img?'':' · sin foto'}</div>
+            <div style="font-size:11px;color:var(--light)">${esc(p.brand)} · ${p.year}${p.hot?' · 🔥 destacado':''}${p.imgs.length?` · 📷 ${p.imgs.length} foto${p.imgs.length>1?'s':''}`:' · sin fotos'}</div>
           </td>
           <td class="hide-sm">${esc(p.cat)}</td>
           <td class="hide-sm">${esc(p.location)}</td>
@@ -180,8 +180,8 @@ function productFormHTML(){
   const p = editingId ? products.find(x=>x.id===editingId) : null;
   const nuevo = !p;
   const v = p || {name:'',brand:'',cat:'',cond:'Nuevo',price:'',original:'',finance:'',leasing:false,
-                  shipping:true,location:'',year:new Date().getFullYear(),specs:[],desc:'',svgKey:'excavadora',img:null,hot:false};
-  const img = draftImg === undefined ? v.img : draftImg;
+                  shipping:true,location:'',year:new Date().getFullYear(),specs:[],desc:'',svgKey:'excavadora',imgs:[],hot:false};
+  const fotos = draftImgs === undefined ? (v.imgs || []) : draftImgs;
 
   return `
     <div class="adm-toolbar">
@@ -190,20 +190,32 @@ function productFormHTML(){
     </div>
     <form id="pForm" novalidate>
       <div class="adm-section">
-        <h3>Foto del equipo</h3>
-        <p class="sub">Se redimensiona a 1000 px y se comprime automáticamente. Si no subes foto se usa un ícono ilustrativo.</p>
-        ${img ? `
-          <div class="img-preview">
-            <img src="${esc(img)}" alt="Vista previa">
-            <button class="rm" type="button" data-action="img-remove">✕ Quitar foto</button>
-            <div class="img-meta">Peso aproximado: ${fmtKB(dataUriBytes(img))}</div>
-          </div>` : `
-          <div class="dropzone" id="dz" tabindex="0" role="button" aria-label="Subir foto del equipo">
+        <h3>Fotos del equipo <span class="hint">(hasta ${MAX_FOTOS})</span></h3>
+        <p class="sub">Cada una se redimensiona a 1000 px y se comprime automáticamente.
+          La <strong>primera es la portada</strong>: es la que sale en el catálogo y al compartir el enlace.
+          Sin fotos se usa un ícono ilustrativo.</p>
+        ${fotos.length ? `
+          <div class="fotos-grid">
+            ${fotos.map((f,n)=>`
+              <figure class="foto-item${n===0?' portada':''}">
+                <img src="${esc(f)}" alt="Foto ${n+1}">
+                ${n===0?'<figcaption class="foto-tag">Portada</figcaption>':''}
+                <div class="foto-tools">
+                  <button type="button" data-foto-mov="${n}" data-paso="-1" ${n===0?'disabled':''} title="Mover antes" aria-label="Mover la foto ${n+1} antes">◀</button>
+                  <button type="button" data-foto-mov="${n}" data-paso="1" ${n===fotos.length-1?'disabled':''} title="Mover después" aria-label="Mover la foto ${n+1} después">▶</button>
+                  <button type="button" class="rm" data-foto-quita="${n}" title="Quitar" aria-label="Quitar la foto ${n+1}">✕</button>
+                </div>
+                <figcaption class="foto-peso">${fmtKB(dataUriBytes(f))}</figcaption>
+              </figure>`).join('')}
+          </div>
+          <p class="sub" style="margin-top:8px">Total de las ${fotos.length} fotos: ${fmtKB(fotos.reduce((s,f)=>s+dataUriBytes(f),0))}</p>` : ''}
+        ${fotos.length < MAX_FOTOS ? `
+          <div class="dropzone${fotos.length?' compacta':''}" id="dz" tabindex="0" role="button" aria-label="Agregar fotos del equipo">
             <div class="dz-icon">📷</div>
-            <p><strong>Haz clic o arrastra una imagen aquí</strong></p>
-            <p>JPG, PNG o WebP</p>
-          </div>`}
-        <input type="file" id="imgInput" accept="image/*" hidden>
+            <p><strong>Haz clic o arrastra ${fotos.length?'más fotos':'imágenes'} aquí</strong></p>
+            <p>JPG, PNG o WebP · puedes elegir varias a la vez</p>
+          </div>` : `<p class="sub">Llegaste al máximo de ${MAX_FOTOS} fotos. Quita alguna para agregar otra.</p>`}
+        <input type="file" id="imgInput" accept="image/*" multiple hidden>
       </div>
 
       <div class="form-grid">
@@ -319,13 +331,16 @@ function saveProductForm(){
   if(data.original !== null && data.original <= data.price) data.original = null;
 
   const prev = editingId ? products.find(p=>p.id===editingId) : null;
-  const img = draftImg === undefined ? (prev ? prev.img : null) : draftImg;
+  const fotos = draftImgs === undefined ? (prev ? prev.imgs : []) : draftImgs;
+  // img es la portada derivada; se guarda junto a imgs para que el resto del
+  // sitio (tarjetas, respaldos viejos, generador) siga leyendo un solo campo.
+  const galeria = {imgs: fotos, img: fotos[0] || null};
   const snapshot = prev ? {...prev} : null;
 
-  if(prev) Object.assign(prev, data, {img});
+  if(prev) Object.assign(prev, data, galeria);
   else {
     const nextId = products.reduce((m,p)=>Math.max(m,p.id), 0) + 1;
-    products.unshift({id: nextId, ...data, img});
+    products.unshift({id: nextId, ...data, ...galeria});
   }
 
   if(!saveProducts()){
@@ -335,7 +350,7 @@ function saveProductForm(){
   }
 
   showToast(prev ? 'Equipo actualizado' : 'Equipo publicado');
-  editingId = null; draftImg = undefined;
+  editingId = null; draftImgs = undefined;
   navSignature = '';
   renderAdmin(); render(); renderCart();
 }
@@ -348,7 +363,7 @@ function deleteProduct(id){
   cart = cart.filter(x=>x.id!==id);
   favorites.delete(id);
   saveProducts(); saveCart(); saveFavs();
-  editingId = null; draftImg = undefined;
+  editingId = null; draftImgs = undefined;
   navSignature = '';
   renderAdmin(); render(); renderCart();
   showToast('Equipo eliminado');
@@ -499,7 +514,7 @@ function backupHTML(){
       <h3>Espacio utilizado</h3>
       <p class="sub">Límite aproximado del navegador: 5 MB. Las fotos son lo que más ocupa.</p>
       <div class="storage-bar ${cls}"><div style="width:${pct.toFixed(1)}%"></div></div>
-      <p style="font-size:12px;color:var(--muted)">${fmtKB(used)} de ~5 MB (${pct.toFixed(1)}%) · ${products.filter(p=>p.img).length} de ${products.length} equipos con foto</p>
+      <p style="font-size:12px;color:var(--muted)">${fmtKB(used)} de ~5 MB (${pct.toFixed(1)}%) · ${products.reduce((s,p)=>s+p.imgs.length,0)} fotos en ${products.filter(p=>p.imgs.length).length} de ${products.length} equipos</p>
     </div>
 
     <div class="adm-section">
@@ -586,13 +601,62 @@ async function resetAll(){
 }
 
 /* ── Carga de imágenes ── */
+
+/** Fotos del equipo en edición, sean las guardadas o las que ya se tocaron. */
+function fotosEnEdicion(){
+  if(draftImgs !== undefined) return draftImgs;
+  const p = editingId ? products.find(x=>x.id===editingId) : null;
+  return p ? [...p.imgs] : [];
+}
+
+function moverFoto(n, paso){
+  const fotos = fotosEnEdicion();
+  const destino = n + paso;
+  if(destino < 0 || destino >= fotos.length) return;
+  [fotos[n], fotos[destino]] = [fotos[destino], fotos[n]];
+  draftImgs = fotos;
+  renderAdmin();
+}
+
+function quitarFoto(n){
+  const fotos = fotosEnEdicion();
+  fotos.splice(n, 1);
+  draftImgs = fotos;
+  renderAdmin();
+}
+
+/** Procesa varias imágenes a la vez, respetando el tope. */
+async function handleImageFiles(files, target){
+  const lista = [...(files || [])];
+  if(!lista.length) return;
+  if(target !== 'product'){ await handleImageFile(lista[0], target); return }
+
+  const fotos = fotosEnEdicion();
+  const espacio = MAX_FOTOS - fotos.length;
+  if(espacio <= 0){ showToast(`Máximo ${MAX_FOTOS} fotos por equipo`, true); return }
+
+  const aceptadas = lista.slice(0, espacio);
+  showToast(aceptadas.length>1 ? `Procesando ${aceptadas.length} imágenes…` : 'Procesando imagen…');
+
+  // Una imagen corrupta no debe tirar las demás: se reporta y se sigue.
+  const fallidas = [];
+  for(const file of aceptadas){
+    try{ fotos.push(await fileToDataURL(file, 1000, .82)) }
+    catch(err){ fallidas.push(file.name || 'una imagen') }
+  }
+  draftImgs = fotos;
+  renderAdmin();
+
+  if(fallidas.length) showToast(`No se pudieron leer: ${fallidas.join(', ')}`, true);
+  else if(lista.length > espacio) showToast(`Se agregaron ${aceptadas.length}; el tope es ${MAX_FOTOS} fotos`, true);
+  else showToast(aceptadas.length>1 ? `${aceptadas.length} fotos agregadas` : 'Foto agregada');
+}
+
 async function handleImageFile(file, target){
   if(!file) return;
   try{
     showToast('Procesando imagen…');
-    if(target==='product'){
-      draftImg = await fileToDataURL(file, 1000, .82);
-    } else if(target==='logo'){
+    if(target==='logo'){
       const prev = settings.logo;
       settings.logo = await fileToDataURL(file, 400, .9);
       if(!saveSettings()){ settings.logo = prev; return }
@@ -620,16 +684,16 @@ function wireDropzone(zoneId, inputId, target){
   zone.addEventListener('dragleave', ()=>zone.classList.remove('drag'));
   zone.addEventListener('drop', e=>{
     e.preventDefault(); zone.classList.remove('drag');
-    handleImageFile(e.dataTransfer.files[0], target);
+    handleImageFiles(e.dataTransfer.files, target);
   });
-  input.addEventListener('change', ()=>handleImageFile(input.files[0], target));
+  input.addEventListener('change', ()=>handleImageFiles(input.files, target));
 }
 
 function logoutAdmin(){
   isAdmin = false;
   sessionStorage.removeItem('mdc_admin');
   document.body.classList.remove('is-admin');
-  editingId = null; draftImg = undefined;
+  editingId = null; draftImgs = undefined;
   closeAll(); render();
   showToast('Sesión de administrador cerrada');
 }

@@ -31,13 +31,19 @@ document.addEventListener('click', e => {
 
   /* — Admin — */
   const admOpen = t.closest('[data-admin-open]');
-  if(admOpen){ editingId = null; draftImg = undefined; openAdmin(admOpen.dataset.adminOpen); return }
+  if(admOpen){ editingId = null; draftImgs = undefined; openAdmin(admOpen.dataset.adminOpen); return }
 
   const tabBtn = t.closest('.admin-tab');
-  if(tabBtn){ adminTab = tabBtn.dataset.tab; editingId = null; draftImg = undefined; renderAdmin(); return }
+  if(tabBtn){ adminTab = tabBtn.dataset.tab; editingId = null; draftImgs = undefined; renderAdmin(); return }
 
   const editBtn = t.closest('[data-edit]');
-  if(editBtn){ editingId = Number(editBtn.dataset.edit); draftImg = undefined; openAdmin('products'); return }
+  if(editBtn){ editingId = Number(editBtn.dataset.edit); draftImgs = undefined; openAdmin('products'); return }
+
+  const fotoMov = t.closest('[data-foto-mov]');
+  if(fotoMov){ moverFoto(Number(fotoMov.dataset.fotoMov), Number(fotoMov.dataset.paso)); return }
+
+  const fotoQuita = t.closest('[data-foto-quita]');
+  if(fotoQuita){ quitarFoto(Number(fotoQuita.dataset.fotoQuita)); return }
 
   const dupBtn = t.closest('[data-dup]');
   if(dupBtn){ duplicateProduct(Number(dupBtn.dataset.dup)); return }
@@ -50,9 +56,8 @@ document.addEventListener('click', e => {
     const a = act.dataset.action;
     if(a==='clear-filters'){ clearFilters(); return }
     if(a==='home'){ e.preventDefault(); clearFilters(); $('#catalogo').scrollIntoView({block:'start'}); return }
-    if(a==='admin-new'){ editingId = 0; draftImg = undefined; openAdmin('products'); return }
-    if(a==='admin-cancel'){ editingId = null; draftImg = undefined; renderAdmin(); return }
-    if(a==='img-remove'){ draftImg = null; renderAdmin(); return }
+    if(a==='admin-new'){ editingId = 0; draftImgs = undefined; openAdmin('products'); return }
+    if(a==='admin-cancel'){ editingId = null; draftImgs = undefined; renderAdmin(); return }
     if(a==='logo-remove'){ settings.logo = null; saveSettings(); applyBranding(); renderAdmin(); return }
     if(a==='hero-remove'){ settings.heroImage = null; saveSettings(); applyBranding(); renderAdmin(); return }
     if(a==='accent-reset'){ settings.accent = DEFAULT_SETTINGS.accent; saveSettings(); applyBranding(); renderAdmin(); return }
@@ -74,6 +79,12 @@ document.addEventListener('click', e => {
   }
 
   /* — Catálogo — */
+  const galBtn = t.closest('[data-gal]');
+  if(galBtn){ moverGaleria(Number(galBtn.dataset.gal)); return }
+
+  const galGo = t.closest('[data-gal-go]');
+  if(galGo){ irGaleria(Number(galGo.dataset.galGo)); return }
+
   const openBtn = t.closest('[data-open]');
   if(openBtn){ openModal(Number(openBtn.dataset.open)); return }
 
@@ -242,7 +253,7 @@ $('#modalClose').addEventListener('click', closeAll);
 $('#modalOverlay').addEventListener('click', e => { if(e.target.id==='modalOverlay') closeAll() });
 $('#adminClose').addEventListener('click', closeAll);
 $('#adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverlay') closeAll() });
-$('#adminEntry').addEventListener('click', ()=>{ editingId = null; draftImg = undefined; openAdmin('products') });
+$('#adminEntry').addEventListener('click', ()=>{ editingId = null; draftImgs = undefined; openAdmin('products') });
 $('#adminLogout').addEventListener('click', logoutAdmin);
 
 $('#pageClose').addEventListener('click', closeAll);
@@ -256,10 +267,16 @@ $('#waBtn').addEventListener('click', e => { if(!cart.length){ e.preventDefault(
 
 document.addEventListener('keydown', e => {
   if(e.key==='Escape' && (openPanel || $('#modalOverlay').classList.contains('open'))) closeAll();
+  // Flechas para recorrer la galería, sólo con la ficha abierta y fuera de un campo.
+  if(galeria.id && (e.key==='ArrowLeft' || e.key==='ArrowRight')
+     && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){
+    e.preventDefault();
+    moverGaleria(e.key==='ArrowRight' ? 1 : -1);
+  }
   // Ctrl+Shift+A abre el panel de administración
   if(e.ctrlKey && e.shiftKey && (e.key==='A' || e.key==='a')){
     e.preventDefault();
-    editingId = null; draftImg = undefined;
+    editingId = null; draftImgs = undefined;
     openAdmin('products');
   }
   trapTab(e);

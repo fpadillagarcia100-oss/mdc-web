@@ -36,6 +36,7 @@ function closeAll(){
   $('#pageOverlay').classList.remove('open');
   $('#overlay').classList.remove('open');
   currentPage = null;
+  galeria.id = null;   // con el modal cerrado, las flechas vuelven a ser del navegador
   $('#cartToggle').setAttribute('aria-expanded','false');
   $('#filtersToggle').setAttribute('aria-expanded','false');
   lockScroll(false);
@@ -52,6 +53,46 @@ function trapTab(e){
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus() }
 }
 
+/* ══════════════════ GALERÍA DE FOTOS ══════════════════ */
+let galeria = { id: null, i: 0 };
+
+/** Dibuja la galería del equipo abierto, con la foto n al frente. */
+function renderGaleria(){
+  const p = products.find(x=>x.id===galeria.id);
+  const box = $('#modalImg');
+  if(!p || !box) return;
+  const fotos = p.imgs;
+  box.className = 'modal-img' + (fotos.length ? ' has-photo' : '');
+
+  if(!fotos.length){ box.innerHTML = productMedia(p, false); return }
+
+  // El índice se acota aquí y no en quien llama: así un clic de más, una tecla
+  // repetida o un equipo con menos fotos que antes no dejan la vista en blanco.
+  const total = fotos.length;
+  const i = ((galeria.i % total) + total) % total;
+  galeria.i = i;
+
+  box.innerHTML = `
+    <div class="gal" role="group" aria-roledescription="galería" aria-label="Fotos de ${esc(p.name)}">
+      <img class="gal-main" src="${esc(fotos[i])}" alt="${esc(p.name)} — foto ${i+1} de ${total}">
+      ${total>1?`
+        <button class="gal-nav prev" type="button" data-gal="-1" aria-label="Foto anterior">‹</button>
+        <button class="gal-nav next" type="button" data-gal="1" aria-label="Foto siguiente">›</button>
+        <span class="gal-count" aria-hidden="true">${i+1} / ${total}</span>`:''}
+    </div>
+    ${total>1?`
+      <div class="gal-thumbs" role="tablist" aria-label="Elegir foto">
+        ${fotos.map((f,n)=>`
+          <button class="gal-thumb${n===i?' on':''}" type="button" role="tab"
+                  data-gal-go="${n}" aria-selected="${n===i}" aria-label="Ver foto ${n+1}">
+            <img src="${esc(f)}" alt="" loading="lazy">
+          </button>`).join('')}
+      </div>`:''}`;
+}
+
+function moverGaleria(paso){ galeria.i += paso; renderGaleria() }
+function irGaleria(n){ galeria.i = n; renderGaleria() }
+
 /* ══════════════════ MODAL PRODUCTO ══════════════════ */
 function openModal(id){
   const p = products.find(x=>x.id===id);
@@ -59,9 +100,8 @@ function openModal(id){
   closeAll();
   lastFocused = document.activeElement;
 
-  const imgBox = $('#modalImg');
-  imgBox.className = 'modal-img' + (p.img ? ' has-photo' : '');
-  imgBox.innerHTML = productMedia(p, false);
+  galeria = { id: p.id, i: 0 };
+  renderGaleria();
 
   const months = p.finance ? parseInt(p.finance,10) : 0;
   const disc = discPct(p)

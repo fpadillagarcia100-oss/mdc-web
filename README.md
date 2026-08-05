@@ -122,6 +122,33 @@ En local, córrelas antes de cada commit.
 - [ ] Activar `Strict-Transport-Security` en `netlify.toml` **sólo** cuando el
       dominio ya sirva bien por HTTPS (es difícil de revertir)
 
+## Fotos de los equipos
+
+Hasta **8 fotos por equipo**. La **primera es la portada**: es la que sale en la
+tarjeta del catálogo, al compartir el enlace y en los resultados de Google.
+Se reordenan con ◀ ▶ en el panel.
+
+En `data/catalogo.json` cada equipo lleva un arreglo `imgs`, y hay **dos formas**
+de poner una foto:
+
+| Forma | Ejemplo | Cuándo |
+|---|---|---|
+| Archivo del sitio | `"/assets/img/equipos/cat320-1.jpg"` | **La buena para publicar** |
+| Foto incrustada | `"data:image/webp;base64,…"` | La que produce el panel |
+
+**No son equivalentes, y la diferencia importa.** Una foto incrustada viaja
+dentro del propio archivo: Google no puede citarla en los resultados y WhatsApp
+no puede mostrarla en la vista previa del enlace, porque ninguno de los dos
+puede descargarla por separado. Además el panel guarda en `localStorage`, que
+ronda los 5 MB para todo el catálogo — con ocho fotos por equipo se llena rápido.
+
+Por eso, para el inventario real: pon los archivos en `assets/img/equipos/` y
+referéncialos con una ruta. Usa el panel para preparar y previsualizar.
+
+Cualquier otra cosa —una URL de otro dominio, un `javascript:`— se descarta al
+cargar. Una foto ajena en un respaldo importado sería código o rastreo de un
+tercero corriendo dentro de tu página.
+
 ## Imagen al compartir
 
 Al mandar el link por WhatsApp se muestra una tarjeta con logo y descripción, no
@@ -188,7 +215,7 @@ PIN inicial: `2580` (cambiable en la pestaña *Respaldo*).
 
 | Pestaña | Qué controla |
 |---|---|
-| 📦 Equipos | Alta, edición, duplicado y baja de maquinaria; fotos |
+| 📦 Equipos | Alta, edición, duplicado y baja de maquinaria; galería de fotos |
 | 🎨 Logo y marca | Logotipo, nombre, color de acento, imagen del banner |
 | 🌐 Textos del sitio | Banner, teléfono, WhatsApp, correo, horario, pie y **sucursales** |
 | 💾 Respaldo | Exportar/importar JSON, espacio usado, **cambio de PIN**, restablecer |

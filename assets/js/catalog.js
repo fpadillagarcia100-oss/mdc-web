@@ -129,6 +129,7 @@ function cardHTML(p){
   return `<article class="pcard">
     <div class="pcard-img">
       ${productMedia(p)}
+      ${p.imgs.length>1?`<span class="pcard-fotos" aria-label="${p.imgs.length} fotos">📷 ${p.imgs.length}</span>`:''}
       ${badgeHTML(p)}
       <button class="pcard-fav" type="button" data-fav="${p.id}" aria-pressed="${fav}"
               aria-label="${fav?'Quitar de':'Guardar en'} favoritos: ${esc(p.name)}">${fav?'♥':'♡'}</button>

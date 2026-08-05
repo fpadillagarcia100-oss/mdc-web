@@ -26,9 +26,23 @@ const store = {
   }
 };
 
+/* Una imagen sólo puede ser una foto incrustada o un archivo del propio sitio.
+   Todo lo demás se descarta: una URL "javascript:" o de otro dominio en un
+   respaldo importado sería código o rastreo ajeno corriendo en la página. */
+const imgOk = s => typeof s==='string' &&
+  (s.startsWith('data:image') || (s.startsWith('/') && !s.startsWith('//')));
+
+/** Devuelve la galería de un equipo, acepte el formato nuevo (imgs) o el viejo (img). */
+function normalizeImgs(p){
+  const crudas = Array.isArray(p.imgs) ? p.imgs : (p.img ? [p.img] : []);
+  return crudas.filter(imgOk).slice(0, MAX_FOTOS);
+}
+
 function normalizeProducts(list){
   if(!Array.isArray(list)) return DEFAULT_PRODUCTS.map(p=>({...p}));
-  return list.filter(p=>p && typeof p==='object' && p.name).map((p,i)=>({
+  return list.filter(p=>p && typeof p==='object' && p.name).map((p,i)=>{
+  const imgs = normalizeImgs(p);
+  return {
     id: Number.isFinite(p.id) ? p.id : i+1,
     // Dirección de su página estática, generada por npm run build.
     slug: typeof p.slug==='string' && /^[a-z0-9-]+$/.test(p.slug) ? p.slug : null,
@@ -46,9 +60,11 @@ function normalizeProducts(list){
     specs: Array.isArray(p.specs) ? p.specs.map(String).filter(Boolean) : [],
     desc: String(p.desc||''),
     svgKey: svgs[p.svgKey] ? p.svgKey : 'excavadora',
-    img: typeof p.img==='string' && p.img.startsWith('data:image') ? p.img : null,
+    imgs,
+    // Portada. Se deriva de imgs para que no puedan contradecirse entre sí.
+    img: imgs[0] || null,
     hot: !!p.hot
-  }));
+  }});
 }
 
 let products = normalizeProducts(store.read(K.products, null) || DEFAULT_PRODUCTS);
