@@ -607,37 +607,60 @@ body.con-cmp{padding-bottom:78px}
 /* ══════════════════ IMPRESIÓN ══════════════════
    Una ficha impresa es un documento comercial: sólo el equipo, su precio y
    cómo contactar. Nada de menús, botones ni controles que en papel no sirven. */
-.solo-impresion{display:none}
+.solo-impresion,.print-marca{display:none}
 @media print{
   @page{margin:14mm}
-  header,footer,.cmp-bar,.toast,.miga,.ficha-acciones,.calc-campos,.overlay,
-  .filter-drawer,.cart-drawer,.admin-overlay,.page-overlay,.pcard-fav,.pcard-cmp,
-  .pcard-edit,.modal-close,.modal-actions,.gal-nav,.gal-thumbs,.fgal-thumbs,
-  .skip-link{display:none!important}
-
   html,body{background:#fff!important;color:#000!important}
-  .solo-impresion{display:block;font-size:10pt;line-height:1.5;margin-top:14mm;
-    padding-top:4mm;border-top:1px solid #999;color:#333}
 
-  /* La ficha estática: una sola columna, sin cajas de color. */
+  /* ── Imprimir desde la aplicación ──
+     Se esconde TODO lo que no sea la ficha abierta, en vez de ir nombrando
+     barra por barra lo que estorba. Esa lista se queda vieja en cuanto se
+     agrega una sección nueva, y el papel sale con menús encima. */
+  body:has(.modal-overlay.open) > *:not(.modal-overlay){display:none!important}
+
+  /* El modal vive en una caja con scroll propio: en papel eso RECORTA la ficha
+     a la altura de la pantalla. Hay que devolverle el alto natural. */
+  .modal-overlay.open{position:static!important;display:block!important;
+    background:none!important;padding:0!important;opacity:1!important;
+    pointer-events:auto!important;overflow:visible!important}
+  .modal-overlay.open .modal{box-shadow:none!important;max-height:none!important;
+    max-width:none!important;width:100%!important;overflow:visible!important;
+    transform:none!important;border-radius:0!important}
+  .modal-grid{display:block!important;min-height:0!important}
+  .modal-info{padding:6mm 0 0!important}
+  .modal-img{border:1px solid #ccc!important;border-radius:0!important;
+    max-height:70mm;padding:0!important;page-break-inside:avoid}
+
+  /* ── Imprimir una ficha estática ── */
+  header,footer,.miga,.ficha-acciones{display:none!important}
   .ficha,.ficha-grid{display:block!important;box-shadow:none!important;border:none!important}
-  .ficha-media{max-height:70mm;border:1px solid #ccc!important;page-break-inside:avoid}
-  .fgal-track{overflow:visible}
-  .fgal-track img:not(:first-child){display:none}
+  .ficha-media{max-height:70mm;border:1px solid #ccc!important;padding:0!important;page-break-inside:avoid}
   .ficha-info{padding:6mm 0 0!important}
   .ficha-specs{page-break-inside:avoid}
+
+  /* ── Común ── */
+  .cmp-bar,.toast,.overlay,.filter-drawer,.cart-drawer,.admin-overlay,.admin-bar,
+  .page-overlay,.topbar,.nav-cats,.hero-banner,.pcard-fav,.pcard-cmp,.pcard-edit,
+  .modal-close,.modal-actions,.calc-campos,.skip-link{display:none!important}
+
+  /* En papel se imprime UNA foto, y completa: recortarla puede cortar
+     justamente la parte del equipo que el cliente quiere ver. */
+  .gal-nav,.gal-thumbs,.gal-count,.fgal-thumbs{display:none!important}
+  .gal,.fgal{height:auto!important;background:none!important}
+  .fgal-track{overflow:visible!important;display:block!important}
+  .fgal-track img:not(:first-child){display:none!important}
+  .gal-main,.fgal-track img,.ficha-media img,.modal-img img{
+    height:auto!important;max-height:70mm;object-fit:contain!important;min-height:0!important}
+
   .calc{page-break-inside:avoid;background:#fff!important;border:1px solid #999!important}
   .calc-salida{border:none!important}
   .calc-supuestos{display:block!important}
   .calc-nota{display:block!important;color:#333!important}
 
-  /* La ficha del modal: se imprime ella sola, sin el catálogo de atrás. */
-  body:has(.modal-overlay.open) .main{display:none!important}
-  .modal-overlay.open{position:static!important;background:none!important;display:block!important;padding:0!important}
-  .modal-overlay.open .modal{box-shadow:none!important;max-height:none!important;width:100%!important}
-  .modal-grid{display:block!important}
-  .modal-img{border:1px solid #ccc!important;max-height:70mm;page-break-inside:avoid}
-  .modal-info{padding:6mm 0 0!important}
+  .print-marca{display:block!important;font-size:12pt;font-weight:700;color:#000!important;
+    border-bottom:2px solid #000;padding-bottom:2mm;margin-bottom:5mm;letter-spacing:.3px}
+  .solo-impresion{display:block!important;font-size:9pt;line-height:1.5;white-space:pre-line;
+    margin-top:10mm;padding-top:3mm;border-top:1px solid #999;color:#333}
 
   a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#555;word-break:break-all}
 }

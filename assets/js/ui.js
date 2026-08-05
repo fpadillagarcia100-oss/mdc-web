@@ -93,6 +93,18 @@ function renderGaleria(){
 function moverGaleria(paso){ galeria.i += paso; renderGaleria() }
 function irGaleria(n){ galeria.i = n; renderGaleria() }
 
+/**
+ * Pie que sólo aparece al imprimir. Va DENTRO de la ficha a propósito: al
+ * imprimir se esconde todo lo que no sea el modal, así que un pie colgado del
+ * body desaparecería junto con el resto de la página.
+ */
+function fichaPie(p){
+  const marca = `${settings.brandMain}${settings.brandAccent} · ${settings.brandFull}`;
+  const url = p.slug ? `${location.origin}/equipos/${p.slug}/` : location.origin;
+  return `${marca} · ${settings.phone} · ${settings.email}\n` +
+    `Ficha: ${url} — precio de referencia en MXN, no constituye una oferta comercial.`;
+}
+
 /* ══════════════════ MODAL PRODUCTO ══════════════════ */
 function openModal(id){
   const p = products.find(x=>x.id===id);
@@ -137,7 +149,8 @@ function openModal(id){
       ${p.slug?`<a class="modal-quote" href="/equipos/${esc(p.slug)}/" style="text-decoration:none">Ficha completa ↗</a>`:''}
       ${isAdmin?`<button class="modal-quote" type="button" data-edit="${p.id}">✎ Editar</button>`:''}
     </div>
-    ${p.cond!=='Renta' ? calculadoraHTML(p.price, {msi:p.finance}) : ''}`;
+    ${p.cond!=='Renta' ? calculadoraHTML(p.price, {msi:p.finance}) : ''}
+    <p class="solo-impresion">${esc(fichaPie(p))}</p>`;
 
   // La calculadora nace después de DOMContentLoaded, así que su primer pintado
   // no lo hace ficha.js: hay que pedirlo aquí.

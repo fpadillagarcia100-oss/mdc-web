@@ -28,6 +28,7 @@ function applyBranding(){
   $('#adminTag').textContent = brandText;
 
   $('#footBrand').textContent = `${brandText} · ${settings.brandFull}`;
+  $('#printMarca').textContent = `${brandText} · ${settings.brandFull}`;
   $('#footAbout').textContent = settings.footerAbout;
   $('#footContact').innerHTML = `
     <li><a href="tel:${esc(settings.phone.replace(/\s/g,''))}">${esc(settings.phone)}</a></li>

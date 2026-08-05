@@ -222,6 +222,7 @@ ${JSON.stringify(datos, null, 2)}
 </header>
 
 <main class="ficha">
+  <p class="print-marca">${esc(marca)} · ${esc(a.marca_completa)}</p>
   <nav class="miga" aria-label="Ruta">
     <a href="/">Inicio</a> ›
     <a href="/#catalogo">${esc(eq.cat)}</a> ›

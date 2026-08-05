@@ -212,18 +212,37 @@ const submit = form =>
     `total ${totalTexto} contra precio ${precioEq}`);
 
   check('La ficha se puede imprimir', $('#modalInfo [data-imprimir]') !== null);
+  check('La hoja impresa lleva la marca arriba',
+    $('#printMarca').textContent.includes('MDC'), $('#printMarca').textContent);
+  check('La hoja impresa lleva los datos de contacto',
+    $('#modalInfo .solo-impresion').textContent.includes(ev('settings.phone')));
+
   // En papel no se ven los controles: la cifra tiene que decir de dónde salió.
   check('El simulador declara sus supuestos',
     /enganche/.test($('[data-calc-out="supuestos"]').textContent),
     $('[data-calc-out="supuestos"]').textContent);
 
-  /* Imprimir una mensualidad sin el aviso de que es un estimado sería
-     presentarla como una oferta en firme. La hoja de estilos no debe esconderlo. */
+  /* Lo que sigue se verifica sobre la hoja de estilos porque jsdom no calcula
+     diseño: no puede decirnos cómo QUEDA la página, sólo qué reglas existen. */
   const impresion = fs.readFileSync(path.join(ROOT, 'assets/css/styles.css'), 'utf8')
     .split('@media print')[1] || '';
+
+  /* Imprimir una mensualidad sin el aviso de que es un estimado sería
+     presentarla como una oferta en firme. */
   check('El aviso legal no desaparece al imprimir',
     !/\.calc-nota\s*{[^}]*display\s*:\s*none/.test(impresion)
     && /\.calc-nota\s*{\s*display\s*:\s*block/.test(impresion));
+
+  /* Antes se enumeraba qué ocultar y se colaban la barra superior, el menú y
+     el banner. La regla que lo resuelve no puede desaparecer. */
+  check('Al imprimir se esconde todo lo que no sea la ficha',
+    /body:has\(\.modal-overlay\.open\)\s*>\s*\*:not\(\.modal-overlay\)\s*\{\s*display:none/.test(impresion));
+
+  /* El modal tiene scroll propio: sin esto el papel sale cortado a la altura de
+     la pantalla, que fue exactamente lo que pasó. */
+  check('El modal recupera su alto natural en papel',
+    /\.modal-overlay\.open \.modal\{[^}]*max-height:none/.test(impresion)
+    && /\.modal-overlay\.open \.modal\{[^}]*overflow:visible/.test(impresion));
   $('#modalClose').click();
 
   /* ── Página de financiamiento ── */
