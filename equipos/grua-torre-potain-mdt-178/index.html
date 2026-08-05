@@ -18,6 +18,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/styles.css">
+<!-- Simulador de financiamiento y botón de impresión. Es un archivo externo,
+     no código en línea: así el CSP de esta página sigue sin 'unsafe-inline'. -->
+<script src="/assets/js/ficha.js" defer></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -143,9 +146,17 @@
       <div class="ficha-acciones">
         <a class="btn-primary" href="https://wa.me/5219611234567?text=Hola%20MDC%2C%20me%20interesa%20el%20Gr%C3%BAa%20Torre%20Potain%20MDT%20178%20(https%3A%2F%2Fmdcmaquinaria.com%2Fequipos%2Fgrua-torre-potain-mdt-178%2F).%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener">💬 Cotizar este equipo</a>
         <a class="btn-ghost" href="tel:9611234567">📞 961 123 4567</a>
+        <button class="btn-ghost" type="button" data-imprimir>🖨 Imprimir o guardar en PDF</button>
       </div>
     </div>
   </div>
+
+  
+
+  <p class="solo-impresion">
+    MDC · Maquinaria de Chiapas · 961 123 4567 · ventas@mdcmaquinaria.com<br>
+    Ficha consultada en https://mdcmaquinaria.com/equipos/grua-torre-potain-mdt-178/ — precio de referencia en MXN, no constituye una oferta comercial.
+  </p>
 </main>
 
 <footer>

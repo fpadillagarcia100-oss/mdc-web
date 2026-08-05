@@ -18,6 +18,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/styles.css">
+<!-- Simulador de financiamiento y botón de impresión. Es un archivo externo,
+     no código en línea: así el CSP de esta página sigue sin 'unsafe-inline'. -->
+<script src="/assets/js/ficha.js" defer></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -135,9 +138,68 @@
       <div class="ficha-acciones">
         <a class="btn-primary" href="https://wa.me/5219611234567?text=Hola%20MDC%2C%20me%20interesa%20el%20Minicargador%20CAT%20262D3%20(https%3A%2F%2Fmdcmaquinaria.com%2Fequipos%2Fminicargador-cat-262d3%2F).%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener">💬 Cotizar este equipo</a>
         <a class="btn-ghost" href="tel:9611234567">📞 961 123 4567</a>
+        <button class="btn-ghost" type="button" data-imprimir>🖨 Imprimir o guardar en PDF</button>
       </div>
     </div>
   </div>
+
+  
+<section class="calc" data-calc data-precio="610000" aria-labelledby="calcTitulo">
+  <h3 id="calcTitulo">🧮 Simula tu financiamiento</h3>
+
+  <div class="calc-campos">
+    <div class="calc-campo">
+      <label for="calc-enganche">Enganche: <output data-calc-out="enganche">20%</output></label>
+      <input type="range" id="calc-enganche" data-calc-in="enganche"
+             min="0" max="60" step="5" value="20">
+    </div>
+
+    <div class="calc-campo">
+      <label for="calc-plazo">Plazo</label>
+      <select id="calc-plazo" data-calc-in="plazo">
+        <option value="12">12 meses</option><option value="24">24 meses</option><option value="36" selected>36 meses</option><option value="48">48 meses</option><option value="60">60 meses</option>
+      </select>
+    </div>
+
+    <div class="calc-campo">
+      <label for="calc-tasa">Tasa anual estimada</label>
+      <div class="calc-tasa">
+        <input type="number" id="calc-tasa" data-calc-in="tasa" min="0" max="60" step="0.5" value="16">
+        <span>%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-salida" aria-live="polite">
+    <div class="calc-mensual">
+      <span class="calc-etq">Tu pago mensual</span>
+      <strong data-calc-out="mensual">—</strong>
+      <span class="calc-plazo-txt" data-calc-out="plazoTxt"></span>
+    </div>
+    <dl class="calc-desglose">
+      <div><dt>Enganche</dt><dd data-calc-out="pagoInicial">—</dd></div>
+      <div><dt>A financiar</dt><dd data-calc-out="financiado">—</dd></div>
+      <div><dt>Intereses</dt><dd data-calc-out="intereses">—</dd></div>
+      <div><dt>Total pagado</dt><dd data-calc-out="total">—</dd></div>
+    </dl>
+  </div>
+
+  <!-- En papel los controles no se ven, así que la cifra tiene que venir
+       acompañada de los supuestos que la produjeron. -->
+  <p class="calc-supuestos" data-calc-out="supuestos"></p>
+
+  <p class="calc-msi">💳 Este equipo también tiene <strong>18 meses sin intereses</strong>:
+    $33,889 al mes, sin enganche y sin pagar intereses.</p>
+
+  <p class="calc-nota">Cálculo estimado con fines informativos. No es una oferta de
+    crédito ni incluye seguro, comisión por apertura ni IVA sobre intereses.
+    La tasa y el plazo definitivos los determina la institución financiera.</p>
+</section>
+
+  <p class="solo-impresion">
+    MDC · Maquinaria de Chiapas · 961 123 4567 · ventas@mdcmaquinaria.com<br>
+    Ficha consultada en https://mdcmaquinaria.com/equipos/minicargador-cat-262d3/ — precio de referencia en MXN, no constituye una oferta comercial.
+  </p>
 </main>
 
 <footer>

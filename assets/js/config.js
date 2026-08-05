@@ -55,5 +55,8 @@ const PER_PAGE = 9;
    del localStorage, que ronda los 5 MB para TODO el catálogo. Ocho fotos
    comprimidas caben; treinta llenan la cuota y la siguiente edición se pierde. */
 const MAX_FOTOS = 8;
+/* Tope de equipos a comparar. Tres caben lado a lado incluso en un celular;
+   con más, la tabla obliga a hacer scroll horizontal y deja de comparar nada. */
+const MAX_COMPARA = 3;
 const K = {products:'mdc_v1_products', settings:'mdc_v1_settings', cart:'mdc_v1_cart',
            favs:'mdc_v1_favs', account:'mdc_v1_account', requests:'mdc_v1_requests'};

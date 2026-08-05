@@ -20,14 +20,16 @@ const load = f => fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8');
 /* Ejecutamos los módulos en un contexto limpio, con lo mínimo que esperan
    del navegador. Así probamos el código real, no una copia. */
 const ctx = vm.createContext({
-  document: { querySelector: () => null, querySelectorAll: () => [] },
+  document: { querySelector: () => null, querySelectorAll: () => [], addEventListener() {} },
+  window: { print() {} },
   localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
   sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
   Intl, Math, Date, JSON, Set, Number, String, Array, Object, RegExp,
   console, TextEncoder,
 });
 // El orden importa: catalogo-datos.js define CATALOGO, del que depende config.js.
-['icons.js', 'catalogo-datos.js', 'config.js', 'utils.js', 'security.js', 'storage.js', 'state.js']
+['icons.js', 'catalogo-datos.js', 'config.js', 'utils.js', 'security.js', 'storage.js', 'state.js',
+ 'ficha.js']
   .forEach(f => vm.runInContext(load(f), ctx, { filename: f }));
 
 const run = expr => vm.runInContext(expr, ctx);
@@ -164,6 +166,69 @@ test('Sin fotos, la galería es un arreglo vacío y no null', () => {
   const p = JSON.parse(run(`JSON.stringify(normalizeProducts([{name:'X'}])[0])`));
   assert.deepStrictEqual(p.imgs, []);
   assert.strictEqual(p.img, null);
+});
+
+/* ── Simulador de financiamiento ──
+   Aquí un error no es un detalle visual: es un número equivocado en la
+   pantalla de alguien que está por comprometer millones de pesos. */
+test('La mensualidad coincide con la fórmula de pagos iguales', () => {
+  // $1,000,000 a 12 meses con 12% anual = $88,848.79 al mes.
+  const m = run('mensualidadCredito(1000000, 12, 12)');
+  assert.ok(Math.abs(m - 88848.79) < 0.01, `dio ${m}`);
+});
+
+test('A tasa cero se reparte el monto entre los meses', () => {
+  // La fórmula normal se indetermina con tasa 0; este caso va aparte.
+  assert.strictEqual(run('mensualidadCredito(120000, 0, 12)'), 10000);
+});
+
+test('Los pagos suman más que lo financiado cuando hay intereses', () => {
+  const r = JSON.parse(run(`JSON.stringify(simularCredito(2850000, {enganche:20, plazo:36, tasa:16}))`));
+  assert.strictEqual(r.pagoInicial, 570000, 'el 20% de 2.85 M');
+  assert.strictEqual(r.financiado, 2280000);
+  assert.ok(r.intereses > 0, 'con tasa positiva tiene que haber intereses');
+  assert.strictEqual(r.total, 2850000 + r.intereses,
+    'el total es el precio más los intereses, sin sorpresas');
+});
+
+test('A tasa cero el total es exactamente el precio', () => {
+  // Multiplicar la mensualidad YA redondeada por el plazo arrastra el error y
+  // llegaba a decir que pagabas menos que el equipo. Los totales usan la exacta.
+  for(const plazo of [12, 24, 36, 48, 60]){
+    const r = JSON.parse(run(`JSON.stringify(simularCredito(2850000, {enganche:50, plazo:${plazo}, tasa:0}))`));
+    assert.strictEqual(r.total, 2850000, `a ${plazo} meses dio ${r.total}`);
+    assert.strictEqual(r.intereses, 0, `a ${plazo} meses cobró ${r.intereses} de intereses`);
+  }
+});
+
+test('Nunca sale más barato financiar que pagar de contado', () => {
+  for(const tasa of [0, 5, 12, 16, 24]){
+    const r = JSON.parse(run(`JSON.stringify(simularCredito(1500000, {enganche:20, plazo:48, tasa:${tasa}}))`));
+    assert.ok(r.total >= 1500000, `al ${tasa}% el total quedó en ${r.total}`);
+    assert.ok(r.intereses >= 0, `al ${tasa}% los intereses quedaron en ${r.intereses}`);
+  }
+});
+
+test('Un enganche del 100% deja mensualidad en cero, no un error', () => {
+  const r = JSON.parse(run(`JSON.stringify(simularCredito(500000, {enganche:100, plazo:36, tasa:16}))`));
+  assert.strictEqual(r.financiado, 0);
+  assert.strictEqual(r.mensual, 0);
+  assert.strictEqual(r.intereses, 0);
+  assert.strictEqual(r.total, 500000, 'pagar de contado cuesta el precio, ni un peso más');
+});
+
+test('El simulador se declara estimado y no una oferta de crédito', () => {
+  // Presentar un cálculo como oferta en firme sería un problema, no un detalle.
+  // El texto se parte en varias líneas en el código: comparamos sin importar
+  // dónde caiga el salto, para que reacomodarlo no rompa la prueba.
+  const html = run('calculadoraHTML(1000000, {})').replace(/\s+/g, ' ');
+  assert.ok(/no es una oferta de crédito/i.test(html));
+  assert.ok(/estimado/i.test(html));
+});
+
+test('Los meses sin intereses se calculan sin intereses', () => {
+  const html = run(`calculadoraHTML(360000, {msi:'12 MSI'})`);
+  assert.ok(html.includes('$30,000'), 'debe mostrar 360,000 / 12 = 30,000 al mes');
 });
 
 /* ── Utilidades de marca ── */

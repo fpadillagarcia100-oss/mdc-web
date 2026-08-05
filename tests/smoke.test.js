@@ -183,6 +183,85 @@ const submit = form =>
     $('#modalImg').querySelector('svg') !== null && $('#modalImg').querySelector('.gal') === null);
   $('#modalClose').click();
 
+  /* ── Simulador de financiamiento ── */
+  ev('openModal(products.find(p => p.cond !== "Renta").id)');
+  const calc = $('#modalInfo [data-calc]');
+  check('La ficha trae el simulador', calc !== null);
+  check('El simulador ya muestra una mensualidad al abrir',
+    /\$[\d,]+/.test($('[data-calc-out="mensual"]').textContent),
+    $('[data-calc-out="mensual"]').textContent);
+
+  const mensualInicial = $('[data-calc-out="mensual"]').textContent;
+  const engancheInput = $('[data-calc-in="enganche"]');
+  engancheInput.value = '50';
+  engancheInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+  check('Subir el enganche baja la mensualidad',
+    $('[data-calc-out="mensual"]').textContent !== mensualInicial,
+    `${mensualInicial} → ${$('[data-calc-out="mensual"]').textContent}`);
+  check('El enganche elegido se ve en pantalla',
+    $('[data-calc-out="enganche"]').textContent === '50%');
+
+  // Una tasa negativa haría que el simulador prometiera pagar menos que el precio.
+  const tasaInput = $('[data-calc-in="tasa"]');
+  tasaInput.value = '-20';
+  tasaInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+  const totalTexto = $('[data-calc-out="total"]').textContent;
+  const total = Number(totalTexto.replace(/[^\d]/g, ''));
+  const precioEq = Number(calc.dataset.precio);
+  check('Una tasa negativa no regala dinero', total >= precioEq,
+    `total ${totalTexto} contra precio ${precioEq}`);
+
+  check('La ficha se puede imprimir', $('#modalInfo [data-imprimir]') !== null);
+  // En papel no se ven los controles: la cifra tiene que decir de dónde salió.
+  check('El simulador declara sus supuestos',
+    /enganche/.test($('[data-calc-out="supuestos"]').textContent),
+    $('[data-calc-out="supuestos"]').textContent);
+
+  /* Imprimir una mensualidad sin el aviso de que es un estimado sería
+     presentarla como una oferta en firme. La hoja de estilos no debe esconderlo. */
+  const impresion = fs.readFileSync(path.join(ROOT, 'assets/css/styles.css'), 'utf8')
+    .split('@media print')[1] || '';
+  check('El aviso legal no desaparece al imprimir',
+    !/\.calc-nota\s*{[^}]*display\s*:\s*none/.test(impresion)
+    && /\.calc-nota\s*{\s*display\s*:\s*block/.test(impresion));
+  $('#modalClose').click();
+
+  /* ── Comparador ── */
+  const ids = ev('JSON.stringify(products.slice(0,4).map(p => p.id))');
+  const [a1, a2, a3, a4] = JSON.parse(ids);
+
+  check('La barra de comparación empieza escondida', $('#cmpBar').hidden === true);
+
+  ev(`toggleCompare(${a1})`);
+  check('Al elegir un equipo aparece la barra', $('#cmpBar').hidden === false);
+  check('Con uno solo no se puede comparar', $('#cmpOpen').disabled === true);
+
+  ev(`toggleCompare(${a2})`);
+  check('Con dos ya se puede comparar', $('#cmpOpen').disabled === false);
+  check('El botón dice cuántos van', $('#cmpOpen').textContent === 'Comparar (2)');
+
+  ev(`toggleCompare(${a3})`);
+  ev(`toggleCompare(${a4})`);
+  check(`No deja pasar del tope de ${ev('MAX_COMPARA')}`, ev('state.compare.length') === ev('MAX_COMPARA'),
+    `quedaron ${ev('state.compare.length')}`);
+
+  $('#cmpOpen').click();
+  const filas = $$('#pageBody .cmp-tabla tbody tr').length;
+  check('La comparación abre con una columna por equipo',
+    $$('#pageBody .cmp-tabla thead th').length === 4, 'incluye la columna de criterios');
+  check('Compara varios criterios', filas >= 10, `${filas} renglones`);
+  check('Marca lo más conveniente de cada renglón',
+    $$('#pageBody .cmp-gana').length > 0);
+
+  // Quitar un equipo desde la propia comparación debe redibujarla, no dejarla vieja.
+  $('#pageBody .cmp-th-quita').click();
+  check('Quitar un equipo actualiza la comparación al momento',
+    $$('#pageBody .cmp-tabla thead th').length === 3);
+
+  ev('clearCompare()');
+  check('Limpiar cierra la comparación y esconde la barra',
+    ev('state.compare.length') === 0 && $('#cmpBar').hidden === true);
+
   /* ── Seguridad del PIN ── */
   const ajustes = JSON.parse(window.localStorage.getItem('mdc_v1_settings') || '{}');
   check('El PIN NO se guarda en claro',

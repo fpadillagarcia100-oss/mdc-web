@@ -54,6 +54,23 @@ function cargarIconos() {
   return vm.runInContext('svgs', ctx);
 }
 
+/**
+ * Toma la calculadora del propio ficha.js en vez de copiar su HTML aquí.
+ * Copiarlo significaría que un cambio en la aplicación no llega a las páginas
+ * estáticas, y nadie se enteraría hasta ver dos calculadoras distintas.
+ */
+function cargarCalculadora() {
+  const ctx = vm.createContext({
+    Intl, Math, Number, String, Array, Object, JSON, parseInt,
+    // ficha.js se registra en el documento al cargarse; aquí sólo queremos su HTML.
+    document: { addEventListener() {}, querySelectorAll: () => [] },
+    window: {},
+  });
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/ficha.js'), 'utf8'), ctx,
+    { filename: 'ficha.js' });
+  return vm.runInContext('calculadoraHTML', ctx);
+}
+
 /** Huella de la fuente, para detectar si lo generado quedó desactualizado. */
 function huellaFuente() {
   const crudo = fs.readFileSync(path.join(ROOT, 'data', 'catalogo.json'));
@@ -142,8 +159,8 @@ function fichaHTML(eq, catalogo, iconos) {
   const wa = `https://wa.me/${String(a.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWa)}`;
 
   /* Galería sin una línea de JavaScript: un carril con scroll-snap y
-     miniaturas que son anclas. El CSP de estas fichas prohíbe scripts, y una
-     galería que dependiera de JS simplemente no se vería. */
+     miniaturas que son anclas. Las fotos son lo primero que mira un cliente,
+     así que se ven aunque el script tarde, falle o venga bloqueado. */
   const medio = !fotos.length
     ? (iconos[eq.svgKey] || iconos.excavadora)
     : fotos.length === 1
@@ -180,6 +197,9 @@ function fichaHTML(eq, catalogo, iconos) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/styles.css">
+<!-- Simulador de financiamiento y botón de impresión. Es un archivo externo,
+     no código en línea: así el CSP de esta página sigue sin 'unsafe-inline'. -->
+<script src="/assets/js/ficha.js" defer></script>
 <script type="application/ld+json">
 ${JSON.stringify(datos, null, 2)}
 </script>
@@ -239,9 +259,17 @@ ${JSON.stringify(datos, null, 2)}
       <div class="ficha-acciones">
         <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar este equipo</a>
         <a class="btn-ghost" href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">📞 ${esc(a.telefono)}</a>
+        <button class="btn-ghost" type="button" data-imprimir>🖨 Imprimir o guardar en PDF</button>
       </div>
     </div>
   </div>
+
+  ${esRenta ? '' : calculadoraHTML(eq.price, { msi: eq.finance })}
+
+  <p class="solo-impresion">
+    ${esc(marca)} · ${esc(a.marca_completa)} · ${esc(a.telefono)} · ${esc(a.correo)}<br>
+    Ficha consultada en ${url} — precio de referencia en MXN, no constituye una oferta comercial.
+  </p>
 </main>
 
 <footer>
@@ -302,6 +330,7 @@ ${urls.join('\n')}
 /* ── Ejecución ── */
 const catalogo = leerCatalogo();
 const iconos = cargarIconos();
+const calculadoraHTML = cargarCalculadora();
 
 const faltantes = catalogo.equipos.filter(e => !e.slug);
 if (faltantes.length) {

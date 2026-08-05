@@ -133,6 +133,8 @@ function cardHTML(p){
       ${badgeHTML(p)}
       <button class="pcard-fav" type="button" data-fav="${p.id}" aria-pressed="${fav}"
               aria-label="${fav?'Quitar de':'Guardar en'} favoritos: ${esc(p.name)}">${fav?'♥':'♡'}</button>
+      <button class="pcard-cmp" type="button" data-cmp="${p.id}" aria-pressed="${state.compare.includes(p.id)}"
+              title="Comparar" aria-label="${state.compare.includes(p.id)?'Quitar de la':'Agregar a la'} comparación: ${esc(p.name)}">⇄</button>
       <button class="pcard-edit" type="button" data-edit="${p.id}" title="Editar equipo" aria-label="Editar ${esc(p.name)}">✎</button>
     </div>
     <div class="pcard-body">
@@ -182,7 +184,59 @@ function render(){
   renderChips();
   renderFilters();
   renderNav();
+  renderCompareBar();
   if(isAdmin) $('#adminBarInfo').textContent = `${products.length} equipos · ${fmtKB(store.usedBytes())} usados`;
+}
+
+/* ══════════════════ COMPARADOR ══════════════════ */
+
+/** Equipos elegidos, en el orden en que se eligieron y sin los que ya no existen. */
+const comparados = () => state.compare
+  .map(id => products.find(p => p.id === id))
+  .filter(Boolean);
+
+function toggleCompare(id){
+  const i = state.compare.indexOf(id);
+  if(i >= 0){ state.compare.splice(i, 1) }
+  else if(state.compare.length >= MAX_COMPARA){
+    showToast(`Puedes comparar hasta ${MAX_COMPARA} equipos. Quita uno para agregar otro.`, true);
+    return;
+  }
+  else state.compare.push(id);
+  render();
+  // Si la comparación está abierta, se redibuja con el cambio en vez de quedarse vieja.
+  if(currentPage === 'comparar') openPage('comparar');
+}
+
+function clearCompare(){
+  state.compare = [];
+  render();
+  if(currentPage === 'comparar') closeAll();
+}
+
+function renderCompareBar(){
+  const bar = $('#cmpBar');
+  if(!bar) return;
+  const lista = comparados();
+  // El estado puede traer ids de equipos ya eliminados: se limpia aquí.
+  state.compare = lista.map(p => p.id);
+  bar.hidden = lista.length === 0;
+  // La barra va fija al fondo: sin este margen taparía la paginación y el pie.
+  document.body.classList.toggle('con-cmp', lista.length > 0);
+  if(!lista.length) return;
+
+  $('#cmpChips').innerHTML = lista.map(p => `
+    <span class="cmp-chip">
+      <span class="cmp-chip-img">${productMedia(p, false)}</span>
+      <span class="cmp-chip-name">${esc(p.name)}</span>
+      <button type="button" data-cmp="${p.id}" aria-label="Quitar ${esc(p.name)} de la comparación">×</button>
+    </span>`).join('');
+
+  const btn = $('#cmpOpen');
+  btn.textContent = `Comparar (${lista.length})`;
+  // Comparar uno contra nada no compara nada: el botón lo dice en vez de fallar.
+  btn.disabled = lista.length < 2;
+  btn.title = lista.length < 2 ? 'Elige al menos dos equipos' : '';
 }
 
 function renderPagination(totalPages){

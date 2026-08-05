@@ -86,6 +86,8 @@
 <script src="assets/js/branding.js" defer></script>
 <script src="assets/js/catalog.js" defer></script>
 <script src="assets/js/cart.js" defer></script>
+<!-- Autónomo: también se carga solo en las fichas estáticas de /equipos/. -->
+<script src="assets/js/ficha.js" defer></script>
 <script src="assets/js/ui.js" defer></script>
 <script src="assets/js/pages.js" defer></script>
 <script src="assets/js/admin.js" defer></script>
@@ -284,6 +286,17 @@
       <button class="close" type="button" id="pageClose" aria-label="Cerrar">×</button>
     </div>
     <div class="page-body" id="pageBody"></div>
+  </div>
+</div>
+
+<!-- ══ BARRA DE COMPARACIÓN ══ -->
+<div class="cmp-bar" id="cmpBar" role="region" aria-label="Equipos elegidos para comparar" hidden>
+  <div class="cmp-bar-inner">
+    <div class="cmp-chips" id="cmpChips"></div>
+    <div class="cmp-bar-btns">
+      <button class="btn-ghost" type="button" data-action="cmp-clear">Limpiar</button>
+      <button class="btn-primary" type="button" id="cmpOpen" data-action="cmp-open">Comparar</button>
+    </div>
   </div>
 </div>
 

@@ -8,7 +8,8 @@
 /* ══════════════════ ESTADO DE NAVEGACIÓN ══════════════════ */
 const state = {
   cat:'Todos', conds:[], brands:[], locations:[], finance:[],
-  onlyFavs:false, min:null, max:null, q:'', sort:'rel', view:'grid', page:1
+  onlyFavs:false, min:null, max:null, q:'', sort:'rel', view:'grid', page:1,
+  compare:[]   // ids de los equipos elegidos para comparar
 };
 
 const predicates = {

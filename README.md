@@ -100,7 +100,7 @@ npm test        # las tres suites
 |---|---|
 | `npm run test:unit` | Precios, descuentos, escapado, validación y normalización de datos |
 | `npm run test:smoke` | El sitio real en un navegador simulado: catálogo, páginas, formularios, carrito y PIN |
-| `npm run test:csp` | Que nadie haya metido JavaScript en línea, lo que anularía el CSP |
+| `npm run test:csp` | Que nadie haya metido JavaScript en línea en **ninguna** página, lo que anularía el CSP |
 | `npm run test:generado` | Que las fichas y el sitemap correspondan a `data/catalogo.json` |
 
 Corren solas en cada push gracias a `.github/workflows/ci.yml`.
@@ -179,6 +179,9 @@ Luego, en el otro dispositivo: `http://<IP-de-la-PC>:8000`
 | Sección | Qué hace |
 |---|---|
 | **Catálogo** | Filtros por condición, marca, precio, financiamiento, ubicación y favoritos, con conteos que se recalculan solos. Orden, paginación y vista lista/cuadrícula |
+| **Simulador de financiamiento** | Enganche, plazo y tasa editables; mensualidad, intereses y total pagado. Marcado como estimado, no como oferta de crédito |
+| **Comparador** ⇄ | Hasta 3 equipos lado a lado, resaltando lo más conveniente de cada renglón |
+| **Ficha imprimible** 🖨 | Hoja limpia con foto, precio, specs y datos de contacto, lista para PDF o WhatsApp |
 | **Cotización** 🛒 | Carrito persistente; separa total de compra del total de renta mensual |
 | **Solicitar cotización** | Formulario validado que arma el mensaje y lo envía por WhatsApp o correo |
 | **Vende tu equipo** | Ficha de valuación (marca, año, horas, precio esperado) que llega por WhatsApp o correo |

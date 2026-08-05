@@ -61,6 +61,8 @@ document.addEventListener('click', e => {
     if(a==='logo-remove'){ settings.logo = null; saveSettings(); applyBranding(); renderAdmin(); return }
     if(a==='hero-remove'){ settings.heroImage = null; saveSettings(); applyBranding(); renderAdmin(); return }
     if(a==='accent-reset'){ settings.accent = DEFAULT_SETTINGS.accent; saveSettings(); applyBranding(); renderAdmin(); return }
+    if(a==='cmp-clear'){ clearCompare(); return }
+    if(a==='cmp-open'){ openPage('comparar'); return }
     if(a==='export'){ exportBackup(); return }
     if(a==='import'){ $('#importInput').click(); return }
     if(a==='reset'){ resetAll(); return }
@@ -97,6 +99,9 @@ document.addEventListener('click', e => {
 
   const favBtn = t.closest('[data-fav]');
   if(favBtn){ toggleFav(Number(favBtn.dataset.fav)); return }
+
+  const cmpBtn = t.closest('[data-cmp]');
+  if(cmpBtn){ toggleCompare(Number(cmpBtn.dataset.cmp)); return }
 
   const navBtn = t.closest('[data-cat]');
   if(navBtn){ state.cat = navBtn.dataset.cat; state.page = 1; render(); return }

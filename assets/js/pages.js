@@ -45,8 +45,71 @@ const PAGES = {
   vender:      {title:'📤 Publica tu equipo',      html:()=>venderHTML()},
   cuenta:      {title:'👤 Mi cuenta',              html:()=>cuentaHTML()},
   privacidad:  {title:'🔐 Aviso de privacidad',    html:()=>privacidadHTML()},
-  cotizar:     {title:'📋 Solicitar cotización',   html:()=>cotizarHTML()}
+  cotizar:     {title:'📋 Solicitar cotización',   html:()=>cotizarHTML()},
+  comparar:    {title:'⇄ Comparar equipos',        html:()=>compararHTML()}
 };
+
+/* ── Comparador ── */
+function compararHTML(){
+  const eq = comparados();
+  if(eq.length < 2) return '<p>Elige al menos dos equipos del catálogo para compararlos.</p>';
+
+  const mejorPrecio = Math.min(...eq.map(p=>p.price));
+  const masNuevo = Math.max(...eq.map(p=>p.year));
+
+  /* Cada fila es un criterio. `destaca` marca al ganador de esa fila; se deja
+     en null cuando "mejor" no significa nada (una ubicación no es mejor que otra). */
+  const filas = [
+    {etq:'Precio', destaca:p=>p.price===mejorPrecio,
+     val:p=>`${fmtFull(p.price)}${p.cond==='Renta'?' <small>/mes</small>':''}`},
+    {etq:'Condición', val:p=>esc(COND_LABELS[p.cond])},
+    {etq:'Marca',     val:p=>esc(p.brand)},
+    {etq:'Año',       val:p=>String(p.year), destaca:p=>p.year===masNuevo},
+    {etq:'Ubicación', val:p=>esc(p.location)},
+    {etq:'Especificaciones', val:p=>p.specs.length
+      ? p.specs.map(s=>`<span class="pcard-spec">${esc(s)}</span>`).join(' ') : '—'},
+    {etq:'Meses sin intereses', val:p=>p.finance?esc(p.finance):'—', destaca:p=>!!p.finance},
+    {etq:'Arrendamiento', val:p=>p.leasing?'Sí':'—',  destaca:p=>p.leasing},
+    {etq:'Envío a obra',  val:p=>p.shipping?'Incluido':'No incluido', destaca:p=>p.shipping},
+    {etq:'Garantía', val:p=>p.cond==='Nuevo'?'12 meses de fábrica'
+      : p.cond==='Renta'?'Incluida en la renta':'6 meses certificada'}
+  ];
+
+  return `
+    <div class="cmp-wrap">
+      <table class="cmp-tabla">
+        <caption class="sr-only">Comparación de ${eq.length} equipos</caption>
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr-only">Característica</span></th>
+            ${eq.map(p=>`<th scope="col">
+              <div class="cmp-th-img">${productMedia(p, false)}</div>
+              <div class="cmp-th-name">${esc(p.name)}</div>
+              <button class="cmp-th-quita" type="button" data-cmp="${p.id}">Quitar</button>
+            </th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${filas.map(f=>`<tr>
+            <th scope="row">${f.etq}</th>
+            ${eq.map(p=>{
+              const gana = f.destaca && f.destaca(p);
+              return `<td${gana?' class="cmp-gana"':''}>${f.val(p)}</td>`;
+            }).join('')}
+          </tr>`).join('')}
+          <tr>
+            <th scope="row">Acciones</th>
+            ${eq.map(p=>`<td>
+              <button class="btn-add" type="button" data-add="${p.id}">+ Cotizar</button>
+              <button class="btn-quote" type="button" data-open="${p.id}">Ver ficha</button>
+            </td>`).join('')}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-nota">Lo resaltado es lo más conveniente de cada renglón.
+      Donde no hay nada resaltado es porque una opción no es mejor que otra.</p>`;
+}
 
 function openPage(kind){
   const def = PAGES[kind];

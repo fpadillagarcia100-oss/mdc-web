@@ -133,9 +133,15 @@ function openModal(id){
     <div class="modal-actions">
       <button class="modal-add" type="button" data-add="${p.id}" data-close-after>+ Agregar a cotización</button>
       <button class="modal-quote" type="button" data-fav="${p.id}">${favorites.has(p.id)?'♥ Guardado':'♡ Guardar'}</button>
+      <button class="modal-quote" type="button" data-imprimir>🖨 Imprimir ficha</button>
       ${p.slug?`<a class="modal-quote" href="/equipos/${esc(p.slug)}/" style="text-decoration:none">Ficha completa ↗</a>`:''}
       ${isAdmin?`<button class="modal-quote" type="button" data-edit="${p.id}">✎ Editar</button>`:''}
-    </div>`;
+    </div>
+    ${p.cond!=='Renta' ? calculadoraHTML(p.price, {msi:p.finance}) : ''}`;
+
+  // La calculadora nace después de DOMContentLoaded, así que su primer pintado
+  // no lo hace ficha.js: hay que pedirlo aquí.
+  refrescarCalculadora($('#modalInfo [data-calc]'));
 
   $('#modalOverlay').classList.add('open');
   lockScroll(true);
