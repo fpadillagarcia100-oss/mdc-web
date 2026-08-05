@@ -265,7 +265,7 @@ body.is-admin .pcard-edit{display:flex}
 .gal-thumb.on{border-color:var(--y)}
 .pcard-fotos{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;
   font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;z-index:2}
-.modal-info{padding:28px}
+.modal-info{padding:28px;min-width:0}
 .modal-cat{font-size:11px;color:var(--light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .modal-name{font-size:22px;font-weight:700;line-height:1.25;margin-bottom:8px}
 .modal-seller-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
@@ -534,22 +534,30 @@ footer button:hover{color:var(--y);text-decoration:underline}
 /* ══════════════════ SIMULADOR DE FINANCIAMIENTO ══════════════════ */
 .calc{border:1px solid var(--border);border-radius:10px;padding:18px;margin-top:22px;background:#FAFAFA}
 .calc h3{font-size:15px;font-weight:700;margin-bottom:14px}
-.calc-campos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+/* Se acomoda al ancho del CONTENEDOR, no al de la ventana: dentro del modal la
+   columna es angosta aunque el monitor sea enorme, y una media query de
+   viewport no se entera. Por eso auto-fit y flex-wrap en vez de columnas fijas. */
+.calc{max-width:100%;min-width:0}
+.calc-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:16px}
 .calc-campo label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
 .calc-campo output{color:var(--dark);font-weight:700}
 .calc-campo input[type=range]{width:100%;accent-color:var(--y)}
 .calc-campo select,.calc-tasa input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:13px;background:var(--white)}
 .calc-tasa{display:flex;align-items:center;gap:6px}
 .calc-tasa span{font-size:13px;color:var(--muted)}
-.calc-salida{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;align-items:center;
+.calc-salida{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;
   background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px}
+.calc-mensual{flex:1 1 150px;min-width:0}
 .calc-etq{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
 .calc-mensual strong{display:block;font-size:28px;font-weight:700;line-height:1.15;color:var(--dark)}
 .calc-plazo-txt{font-size:12px;color:var(--muted)}
-.calc-desglose{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin:0}
-.calc-desglose div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--border);padding-bottom:3px}
-.calc-desglose dt{font-size:12px;color:var(--muted)}
-.calc-desglose dd{font-size:12px;font-weight:600;margin:0}
+/* Etiqueta ARRIBA del valor, no al lado: en columna angosta el precio se salía
+   de la caja. Además queda igual que las especificaciones de la ficha. */
+.calc-desglose{flex:2 1 240px;min-width:0;display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px 16px;margin:0}
+.calc-desglose div{min-width:0;border-bottom:1px dotted var(--border);padding-bottom:4px}
+.calc-desglose dt{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.calc-desglose dd{font-size:13px;font-weight:600;margin:2px 0 0;overflow-wrap:anywhere}
 .calc-msi{font-size:12px;color:var(--green);margin-top:12px;background:#E8F5E9;border-radius:6px;padding:9px 12px}
 .calc-supuestos{display:none;font-size:12px;font-weight:600;color:var(--dark);margin-top:10px}
 .calc-nota{font-size:11px;color:var(--light);line-height:1.6;margin-top:12px}
@@ -595,11 +603,6 @@ body.con-cmp{padding-bottom:78px}
 .cmp-gana{background:#E8F5E9;font-weight:700}
 .cmp-tabla td .btn-add,.cmp-tabla td .btn-quote{width:100%;margin-bottom:5px}
 .cmp-nota{font-size:11px;color:var(--light);margin-top:12px;line-height:1.6}
-
-@media(max-width:860px){
-  .calc-campos{grid-template-columns:1fr}
-  .calc-salida{grid-template-columns:1fr}
-}
 
 /* ══════════════════ IMPRESIÓN ══════════════════
    Una ficha impresa es un documento comercial: sólo el equipo, su precio y

@@ -153,9 +153,11 @@ function refrescarCalculadora(root) {
     const msi = parseInt(root.dataset.msi, 10);
     const hay = Number.isFinite(msi) && msi > 0 && precio > 0;
     msiEl.hidden = !hay;
+    /* Se presenta como ALTERNATIVA al crédito de arriba, no como un dato suelto:
+       la ficha ya menciona los MSI y repetir el mismo texto se lee descuidado. */
     msiEl.textContent = hay
-      ? `💳 Este equipo también tiene ${msi} meses sin intereses: ` +
-        `${pesos.format(Math.round(precio / msi))} al mes, sin enganche y sin pagar intereses.`
+      ? `💳 Alternativa sin intereses: ${msi} pagos de ${pesos.format(Math.round(precio / msi))}, ` +
+        `sin enganche. Mensualidad más alta, pero $0 de intereses.`
       : '';
   }
 }
