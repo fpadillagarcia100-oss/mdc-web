@@ -5,7 +5,9 @@
   "description": "MDC · Maquinaria de Chiapas — catálogo de venta y renta de maquinaria pesada",
   "scripts": {
     "dev": "python -m http.server 8000",
-    "test": "npm run test:unit && npm run test:smoke && npm run test:csp",
+    "build": "node tools/build.js",
+    "test": "npm run test:unit && npm run test:smoke && npm run test:csp && npm run test:generado",
+    "test:generado": "node tools/check-generado.js",
     "test:unit": "node tests/unit.test.js",
     "test:smoke": "node tests/smoke.test.js",
     "test:csp": "node tools/check-csp.js",

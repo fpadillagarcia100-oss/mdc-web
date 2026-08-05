@@ -32,3 +32,6 @@ jobs:
 
       - name: Integridad del CSP
         run: npm run test:csp
+
+      - name: El sitio generado corresponde a los datos
+        run: npm run test:generado

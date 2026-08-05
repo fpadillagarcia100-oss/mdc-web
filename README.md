@@ -2,10 +2,40 @@
 
 Catálogo web de venta y renta de maquinaria pesada.
 
+## Cómo cambiar el catálogo
+
+**La fuente de verdad es [`data/catalogo.json`](data/catalogo.json).**
+
+```powershell
+# 1. Edita data/catalogo.json (equipos, sucursales, textos)
+# 2. Regenera el sitio
+npm run build
+# 3. Verifica y publica
+npm test
+git add -A && git commit -m "Actualiza catálogo" && git push
+```
+
+`npm run build` produce tres cosas:
+
+| Genera | Para qué |
+|---|---|
+| `assets/js/catalogo-datos.js` | Los datos que ve **cualquier visitante**, no sólo tu navegador |
+| `equipos/<slug>/index.html` | Una página por equipo, indexable por Google |
+| `sitemap.xml` | Con todas las direcciones reales |
+
+Netlify ejecuta `npm run build` en cada despliegue, así que basta con
+`git push`. Y `npm run test:generado` impide publicar con las fichas
+desactualizadas: si editas los datos y olvidas regenerar, el CI se pone rojo.
+
+> El panel de administración sigue guardando en `localStorage`, que **es local
+> a tu navegador**. Sirve para preparar y previsualizar; para que un cambio
+> llegue a los visitantes hay que volcarlo a `data/catalogo.json`. Eso
+> desaparece cuando entre el backend (ver [docs/BACKEND.md](docs/BACKEND.md)).
+
 ## Estado actual
 
-Sitio estático, sin servidor. Todo el catálogo, imágenes, logo y ajustes se
-guardan en el `localStorage` del navegador que los edita.
+Sitio estático, sin servidor. El catálogo viaja dentro del sitio publicado;
+las ediciones del panel viven en el `localStorage` del navegador que las hace.
 
 **Esto implica dos límites importantes:**
 
@@ -71,6 +101,7 @@ npm test        # las tres suites
 | `npm run test:unit` | Precios, descuentos, escapado, validación y normalización de datos |
 | `npm run test:smoke` | El sitio real en un navegador simulado: catálogo, páginas, formularios, carrito y PIN |
 | `npm run test:csp` | Que nadie haya metido JavaScript en línea, lo que anularía el CSP |
+| `npm run test:generado` | Que las fichas y el sitemap correspondan a `data/catalogo.json` |
 
 Corren solas en cada push gracias a `.github/workflows/ci.yml`.
 En local, córrelas antes de cada commit.

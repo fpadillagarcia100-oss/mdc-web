@@ -1,16 +1,118 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Por ahora sólo hay una URL: todo el sitio es una sola página y las secciones
-  se abren con JavaScript, así que Google no puede indexarlas por separado.
-
-  Cuando exista el backend, cada equipo tendrá su propia dirección
-  (/equipos/excavadora-cat-320-gc) y este archivo se generará solo. Ese es el
-  cambio que de verdad mueve la aguja para aparecer en búsquedas.
--->
+<!-- GENERADO AUTOMÁTICAMENTE por "npm run build". No lo edites a mano. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mdcmaquinaria.com/</loc>
+    <lastmod>2026-08-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/excavadora-cat-320-gc/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/excavadora-cat-336/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/excavadora-komatsu-pc290/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/retroexcavadora-jcb-3cx-pro/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/retroexcavadora-jcb-4cx/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/retroexcavadora-cat-416f2/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/bulldozer-komatsu-d65px/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/bulldozer-cat-d6t/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/bulldozer-komatsu-d51i/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/compactador-dynapac-ca250/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/compactador-bomag-bw-216/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/compactador-cat-cs533/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/minicargador-bobcat-s650/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/minicargador-cat-262d3/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/minicargador-bobcat-t450/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/grua-torre-liebherr-160ec/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/grua-torre-potain-mdt-178/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mdcmaquinaria.com/equipos/retroexcavadora-komatsu-wb97/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>

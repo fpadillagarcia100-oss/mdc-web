@@ -30,6 +30,8 @@ function normalizeProducts(list){
   if(!Array.isArray(list)) return DEFAULT_PRODUCTS.map(p=>({...p}));
   return list.filter(p=>p && typeof p==='object' && p.name).map((p,i)=>({
     id: Number.isFinite(p.id) ? p.id : i+1,
+    // Dirección de su página estática, generada por npm run build.
+    slug: typeof p.slug==='string' && /^[a-z0-9-]+$/.test(p.slug) ? p.slug : null,
     name: String(p.name),
     brand: String(p.brand||'Sin marca'),
     cat: String(p.cat||'General'),

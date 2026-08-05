@@ -7,6 +7,8 @@
 
 [build]
   publish = "."
+  # Regenera las fichas de equipo y el sitemap desde data/catalogo.json.
+  command = "npm run build"
 
 [[headers]]
   for = "/*"

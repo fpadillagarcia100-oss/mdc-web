@@ -1,0 +1,301 @@
+/**
+ * build.js — Genera el sitio a partir de los datos del catálogo.
+ *
+ * Produce tres cosas:
+ *
+ *   1. assets/js/catalogo-datos.js  — los datos que consume la aplicación.
+ *      Resuelve el problema de fondo del prototipo: hasta ahora el catálogo
+ *      vivía en el localStorage de quien lo editaba, así que los visitantes
+ *      veían siempre el de ejemplo. Ahora viaja dentro del sitio.
+ *
+ *   2. equipos/<slug>/index.html    — una página estática por equipo.
+ *      Es la mayor ganancia de posicionamiento: Google no puede indexar lo
+ *      que sólo existe después de ejecutar JavaScript. Con esto, cada máquina
+ *      tiene su propia dirección, su título y sus datos estructurados.
+ *
+ *   3. sitemap.xml                  — con todas las direcciones reales.
+ *
+ * La fuente de datos hoy es data/catalogo.json. Cuando exista el backend,
+ * basta cambiar leerCatalogo() por una consulta a Supabase: nada más de este
+ * archivo cambia.
+ *
+ * Se corre con:  npm run build
+ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const ROOT = path.join(__dirname, '..');
+const SITIO = 'https://mdcmaquinaria.com';
+
+/* ── Fuente de datos ─────────────────────────────────────────────────────
+   El único punto que cambia al migrar a Supabase.                        */
+function leerCatalogo() {
+  const crudo = fs.readFileSync(path.join(ROOT, 'data', 'catalogo.json'), 'utf8');
+  return JSON.parse(crudo);
+}
+
+/* ── Utilidades ── */
+const esc = s => String(s ?? '').replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const nf = new Intl.NumberFormat('es-MX');
+const precioCompleto = n => '$' + nf.format(n) + ' MXN';
+const precioCorto = n => n >= 1e6
+  ? '$' + ((n / 1e6) % 1 === 0 ? (n / 1e6).toFixed(0) : (n / 1e6).toFixed(2)) + ' M'
+  : '$' + nf.format(n);
+
+/** Reutiliza los mismos SVG del sitio, sin duplicarlos. */
+function cargarIconos() {
+  const ctx = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/icons.js'), 'utf8'), ctx);
+  return vm.runInContext('svgs', ctx);
+}
+
+/** Huella de la fuente, para detectar si lo generado quedó desactualizado. */
+function huellaFuente() {
+  const crudo = fs.readFileSync(path.join(ROOT, 'data', 'catalogo.json'));
+  return require('crypto').createHash('sha256').update(crudo).digest('hex').slice(0, 16);
+}
+
+/* ── 1. Datos para la aplicación ── */
+function generarDatos(catalogo) {
+  const destino = path.join(ROOT, 'assets/js/catalogo-datos.js');
+  const cuerpo = `/**
+ * catalogo-datos.js — GENERADO AUTOMÁTICAMENTE. No lo edites a mano.
+ *
+ * Se produce con "npm run build" a partir de data/catalogo.json.
+ * Cualquier cambio aquí se pierde en la siguiente compilación.
+ */
+'use strict';
+
+/* Huella de data/catalogo.json al momento de generar. La verifica
+   "npm run test:generado" para que nadie publique fichas desactualizadas. */
+const CATALOGO_HUELLA = '${huellaFuente()}';
+
+const CATALOGO = ${JSON.stringify(
+    { ajustes: catalogo.ajustes, sucursales: catalogo.sucursales, equipos: catalogo.equipos },
+    null, 2)};
+`;
+  fs.writeFileSync(destino, cuerpo, 'utf8');
+  return destino;
+}
+
+/* ── 2. Una página por equipo ── */
+function fichaHTML(eq, catalogo, iconos) {
+  const a = catalogo.ajustes;
+  const marca = a.marca_principal + a.marca_acento;
+  const url = `${SITIO}/equipos/${eq.slug}/`;
+  const esRenta = eq.cond === 'Renta';
+  const imagen = eq.img && eq.img.startsWith('http') ? eq.img : `${SITIO}/assets/img/og.png`;
+
+  const titulo = `${eq.name} — ${esRenta ? 'renta' : 'venta'} en ${eq.location} | ${marca}`;
+  const resumen = `${eq.name} ${eq.cond.toLowerCase()} en ${eq.location}. ` +
+    `${eq.specs.join(' · ')}. ${esRenta ? precioCompleto(eq.price) + ' al mes' : precioCompleto(eq.price)}. ` +
+    `${eq.finance ? eq.finance + ' sin intereses. ' : ''}${eq.shipping ? 'Envío incluido a obra.' : ''}`.trim();
+
+  // Datos estructurados: lo que permite que Google muestre precio y
+  // disponibilidad directamente en los resultados de búsqueda.
+  const oferta = esRenta
+    ? {
+        '@type': 'Offer', url, priceCurrency: 'MXN',
+        availability: 'https://schema.org/InStock',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          price: eq.price, priceCurrency: 'MXN',
+          unitText: 'MES', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'MES' },
+        },
+      }
+    : {
+        '@type': 'Offer', url, price: eq.price, priceCurrency: 'MXN',
+        availability: 'https://schema.org/InStock',
+        itemCondition: eq.cond === 'Nuevo'
+          ? 'https://schema.org/NewCondition'
+          : 'https://schema.org/UsedCondition',
+        seller: { '@type': 'Organization', name: a.vendedor },
+      };
+
+  const datos = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: eq.name,
+    description: eq.desc,
+    sku: eq.slug,
+    category: eq.cat,
+    image: imagen,
+    brand: { '@type': 'Brand', name: eq.brand },
+    offers: oferta,
+    additionalProperty: eq.specs.map(s => ({
+      '@type': 'PropertyValue', name: 'Especificación', value: s,
+    })),
+  };
+
+  const mensajeWa = `Hola ${marca}, me interesa el ${eq.name} (${url}). ¿Me pueden dar más información?`;
+  const wa = `https://wa.me/${String(a.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWa)}`;
+
+  const medio = eq.img
+    ? `<img src="${esc(eq.img)}" alt="${esc(eq.name)}">`
+    : (iconos[eq.svgKey] || iconos.excavadora);
+
+  const descuento = eq.original && eq.original > eq.price
+    ? Math.round((1 - eq.price / eq.original) * 100) : 0;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(titulo)}</title>
+<meta name="description" content="${esc(resumen)}">
+<meta name="theme-color" content="#1A1A1A">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'none'">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="product">
+<meta property="og:url" content="${url}">
+<meta property="og:title" content="${esc(eq.name)} — ${marca}">
+<meta property="og:description" content="${esc(resumen)}">
+<meta property="og:image" content="${esc(imagen)}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+<script type="application/ld+json">
+${JSON.stringify(datos, null, 2)}
+</script>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="/">
+      <span>
+        <span class="logo-text">${esc(a.marca_principal)}<span>${esc(a.marca_acento)}</span></span>
+        <span class="logo-sub">${esc(a.marca_completa)}</span>
+      </span>
+    </a>
+    <div class="header-actions">
+      <a class="hbtn" href="/#catalogo">← Ver todo el catálogo</a>
+      <a class="hbtn primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar por WhatsApp</a>
+    </div>
+  </div>
+</header>
+
+<main class="ficha">
+  <nav class="miga" aria-label="Ruta">
+    <a href="/">Inicio</a> ›
+    <a href="/#catalogo">${esc(eq.cat)}</a> ›
+    <span>${esc(eq.name)}</span>
+  </nav>
+
+  <div class="ficha-grid">
+    <div class="ficha-media">${medio}</div>
+
+    <div class="ficha-info">
+      <p class="ficha-cat">${esc(eq.cat)} · ${esc(eq.brand)}</p>
+      <h1>${esc(eq.name)}</h1>
+      <p class="ficha-meta">📍 ${esc(eq.location)} · Año ${eq.year} ·
+        <span class="pcard-seller-tag">✓ ${esc(eq.cond === 'Renta' ? 'En renta' : eq.cond === 'Nuevo' ? 'Nuevo' : 'Usado certificado')}</span>
+      </p>
+
+      <p class="ficha-precio">
+        ${precioCompleto(eq.price)}${esRenta ? '<small> / mes</small>' : ''}
+        ${descuento ? `<span class="pcard-original">${precioCorto(eq.original)}</span><span class="pcard-disc">−${descuento}%</span>` : ''}
+      </p>
+      ${eq.finance ? `<p class="ficha-extra">💳 ${esc(eq.finance)} sin intereses = ${precioCompleto(Math.round(eq.price / parseInt(eq.finance, 10)))} al mes</p>` : ''}
+      ${eq.leasing ? '<p class="ficha-extra">🏦 Disponible en arrendamiento puro</p>' : ''}
+      ${eq.shipping ? '<p class="ficha-extra">🚚 Envío incluido a pie de obra</p>' : ''}
+
+      <div class="ficha-specs">
+        ${eq.specs.map((s, i) => `<div class="modal-spec">
+          <div class="modal-spec-label">${['Capacidad', 'Potencia', 'Detalle'][i] || 'Especificación'}</div>
+          <div class="modal-spec-val">${esc(s)}</div></div>`).join('')}
+        <div class="modal-spec"><div class="modal-spec-label">Garantía</div>
+          <div class="modal-spec-val">${eq.cond === 'Nuevo' ? '12 meses de fábrica' : eq.cond === 'Renta' ? 'Incluida en la renta' : '6 meses certificada'}</div></div>
+      </div>
+
+      <p class="ficha-desc">${esc(eq.desc)}</p>
+
+      <div class="ficha-acciones">
+        <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar este equipo</a>
+        <a class="btn-ghost" href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">📞 ${esc(a.telefono)}</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-col">
+      <h4>${esc(marca)} · ${esc(a.marca_completa)}</h4>
+      <p style="max-width:300px;line-height:1.6">${esc(a.pie_descripcion)}</p>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <ul>
+        <li><a href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">${esc(a.telefono)}</a></li>
+        <li><a href="mailto:${esc(a.correo)}">${esc(a.correo)}</a></li>
+        <li>${esc(a.direccion)}</li>
+        <li>${esc(a.horario)}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-legal">Precio de referencia en MXN, no constituye una oferta comercial.</div>
+</footer>
+
+</body>
+</html>
+`;
+}
+
+function generarFichas(catalogo, iconos) {
+  const base = path.join(ROOT, 'equipos');
+  fs.rmSync(base, { recursive: true, force: true });   // borra fichas de equipos ya dados de baja
+  let n = 0;
+  for (const eq of catalogo.equipos) {
+    const dir = path.join(base, eq.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), fichaHTML(eq, catalogo, iconos), 'utf8');
+    n++;
+  }
+  return n;
+}
+
+/* ── 3. Sitemap ── */
+function generarSitemap(catalogo) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const urls = [
+    `  <url>\n    <loc>${SITIO}/</loc>\n    <lastmod>${hoy}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>`,
+    ...catalogo.equipos.map(eq =>
+      `  <url>\n    <loc>${SITIO}/equipos/${eq.slug}/</loc>\n    <lastmod>${hoy}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>`),
+  ];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!-- GENERADO AUTOMÁTICAMENTE por "npm run build". No lo edites a mano. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('\n')}
+</urlset>
+`;
+  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml, 'utf8');
+  return urls.length;
+}
+
+/* ── Ejecución ── */
+const catalogo = leerCatalogo();
+const iconos = cargarIconos();
+
+const faltantes = catalogo.equipos.filter(e => !e.slug);
+if (faltantes.length) {
+  console.error(`Hay ${faltantes.length} equipos sin "slug" en data/catalogo.json. Sin él no se puede generar su página.`);
+  process.exit(1);
+}
+
+generarDatos(catalogo);
+const fichas = generarFichas(catalogo, iconos);
+const urls = generarSitemap(catalogo);
+
+console.log('Sitio generado:');
+console.log(`  assets/js/catalogo-datos.js   ${catalogo.equipos.length} equipos, ${catalogo.sucursales.length} sucursales`);
+console.log(`  equipos/<slug>/index.html     ${fichas} fichas`);
+console.log(`  sitemap.xml                   ${urls} direcciones`);

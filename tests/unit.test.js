@@ -26,7 +26,8 @@ const ctx = vm.createContext({
   Intl, Math, Date, JSON, Set, Number, String, Array, Object, RegExp,
   console, TextEncoder,
 });
-['icons.js', 'config.js', 'utils.js', 'security.js', 'storage.js', 'state.js']
+// El orden importa: catalogo-datos.js define CATALOGO, del que depende config.js.
+['icons.js', 'catalogo-datos.js', 'config.js', 'utils.js', 'security.js', 'storage.js', 'state.js']
   .forEach(f => vm.runInContext(load(f), ctx, { filename: f }));
 
 const run = expr => vm.runInContext(expr, ctx);

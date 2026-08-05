@@ -93,6 +93,7 @@ function openModal(id){
     <div class="modal-actions">
       <button class="modal-add" type="button" data-add="${p.id}" data-close-after>+ Agregar a cotización</button>
       <button class="modal-quote" type="button" data-fav="${p.id}">${favorites.has(p.id)?'♥ Guardado':'♡ Guardar'}</button>
+      ${p.slug?`<a class="modal-quote" href="/equipos/${esc(p.slug)}/" style="text-decoration:none">Ficha completa ↗</a>`:''}
       ${isAdmin?`<button class="modal-quote" type="button" data-edit="${p.id}">✎ Editar</button>`:''}
     </div>`;
 
