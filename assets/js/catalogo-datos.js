@@ -8,7 +8,7 @@
 
 /* Huella de data/catalogo.json al momento de generar. La verifica
    "npm run test:generado" para que nadie publique fichas desactualizadas. */
-const CATALOGO_HUELLA = 'ba9c6d210f83ae2a';
+const CATALOGO_HUELLA = '1853b9e900085204';
 
 const CATALOGO = {
   "ajustes": {
