@@ -95,6 +95,7 @@ function equipoDesdeFila(f) {
     imgs: f.imagen_url ? [f.imagen_url] : [],
     hot: f.destacado,
     publicado: f.publicado,
+    disponibilidad: f.disponibilidad || 'disponible',
   };
 }
 
@@ -125,6 +126,7 @@ function filaDesdeEquipo(p) {
     icono: p.svgKey || 'excavadora',
     destacado: !!p.hot,
     publicado: p.publicado !== false,
+    disponibilidad: ['disponible','apartado','vendido'].includes(p.disponibilidad) ? p.disponibilidad : 'disponible',
   };
 }
 
@@ -306,4 +308,82 @@ async function remotoPublicar() {
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error || `No se pudo publicar (${r.status}).`);
   return d;
+}
+
+
+/* ── Solicitudes ────────────────────────────────────────────────────────────
+   La bandeja de cotizaciones. Sólo la ve el personal: la política de la base
+   rechaza esta consulta a cualquiera sin sesión de administrador, y eso está
+   comprobado en tests/seguridad.test.js. */
+
+/** Trae las solicitudes, las más recientes primero. */
+async function remotoSolicitudes(estado = null) {
+  const filtro = estado ? `&estado=eq.${encodeURIComponent(estado)}` : '';
+  return apiRemota(`solicitudes?select=*&order=creado_en.desc&limit=200${filtro}`);
+}
+
+/**
+ * Cambia el estado de una solicitud.
+ *
+ * No hay forma de borrarlas, ni siquiera siendo admin: son registro comercial
+ * y evidencia del consentimiento con que se dieron los datos. Se cierran o se
+ * marcan como spam, pero se quedan.
+ */
+async function remotoEstadoSolicitud(id, estado) {
+  const filas = await apiRemota(`solicitudes?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH', body: JSON.stringify({ estado }),
+  });
+  if (!filas || !filas.length) throw new Error('No se pudo actualizar. ¿Sigue abierta tu sesión?');
+  return filas[0];
+}
+
+/* ── Fotos ──────────────────────────────────────────────────────────────────
+   Van al almacenamiento de Supabase, no incrustadas en la base.
+
+   El sistema viejo las guardaba como texto dentro del navegador de quien las
+   subía: ocupaban el límite de 5 MB del localStorage, no las veía nadie más y
+   se perdían al limpiar el navegador. Aquí quedan en un CDN, con dirección
+   permanente, y las ve todo el mundo. */
+
+/**
+ * Sube una foto y devuelve su dirección pública.
+ *
+ * @param {Blob} archivo   ya redimensionado y comprimido por el panel
+ * @param {string} slug    para agrupar las fotos por equipo
+ */
+async function remotoSubirFoto(archivo, slug) {
+  const token = await tokenValido();
+  if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
+
+  const ext = (archivo.type.split('/')[1] || 'webp').replace('jpeg', 'jpg');
+  /* El nombre lleva un sufijo aleatorio a propósito. Con un nombre fijo por
+     equipo, cambiar la foto dejaría la vieja en el caché del CDN y de los
+     navegadores durante horas: subirías una nueva y seguirías viendo la
+     anterior sin entender por qué. Un nombre distinto se ve al instante. */
+  const sufijo = Math.random().toString(36).slice(2, 10);
+  const ruta = `${slug || 'equipo'}/${Date.now()}-${sufijo}.${ext}`;
+
+  const r = await fetch(`${BACKEND.url}/storage/v1/object/equipos/${ruta}`, {
+    method: 'POST',
+    headers: {
+      apikey: BACKEND.llave,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': archivo.type,
+    },
+    body: archivo,
+    signal: AbortSignal.timeout(60000),
+  });
+
+  if (!r.ok) {
+    const detalle = await r.text();
+    if (/exceeded the maximum allowed size/i.test(detalle)) {
+      throw new Error('La foto pesa demasiado. El límite del servidor son 3 MB.');
+    }
+    if (r.status === 401 || r.status === 403) {
+      throw new Error('No tienes permiso para subir fotos. ¿Sigue abierta tu sesión?');
+    }
+    throw new Error('No se pudo subir la foto: ' + detalle.slice(0, 150));
+  }
+
+  return `${BACKEND.url}/storage/v1/object/public/equipos/${ruta}`;
 }

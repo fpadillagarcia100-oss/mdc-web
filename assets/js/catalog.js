@@ -107,6 +107,11 @@ function renderNav(){
 
 /* ══════════════════ RENDER: PRODUCTOS ══════════════════ */
 function badgeHTML(p){
+  /* Vendido y apartado van PRIMERO, por encima de "Nuevo" o "Mas vendido".
+     Un equipo vendido con la etiqueta de oferta es una llamada perdida para
+     los dos: el cliente se ilusiona y tu explicas lo mismo por decima vez. */
+  if(p.disponibilidad==='vendido') return '<span class="pcard-badge badge-vendido">Vendido</span>';
+  if(p.disponibilidad==='apartado') return '<span class="pcard-badge badge-apartado">Apartado</span>';
   if(p.cond==='Renta') return '<span class="pcard-badge badge-rent">En renta</span>';
   if(p.hot) return '<span class="pcard-badge badge-hot">🔥 Más vendido</span>';
   if(p.cond==='Nuevo') return '<span class="pcard-badge badge-new">Nuevo</span>';
@@ -126,7 +131,8 @@ function priceHTML(p){
 
 function cardHTML(p){
   const fav = favorites.has(p.id);
-  return `<article class="pcard">
+  const agotado = p.disponibilidad === 'vendido' || p.disponibilidad === 'apartado';
+  return `<article class="pcard${agotado?' agotado':''}">
     <div class="pcard-img">
       ${productMedia(p)}
       ${p.imgs.length>1?`<span class="pcard-fotos" aria-label="${p.imgs.length} fotos">📷 ${p.imgs.length}</span>`:''}

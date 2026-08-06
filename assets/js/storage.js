@@ -63,7 +63,10 @@ function normalizeProducts(list){
     imgs,
     // Portada. Se deriva de imgs para que no puedan contradecirse entre sí.
     img: imgs[0] || null,
-    hot: !!p.hot
+    hot: !!p.hot,
+    // Un valor desconocido se trata como disponible: mas vale que una etiqueta
+    // no aparezca a que un equipo se marque "vendido" por un dato raro.
+    disponibilidad: ['apartado','vendido'].includes(p.disponibilidad) ? p.disponibilidad : 'disponible'
   }});
 }
 

@@ -253,8 +253,14 @@ const ev = code => window.eval(code);
 
   /* Lo que sigue se verifica sobre la hoja de estilos porque jsdom no calcula
      diseño: no puede decirnos cómo QUEDA la página, sólo qué reglas existen. */
+  /* Se juntan TODOS los bloques de impresión, no sólo el primero.
+
+     Antes esto era `.split('@media print')[1]`, que se queda con lo que sigue
+     al primero. El día que aparezca un segundo bloque —pasó al añadir el botón
+     de WhatsApp— las comprobaciones empiezan a leer el bloque equivocado y
+     fallan por un motivo que no tiene nada que ver con lo que prueban. */
   const impresion = fs.readFileSync(path.join(ROOT, 'assets/css/styles.css'), 'utf8')
-    .split('@media print')[1] || '';
+    .split('@media print').slice(1).join(' ');
 
   /* Imprimir una mensualidad sin el aviso de que es un estimado sería
      presentarla como una oferta en firme. */
@@ -406,6 +412,35 @@ const ev = code => window.eval(code);
      seguía visible en la pantalla de acceso (el CSS le ganaba al atributo
      hidden), y el clic llamaba a renderAdmin() directo, sin pasar por la
      comprobación de sesión. Se entraba al panel completo sin contraseña. */
+  /* ── Lo nuevo ── */
+  check('El botón flotante de WhatsApp existe y apunta al número del sitio',
+    $('#waFloat') !== null &&
+    ev('typeof waLink') === 'function' &&
+    ev("waLink('x')").includes(ev('settings.whatsapp')));
+
+  /* Un equipo vendido con la etiqueta de "más vendido" es una llamada perdida
+     para los dos: el cliente se ilusiona y hay que explicarlo otra vez. */
+  ev("products[0].disponibilidad = 'vendido'; products[0].hot = true; render()");
+  check('Vendido gana a cualquier otra etiqueta',
+    $('.pcard .pcard-badge').textContent.trim() === 'Vendido',
+    $('.pcard .pcard-badge').textContent.trim());
+
+  check('La tarjeta vendida se atenúa',
+    $('.pcard').classList.contains('agotado'));
+
+  ev("products[0].disponibilidad = 'apartado'; render()");
+  check('Apartado también se marca',
+    $('.pcard .pcard-badge').textContent.trim() === 'Apartado');
+
+  ev("products[0].disponibilidad = 'disponible'; products[0].hot = true; render()");
+  check('Un equipo disponible recupera su etiqueta normal',
+    $('.pcard .pcard-badge').textContent.includes('vendido') === false ||
+    $('.pcard .pcard-badge').textContent.includes('Más'),
+    $('.pcard .pcard-badge').textContent.trim());
+
+  check('Las fotos ya no se guardan como texto incrustado',
+    ev('typeof fileToBlob') === 'function' && ev('typeof remotoSubirFoto') === 'function');
+
   check('Las pestañas están ocultas sin sesión',
     $('#adminTabs').hidden === true);
 

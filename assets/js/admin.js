@@ -219,6 +219,7 @@ function renderAdmin(){
   const body = $('#adminBody');
   if(editingId !== null) body.innerHTML = productFormHTML();
   else if(adminTab==='products') body.innerHTML = productListHTML();
+  else if(adminTab==='solicitudes') body.innerHTML = solicitudesHTML();
   else if(adminTab==='brand') body.innerHTML = brandHTML();
   else if(adminTab==='site') body.innerHTML = siteHTML();
   else body.innerHTML = backupHTML();
@@ -238,6 +239,109 @@ function renderAdmin(){
 
   const form = $('#pForm');
   if(form) form.addEventListener('submit', e=>{ e.preventDefault(); saveProductForm() });
+
+  if(adminTab==='solicitudes' && solicitudes === null) cargarSolicitudes();
+}
+
+/* ══════════════════ COTIZACIONES ══════════════════
+
+   La bandeja de trabajo. Hasta ahora había que entrar a Supabase y leer
+   columnas en crudo; aquí se ven como lo que son: gente que pidió precio.
+
+   `null` significa "todavía no se han pedido", que no es lo mismo que "no hay
+   ninguna". Distinguirlo evita enseñar "no tienes cotizaciones" mientras la
+   consulta va en camino — un mensaje que asusta y encima es falso. */
+let solicitudes = null;
+
+async function cargarSolicitudes(){
+  try{
+    solicitudes = await remotoSolicitudes();
+  }catch(err){
+    solicitudes = [];
+    showToast('No se pudieron cargar las cotizaciones: ' + err.message, true);
+  }
+  if(isAdmin && adminTab==='solicitudes') renderAdmin();
+}
+
+const ETIQUETA_ESTADO = {
+  nueva:    {texto:'Nueva',    clase:'badge-new'},
+  atendida: {texto:'Atendida', clase:'badge-rent'},
+  cerrada:  {texto:'Cerrada',  clase:'badge-used'},
+  spam:     {texto:'Spam',     clase:'badge-vendido'},
+};
+
+function solicitudesHTML(){
+  if(solicitudes === null) return '<p class="adm-note">Cargando cotizaciones…</p>';
+
+  if(!solicitudes.length) return `
+    <div class="empty-state" style="border:none;background:#FAFAFA">
+      <div class="icon">📨</div><h3>Todavía no hay cotizaciones</h3>
+      <p>Aquí van a aparecer las solicitudes que llegue por el formulario del sitio,
+         con sus datos de contacto y lo que pidieron.</p>
+    </div>`;
+
+  const nuevas = solicitudes.filter(s => s.estado==='nueva').length;
+
+  return `
+    <p class="adm-note">${solicitudes.length} solicitudes${nuevas?` · <strong>${nuevas} sin atender</strong>`:''}.
+      No se pueden borrar: son registro comercial y la evidencia de que el cliente
+      dio sus datos. Se marcan como atendida, cerrada o spam.</p>
+    <table class="adm-table">
+      <thead><tr>
+        <th>Cuándo</th><th>Quién</th><th class="hide-sm">Pidió</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${solicitudes.map(s => solicitudFilaHTML(s)).join('')}
+      </tbody>
+    </table>`;
+}
+
+function solicitudFilaHTML(s){
+  const f = new Date(s.creado_en);
+  const cuando = f.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}) + ' · ' +
+                 f.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const et = ETIQUETA_ESTADO[s.estado] || ETIQUETA_ESTADO.nueva;
+  const carrito = Array.isArray(s.carrito) ? s.carrito : [];
+
+  /* El teléfono es un enlace directo a WhatsApp con el nombre ya escrito.
+     Ese es el gesto que convierte una lista en una herramienta: se ve la
+     solicitud y se contesta sin copiar números a mano. */
+  const wa = `https://wa.me/52${String(s.telefono).replace(/\D/g,'')}?text=` +
+    encodeURIComponent(`Hola ${s.nombre}, le escribo de ${settings.brandMain}${settings.brandAccent} por su solicitud.`);
+
+  return `<tr>
+    <td style="white-space:nowrap;font-size:12px">${esc(cuando)}</td>
+    <td>
+      <div style="font-weight:600">${esc(s.nombre)}</div>
+      <div style="font-size:12px">
+        <a href="${wa}" target="_blank" rel="noopener">💬 ${esc(s.telefono)}</a>
+        ${s.correo?` · ${esc(s.correo)}`:''}
+      </div>
+      ${s.empresa?`<div style="font-size:12px;color:var(--muted)">${esc(s.empresa)}</div>`:''}
+    </td>
+    <td class="hide-sm" style="font-size:12px">
+      ${s.tipo==='publicacion'?'<em>Quiere vender un equipo</em>':''}
+      ${carrito.length?carrito.map(i=>`${i.cantidad||1}× ${esc(i.nombre||i.slug||'')}`).join('<br>'):''}
+      ${s.mensaje?`<div style="color:var(--muted);margin-top:4px">${esc(String(s.mensaje).slice(0,180))}</div>`:''}
+    </td>
+    <td><span class="pcard-badge ${et.clase}" style="position:static">${et.texto}</span></td>
+    <td style="white-space:nowrap">
+      ${s.estado!=='atendida'?`<button class="icon-btn" type="button" data-sol="${s.id}" data-estado="atendida" title="Marcar como atendida">✓</button>`:''}
+      ${s.estado!=='cerrada'?`<button class="icon-btn" type="button" data-sol="${s.id}" data-estado="cerrada" title="Cerrar">📁</button>`:''}
+      ${s.estado!=='spam'?`<button class="icon-btn" type="button" data-sol="${s.id}" data-estado="spam" title="Marcar como spam">🚫</button>`:''}
+    </td>
+  </tr>`;
+}
+
+async function cambiarEstadoSolicitud(id, estado){
+  try{
+    const actualizada = await remotoEstadoSolicitud(id, estado);
+    const i = solicitudes.findIndex(s => s.id === id);
+    if(i >= 0) solicitudes[i] = actualizada;
+    renderAdmin();
+  }catch(err){
+    showToast(err.message, true);
+  }
 }
 
 /* ── Listado de equipos ── */
@@ -347,6 +451,14 @@ function productFormHTML(){
           <select id="f-cond">${CONDS.map(c=>`<option value="${c}"${v.cond===c?' selected':''}>${COND_LABELS[c]}</option>`).join('')}</select>
         </div>
         <div class="field">
+          <label for="f-disp">Disponibilidad</label>
+          <select id="f-disp">
+            <option value="disponible"${(v.disponibilidad||'disponible')==='disponible'?' selected':''}>Disponible</option>
+            <option value="apartado"${v.disponibilidad==='apartado'?' selected':''}>Apartado</option>
+            <option value="vendido"${v.disponibilidad==='vendido'?' selected':''}>Vendido</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="f-location">Ubicación</label>
           <input type="text" id="f-location" list="dl-locs" value="${esc(v.location)}" placeholder="Tuxtla Gutiérrez">
           <datalist id="dl-locs">${locations().map(l=>`<option value="${esc(l)}">`).join('')}</datalist>
@@ -421,7 +533,8 @@ function readForm(){
     year: num('f-year') || new Date().getFullYear(),
     specs: val('f-specs').split(',').map(s=>s.trim()).filter(Boolean),
     desc: val('f-desc'),
-    svgKey: val('f-svg')
+    svgKey: val('f-svg'),
+    disponibilidad: val('f-disp') || 'disponible'
   };
 }
 
@@ -918,20 +1031,69 @@ async function handleImageFiles(files, target){
   if(espacio <= 0){ showToast(`Máximo ${MAX_FOTOS} fotos por equipo`, true); return }
 
   const aceptadas = lista.slice(0, espacio);
-  showToast(aceptadas.length>1 ? `Procesando ${aceptadas.length} imágenes…` : 'Procesando imagen…');
+  showToast(aceptadas.length>1 ? `Subiendo ${aceptadas.length} fotos…` : 'Subiendo foto…');
 
-  // Una imagen corrupta no debe tirar las demás: se reporta y se sigue.
+  /* Se comprime ANTES de subir, no después.
+
+     Una foto de celular ronda los 4-8 MB y el servidor rechaza cualquier cosa
+     por encima de 3. Comprimiendo aquí a 1400 px se queda en unos cientos de
+     KB: sube en segundos incluso con mala señal, y en pantalla se ve igual.
+     Subir el original sería tardar diez veces más para que el visitante
+     descargue una foto que su pantalla no puede aprovechar. */
+  const prev = editingId ? products.find(p=>p.id===editingId) : null;
+  const slug = prev?.slug || (($('#f-name')?.value || 'equipo').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''));
+
   const fallidas = [];
   for(const file of aceptadas){
-    try{ fotos.push(await fileToDataURL(file, 1000, .82)) }
-    catch(err){ fallidas.push(file.name || 'una imagen') }
+    try{
+      const comprimida = await fileToBlob(file, 1400, .82);
+      fotos.push(await remotoSubirFoto(comprimida, slug));
+    }catch(err){
+      fallidas.push(`${file.name || 'una imagen'} (${err.message})`);
+    }
   }
   draftImgs = fotos;
   renderAdmin();
 
-  if(fallidas.length) showToast(`No se pudieron leer: ${fallidas.join(', ')}`, true);
-  else if(lista.length > espacio) showToast(`Se agregaron ${aceptadas.length}; el tope es ${MAX_FOTOS} fotos`, true);
-  else showToast(aceptadas.length>1 ? `${aceptadas.length} fotos agregadas` : 'Foto agregada');
+  if(fallidas.length) showToast('No se subieron: ' + fallidas.join(' · '), true);
+  else if(lista.length > espacio) showToast(`Se subieron ${aceptadas.length}; el tope es ${MAX_FOTOS} fotos`, true);
+  else showToast(aceptadas.length>1 ? `${aceptadas.length} fotos subidas` : 'Foto subida');
+}
+
+/**
+ * Comprime una imagen y la devuelve como Blob, listo para subir.
+ *
+ * Es fileToDataURL pero sin convertir a texto. La conversión a data URI infla
+ * el tamaño un 33% y sólo servía para meter la foto en el localStorage — que
+ * es justamente lo que dejamos de hacer.
+ */
+async function fileToBlob(file, maxW = 1400, quality = 0.82){
+  if(!file.type.startsWith('image/')) throw new Error('no es una imagen');
+
+  // Los SVG no se rasterizan: son vectores y pesan poco. Van tal cual.
+  if(file.type === 'image/svg+xml'){
+    if(file.size > 200*1024) throw new Error('el SVG pesa más de 200 KB');
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const escala = Math.min(1, maxW / bitmap.width);
+  const w = Math.max(1, Math.round(bitmap.width*escala));
+  const h = Math.max(1, Math.round(bitmap.height*escala));
+
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  // Sin fondo blanco, un JPEG con transparencia sale con manchas negras.
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  if(bitmap.close) bitmap.close();
+
+  const blob = await new Promise(res => c.toBlob(res, 'image/webp', quality));
+  if(!blob) throw new Error('no se pudo comprimir');
+  if(blob.size > 3*1024*1024) throw new Error('sigue pesando más de 3 MB');
+  return blob;
 }
 
 async function handleImageFile(file, target){

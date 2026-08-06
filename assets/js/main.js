@@ -47,6 +47,9 @@ document.addEventListener('click', e => {
   const fotoQuita = t.closest('[data-foto-quita]');
   if(fotoQuita){ quitarFoto(Number(fotoQuita.dataset.fotoQuita)); return }
 
+  const solBtn = t.closest('[data-sol]');
+  if(solBtn){ cambiarEstadoSolicitud(Number(solBtn.dataset.sol), solBtn.dataset.estado); return }
+
   const dupBtn = t.closest('[data-dup]');
   if(dupBtn){ duplicateProduct(Number(dupBtn.dataset.dup)); return }
 
@@ -289,6 +292,33 @@ document.addEventListener('keydown', e => {
 
 /* ══════════════════ INIT ══════════════════ */
 restaurarSesion();   // asíncrono: el panel se abre al confirmar, no antes
+
+/* ── Botón flotante de WhatsApp ──
+   El mensaje cambia según dónde esté el cliente: si tiene equipos en la
+   cotización los nombra, y si está viendo una ficha, la menciona. No es
+   adorno — que el cliente no tenga que explicar qué máquina le interesa
+   quita el principal motivo por el que la gente no escribe. */
+$('#waFloat').addEventListener('click', () => {
+  const enCarrito = cartLines();
+  let msg;
+
+  if(enCarrito.length){
+    msg = [
+      `Hola ${settings.brandMain}${settings.brandAccent}, me interesan:`,
+      '',
+      ...enCarrito.map(i => `• ${i.qty}× ${i.name}`),
+      '',
+      '¿Me pueden dar más información?',
+    ].join('\n');
+  }else{
+    const abierto = products.find(p => p.id === galeria.id);
+    msg = abierto
+      ? `Hola, me interesa la ${abierto.name} que vi en su página. ¿Sigue disponible?`
+      : `Hola ${settings.brandMain}${settings.brandAccent}, vi su página y quiero información sobre sus equipos.`;
+  }
+
+  window.open(waLink(msg), '_blank', 'noopener');
+});
 cart = cart.filter(c=>products.some(p=>p.id===c.id));
 favorites = new Set([...favorites].filter(id=>products.some(p=>p.id===id)));
 if(!Array.isArray(settings.branches)) settings.branches = DEFAULT_SETTINGS.branches.map(b=>({...b}));
