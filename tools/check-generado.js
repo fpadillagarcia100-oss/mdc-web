@@ -72,6 +72,36 @@ if (faltanEnSitemap.length) {
   problemas.push(`${faltanEnSitemap.length} equipos no aparecen en sitemap.xml. Google no los encontrará.`);
 }
 
+/* 5. ¿Cada ficha dice la verdad sobre la disponibilidad y ofrece alternativas?
+
+   La disponibilidad importa porque es lo que Google enseña en los resultados.
+   Si una máquina vendida sigue anunciándose como disponible, entran llamadas
+   por algo que ya no existe — la peor llamada que puede recibir un vendedor.
+
+   Los equipos similares importan porque quien llega desde Google cae en UNA
+   ficha: sin nada más que mirar, se va. */
+const ESPERADO = {
+  disponible: 'schema.org/InStock',
+  apartado:   'schema.org/LimitedAvailability',
+  vendido:    'schema.org/SoldOut',
+};
+
+for (const eq of catalogo.equipos) {
+  const ficha = path.join(dirFichas, eq.slug, 'index.html');
+  if (!fs.existsSync(ficha)) continue;
+  const html = fs.readFileSync(ficha, 'utf8');
+
+  const debe = ESPERADO[eq.disponibilidad || 'disponible'];
+  if (!html.includes(debe)) {
+    problemas.push(`${eq.slug}: la ficha no le dice a Google "${eq.disponibilidad || 'disponible'}".`);
+  }
+
+  // Con tres equipos o menos no hay nada que sugerir.
+  if (catalogo.equipos.length > 3 && !html.includes('class="similar"')) {
+    problemas.push(`${eq.slug}: la ficha no ofrece equipos similares.`);
+  }
+}
+
 if (problemas.length) {
   console.error('El sitio generado no corresponde a los datos:\n');
   problemas.forEach(p => console.error('  · ' + p));

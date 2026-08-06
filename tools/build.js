@@ -154,6 +154,53 @@ const BACKEND_CONFIG = ${configBackend()};
   return destino;
 }
 
+/**
+ * Equipos relacionados para el pie de la ficha.
+ *
+ * Quien llega desde Google cae en UNA máquina. Si no le convence, se va — hoy
+ * no hay nada que le invite a mirar otra. Y quien busca una retro de 8
+ * toneladas casi siempre está dispuesto a ver dos o tres parecidas.
+ *
+ * Se prefieren las de la misma categoría y, dentro de ellas, las de precio más
+ * cercano: quien mira una máquina de un millón no está buscando una de cien
+ * mil. Si la categoría no da para tres, se completa con el resto del catálogo
+ * ordenado por cercanía de precio — mejor tres sugerencias que una sola fila
+ * a medias.
+ *
+ * Los vendidos quedan fuera: no tiene sentido rematar una ficha invitando a
+ * ver algo que tampoco está.
+ */
+function similaresHTML(eq, catalogo, iconos) {
+  const candidatos = catalogo.equipos.filter(o =>
+    o.slug !== eq.slug && o.disponibilidad !== 'vendido');
+
+  const cerca = (a, b) => Math.abs(a.price - eq.price) - Math.abs(b.price - eq.price);
+  const mismaCat = candidatos.filter(o => o.cat === eq.cat).sort(cerca);
+  const resto = candidatos.filter(o => o.cat !== eq.cat).sort(cerca);
+  const elegidos = [...mismaCat, ...resto].slice(0, 3);
+
+  if (!elegidos.length) return '';
+
+  return `
+  <section class="similares">
+    <h2>Otros equipos que te pueden servir</h2>
+    <div class="similares-grid">
+      ${elegidos.map(o => `
+        <a class="similar" href="${SITIO}/equipos/${o.slug}/">
+          <div class="similar-img">${
+            o.img ? `<img src="${esc(o.img)}" alt="${esc(o.name)}" loading="lazy" decoding="async">`
+                  : (iconos[o.svgKey] || iconos.excavadora)
+          }</div>
+          <div class="similar-body">
+            <p class="similar-cat">${esc(o.cat)} · ${esc(o.brand)}</p>
+            <h3>${esc(o.name)}</h3>
+            <p class="similar-precio">${precioCorto(o.price)}${o.cond === 'Renta' ? ' <small>/mes</small>' : ''}</p>
+          </div>
+        </a>`).join('')}
+    </div>
+  </section>`;
+}
+
 /* ── 2. Una página por equipo ── */
 function fichaHTML(eq, catalogo, iconos) {
   const a = catalogo.ajustes;
@@ -173,12 +220,28 @@ function fichaHTML(eq, catalogo, iconos) {
     `${eq.specs.join(' · ')}. ${esRenta ? precioCompleto(eq.price) + ' al mes' : precioCompleto(eq.price)}. ` +
     `${eq.finance ? eq.finance + ' sin intereses. ' : ''}${eq.shipping ? 'Envío incluido a obra.' : ''}`.trim();
 
-  // Datos estructurados: lo que permite que Google muestre precio y
-  // disponibilidad directamente en los resultados de búsqueda.
+  /* Datos estructurados: lo que permite que Google muestre precio y
+     disponibilidad directamente en los resultados de búsqueda.
+
+     La disponibilidad tiene que ser la de verdad. Antes decía siempre
+     "InStock", así que una máquina vendida seguía anunciándose como
+     disponible en Google durante meses — y esa es la peor llamada que puedes
+     recibir: el cliente llega ilusionado por algo que ya no existe y tú
+     explicas lo mismo por décima vez.
+
+     Marcarla como vendida es además lo que hace que Google deje de mostrarla
+     arriba, sin que tengas que borrar la página y perder su posicionamiento. */
+  const DISPONIBILIDAD = {
+    disponible: 'https://schema.org/InStock',
+    apartado:   'https://schema.org/LimitedAvailability',
+    vendido:    'https://schema.org/SoldOut',
+  };
+  const existencias = DISPONIBILIDAD[eq.disponibilidad] || DISPONIBILIDAD.disponible;
+
   const oferta = esRenta
     ? {
         '@type': 'Offer', url, priceCurrency: 'MXN',
-        availability: 'https://schema.org/InStock',
+        availability: existencias,
         priceSpecification: {
           '@type': 'UnitPriceSpecification',
           price: eq.price, priceCurrency: 'MXN',
@@ -187,7 +250,7 @@ function fichaHTML(eq, catalogo, iconos) {
       }
     : {
         '@type': 'Offer', url, price: eq.price, priceCurrency: 'MXN',
-        availability: 'https://schema.org/InStock',
+        availability: existencias,
         itemCondition: eq.cond === 'Nuevo'
           ? 'https://schema.org/NewCondition'
           : 'https://schema.org/UsedCondition',
@@ -289,6 +352,11 @@ ${JSON.stringify(datos, null, 2)}
     <div class="ficha-info">
       <p class="ficha-cat">${esc(eq.cat)} · ${esc(eq.brand)}</p>
       <h1>${esc(eq.name)}</h1>
+      ${eq.disponibilidad === 'vendido' ? `
+        <p class="ficha-agotado">Esta máquina ya se vendió.
+          <a href="${SITIO}/#catalogo">Ver equipos disponibles</a></p>` : ''}
+      ${eq.disponibilidad === 'apartado' ? `
+        <p class="ficha-agotado apartado">Apartada. Escríbenos por si se libera.</p>` : ''}
       <p class="ficha-meta">📍 ${esc(eq.location)} · Año ${eq.year} ·
         <span class="pcard-seller-tag">✓ ${esc(eq.cond === 'Renta' ? 'En renta' : eq.cond === 'Nuevo' ? 'Nuevo' : 'Usado certificado')}</span>
       </p>
@@ -320,6 +388,8 @@ ${JSON.stringify(datos, null, 2)}
   </div>
 
   ${esRenta ? '' : calculadoraHTML(eq.price, { msi: eq.finance })}
+
+  ${similaresHTML(eq, catalogo, iconos)}
 
   <p class="solo-impresion">
     ${esc(marca)} · ${esc(a.marca_completa)} · ${esc(a.telefono)} · ${esc(a.correo)}<br>

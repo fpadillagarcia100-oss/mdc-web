@@ -118,8 +118,12 @@ function badgeHTML(p){
   return '<span class="pcard-badge badge-used">Usado cert.</span>';
 }
 
+/* `decoding="async"` deja que el navegador descomprima la foto sin frenar el
+   dibujado de la pagina. Con nueve tarjetas y fotos de verdad, la diferencia
+   se nota en un celular de obra: la pagina responde mientras las imagenes
+   siguen llegando, en vez de quedarse tiesa. */
 const productMedia = (p, alt=true) => p.img
-  ? `<img src="${esc(p.img)}" alt="${alt?esc(p.name):''}" loading="lazy">`
+  ? `<img src="${esc(p.img)}" alt="${alt?esc(p.name):''}" loading="lazy" decoding="async">`
   : (svgs[p.svgKey] || svgs.excavadora);
 
 function priceHTML(p){

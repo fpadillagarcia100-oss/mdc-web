@@ -656,6 +656,9 @@ body.con-cmp{padding-bottom:78px}
    cómo contactar. Nada de menús, botones ni controles que en papel no sirven. */
 .solo-impresion,.print-marca{display:none}
 @media print{
+  /* Los equipos similares no van en una ficha impresa. */
+  .similares{display:none}
+
   /* En papel no sirve un boton. */
   .wa-float{display:none}
 
@@ -728,3 +731,40 @@ body.con-cmp{padding-bottom:78px}
 .fin-op strong{display:block;font-size:13px;margin-bottom:4px}
 .fin-op p{font-size:12px;color:var(--muted);line-height:1.65}
 @media(max-width:600px){ .fin-selector{grid-template-columns:1fr} }
+
+
+/* ══════════════════ FICHA: AVISO Y EQUIPOS SIMILARES ══════════════════ */
+
+/* El aviso va ARRIBA, junto al título, no al final. Alguien que llega desde
+   Google no lee la ficha entera: mira la foto y el precio. Si el "vendido"
+   está abajo, se entera después de escribirte. */
+.ficha-agotado{background:#37474F;color:#fff;padding:10px 14px;border-radius:6px;
+  font-weight:600;margin:10px 0 14px;font-size:14px}
+.ficha-agotado.apartado{background:#F57C00}
+.ficha-agotado a{color:#fff;text-decoration:underline}
+
+.similares{max-width:1080px;margin:0 auto;padding:8px 20px 40px}
+.similares h2{font-size:19px;margin-bottom:16px}
+.similares-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+.similar{display:block;background:var(--white);border:1px solid var(--border);border-radius:8px;
+  overflow:hidden;text-decoration:none;color:inherit;transition:box-shadow .18s,transform .18s}
+.similar:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
+.similar-img{aspect-ratio:4/3;background:#F5F5F5;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.similar-img img{width:100%;height:100%;object-fit:cover;display:block}
+.similar-img svg{width:70%;height:auto}
+.similar-body{padding:12px 14px 14px}
+.similar-cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.similar h3{font-size:15px;margin:3px 0 6px;line-height:1.3}
+.similar-precio{font-weight:700;font-size:17px}
+
+@media (max-width:900px){
+  .similares-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  /* En una columna serían tres pantallazos de scroll para ver tres equipos.
+     A dos, se ven de un vistazo aunque las tarjetas queden pequeñas. */
+  .similares-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .similar h3{font-size:13px}
+  .similar-precio{font-size:15px}
+}
