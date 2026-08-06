@@ -185,6 +185,34 @@ function financiamientoPayload(){
 }
 
 /* ── Comparador ── */
+
+/**
+ * Renglones de ficha técnica para la tabla comparativa.
+ *
+ * Sólo salen los datos que tiene al menos uno de los equipos elegidos: una
+ * fila entera de guiones no compara nada y aleja las que sí sirven.
+ *
+ * Se resalta un ganador únicamente cuando "mejor" significa algo Y hay al
+ * menos dos cifras que enfrentar. Más potencia es mejor y menos horas también,
+ * pero un ancho de tambor mayor depende de la obra — ahí no se marca nada, que
+ * es más honesto que inventar un criterio.
+ */
+function filasTecnicas(eq){
+  return FICHA_TECNICA
+    .filter(c => eq.some(p => p.atributos[c.k] != null))
+    .map(c => {
+      const valores = eq.map(p => p.atributos[c.k]).filter(v => v != null);
+      const gana = (c.mejor && valores.length >= 2 && c.tipo === 'num')
+        ? (c.mejor === 'menor' ? Math.min(...valores) : Math.max(...valores))
+        : null;
+      return {
+        etq: c.etq,
+        val: p => p.atributos[c.k] != null ? esc(textoAtributo(c, p.atributos[c.k])) : '—',
+        destaca: gana === null ? null : (p => p.atributos[c.k] === gana),
+      };
+    });
+}
+
 function compararHTML(){
   const eq = comparados();
   if(eq.length < 2) return '<p>Elige al menos dos equipos del catálogo para compararlos.</p>';
@@ -203,6 +231,8 @@ function compararHTML(){
     {etq:'Ubicación', val:p=>esc(p.location)},
     {etq:'Especificaciones', val:p=>p.specs.length
       ? p.specs.map(s=>`<span class="pcard-spec">${esc(s)}</span>`).join(' ') : '—'},
+    ...filasTecnicas(eq),
+    {etq:'Video', val:p=>p.video?'▶ Sí':'—', destaca:p=>!!p.video},
     {etq:'Meses sin intereses', val:p=>p.finance?esc(p.finance):'—', destaca:p=>!!p.finance},
     {etq:'Arrendamiento', val:p=>p.leasing?'Sí':'—',  destaca:p=>p.leasing},
     {etq:'Envío a obra',  val:p=>p.shipping?'Incluido':'No incluido', destaca:p=>p.shipping},

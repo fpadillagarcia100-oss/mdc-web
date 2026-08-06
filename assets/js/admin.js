@@ -220,6 +220,7 @@ function renderAdmin(){
   if(editingId !== null) body.innerHTML = productFormHTML();
   else if(adminTab==='products') body.innerHTML = productListHTML();
   else if(adminTab==='solicitudes') body.innerHTML = solicitudesHTML();
+  else if(adminTab==='preguntas') body.innerHTML = preguntasAdminHTML();
   else if(adminTab==='brand') body.innerHTML = brandHTML();
   else if(adminTab==='site') body.innerHTML = siteHTML();
   else body.innerHTML = backupHTML();
@@ -242,6 +243,13 @@ function renderAdmin(){
 
   if(adminTab==='solicitudes' && solicitudes === null) cargarSolicitudes();
   if(adminTab==='products' && metricas === null) cargarMetricas();
+
+  /* Las preguntas se piden apenas se abre el panel, aunque la pestaña activa
+     sea otra: sin el número al lado del rótulo, una pregunta sin contestar
+     sólo se descubre entrando a buscarla, y nadie entra a buscar lo que no
+     sabe que existe. */
+  cargarPreguntas();
+  pintarPendientes();
 
   // El botón se vuelve a dibujar en cada render: hay que devolverle la cuenta
   // atrás, o cambiar de pestaña serviría para saltarse la espera.
@@ -344,6 +352,146 @@ async function cambiarEstadoSolicitud(id, estado){
     const i = solicitudes.findIndex(s => s.id === id);
     if(i >= 0) solicitudes[i] = actualizada;
     renderAdmin();
+  }catch(err){
+    showToast(err.message, true);
+  }
+}
+
+/* ══════════════════ PREGUNTAS DEL PÚBLICO ══════════════════
+
+   La bandeja que más rinde por minuto invertido: cada respuesta se queda en la
+   ficha y contesta a todos los que lleguen después. Una duda contestada por
+   WhatsApp sirve una vez; contestada aquí, sirve para siempre y además Google
+   la indexa como contenido de la página.
+
+   Igual que con las solicitudes, `null` es "todavía no se han pedido", que no
+   es lo mismo que "no hay ninguna". */
+let preguntas = null;
+let pidiendoPreguntas = false;
+
+async function cargarPreguntas(){
+  /* renderAdmin() se llama muchas veces —al cambiar de pestaña, al guardar, al
+     escribir en el buscador—. Sin este cerrojo cada redibujado dispararía otra
+     consulta, y con la respuesta de cada una otro redibujado. */
+  if(preguntas !== null || pidiendoPreguntas) return;
+  pidiendoPreguntas = true;
+
+  try{
+    preguntas = await remotoPreguntas();
+  }catch(err){
+    preguntas = [];
+    showToast('No se pudieron cargar las preguntas: ' + err.message, true);
+  }finally{
+    pidiendoPreguntas = false;
+  }
+
+  if(!isAdmin) return;
+  /* Sólo se redibuja el panel entero si se está mirando esa pestaña. Si no, se
+     actualiza nada más el número: un renderAdmin() a destiempo reconstruye el
+     formulario de equipo desde la base y se lleva por delante lo que se
+     estuviera escribiendo sin haber guardado. */
+  if(adminTab==='preguntas' && editingId === null) renderAdmin();
+  else pintarPendientes();
+}
+
+/** Cuántas esperan respuesta. Va en la pestaña para que no se olviden. */
+const preguntasPendientes = () =>
+  preguntas === null ? 0 : preguntas.filter(q => !q.respuesta).length;
+
+function pintarPendientes(){
+  const chip = $('#tabPreguntasN');
+  if(!chip) return;
+  const n = preguntasPendientes();
+  chip.textContent = n;
+  chip.hidden = n === 0;
+}
+
+function preguntasAdminHTML(){
+  if(preguntas === null) return '<p class="adm-note">Cargando preguntas…</p>';
+
+  if(!preguntas.length) return `
+    <div class="empty-state" style="border:none;background:#FAFAFA">
+      <div class="icon">💬</div><h3>Todavía no hay preguntas</h3>
+      <p>Cuando alguien pregunte desde una ficha, aparecerá aquí. Tu respuesta se
+         publica en esa misma ficha y le sirve a todos los que la vean después.</p>
+    </div>`;
+
+  const pendientes = preguntasPendientes();
+
+  /* Las pendientes primero, sin importar la fecha. Es una bandeja de trabajo:
+     lo que hace falta ver arriba es lo que falta por hacer. */
+  const orden = [...preguntas].sort((a, b) =>
+    (a.respuesta ? 1 : 0) - (b.respuesta ? 1 : 0) ||
+    new Date(b.creado_en) - new Date(a.creado_en));
+
+  return `
+    <p class="adm-note">${preguntas.length} preguntas${pendientes?` · <strong>${pendientes} sin contestar</strong>`:''}.
+      Lo que respondas y marques como público sale en la ficha del equipo la
+      próxima vez que publiques.</p>
+    ${orden.map(preguntaFilaHTML).join('')}`;
+}
+
+function preguntaFilaHTML(q){
+  const eq = products.find(p => p.slug === q.slug);
+  const f = new Date(q.creado_en);
+  const cuando = f.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}) + ' · ' +
+                 f.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
+  return `
+    <div class="adm-section adm-pregunta${q.respuesta?'':' pendiente'}">
+      <p class="sub" style="margin:0 0 6px">
+        <strong>${esc(eq ? eq.name : q.slug)}</strong> · ${esc(q.nombre)} · ${esc(cuando)}
+        ${q.respuesta ? (q.publicada
+            ? '<span class="pcard-badge badge-rent" style="position:static;margin-left:6px">Publicada</span>'
+            : '<span class="pcard-badge badge-used" style="position:static;margin-left:6px">Contestada en privado</span>')
+          : '<span class="pcard-badge badge-new" style="position:static;margin-left:6px">Sin contestar</span>'}
+      </p>
+      <p style="font-weight:600;margin:0 0 10px">${esc(q.pregunta)}</p>
+      <div class="field">
+        <label class="sr-only" for="resp-${q.id}">Respuesta</label>
+        <textarea id="resp-${q.id}" maxlength="1000" rows="3"
+                  placeholder="Contesta como si lo fuera a leer todo el que abra esta ficha…">${esc(q.respuesta || '')}</textarea>
+      </div>
+      <div class="adm-toolbar" style="margin-top:8px">
+        <label class="check"><input type="checkbox" id="pub-${q.id}"${q.publicada?' checked':''}> Publicar en la ficha</label>
+        <button class="btn-primary" type="button" data-resp="${q.id}">Guardar respuesta</button>
+        <button class="btn-danger" type="button" data-qdel="${q.id}">Borrar</button>
+      </div>
+    </div>`;
+}
+
+async function responderPregunta(id){
+  const q = preguntas.find(x => x.id === id);
+  if(!q) return;
+  const texto = ($('#resp-'+id).value || '').trim();
+  const publicar = $('#pub-'+id).checked;
+
+  /* Publicar sin respuesta dejaría la pregunta colgada en la ficha, a la vista
+     y sin contestar. Dice de la empresa lo contrario de lo que se busca aquí. */
+  if(publicar && !texto){
+    showToast('Para publicarla hace falta una respuesta.', true);
+    return;
+  }
+
+  try{
+    const actualizada = await remotoResponderPregunta(id, texto, publicar, !!q.respuesta);
+    Object.assign(q, actualizada);
+    renderAdmin();
+    showToast(publicar ? 'Respuesta guardada. Publica el sitio para que se vea.' : 'Respuesta guardada');
+  }catch(err){
+    showToast(err.message, true);
+  }
+}
+
+async function borrarPregunta(id){
+  const q = preguntas.find(x => x.id === id);
+  if(!q) return;
+  if(!confirm(`¿Borrar esta pregunta?\n\n"${q.pregunta}"\n\nNo se puede deshacer.`)) return;
+  try{
+    await remotoBorrarPregunta(id);
+    preguntas = preguntas.filter(x => x.id !== id);
+    renderAdmin();
+    showToast('Pregunta borrada');
   }catch(err){
     showToast(err.message, true);
   }
@@ -556,6 +704,14 @@ function productFormHTML(){
           <textarea id="f-desc" placeholder="Describe el equipo, su estado y qué incluye…">${esc(v.desc)}</textarea>
         </div>
 
+        <div class="field full">
+          <label for="f-video">Video de YouTube <span class="hint">(pega el enlace; opcional)</span></label>
+          <input type="text" id="f-video" value="${esc(v.video ? videoPagina(v.video) : '')}"
+                 placeholder="https://www.youtube.com/watch?v=…">
+          <span class="hint">Un video de 30 segundos con el motor encendido vende más que ocho fotos.
+            Se guarda sólo el identificador y se reproduce sin cookies hasta que el cliente le da al play.</span>
+        </div>
+
         <div class="field">
           <label for="f-svg">Ícono de respaldo <span class="hint">(si no hay foto)</span></label>
           <select id="f-svg">${Object.keys(svgs).map(k=>`<option value="${k}"${v.svgKey===k?' selected':''}>${SVG_LABELS[k]}</option>`).join('')}</select>
@@ -570,12 +726,76 @@ function productFormHTML(){
         </div>
       </div>
 
+      <div class="adm-section" id="atributosBox" data-cat="${esc(v.cat || '')}">
+        ${atributosCamposHTML(v.cat, v.atributos || {})}
+      </div>
+
       <div class="form-actions">
         ${!nuevo?`<button class="btn-danger" type="button" data-delp="${v.id}">Eliminar equipo</button>`:''}
         <button class="btn-ghost" type="button" data-action="admin-cancel">Cancelar</button>
         <button class="btn-primary" type="submit">${nuevo?'Publicar equipo':'Guardar cambios'}</button>
       </div>
     </form>`;
+}
+
+/* ── Ficha técnica ──
+   Los campos dependen de la categoría: una grúa torre no tiene profundidad de
+   excavación y una excavadora no tiene longitud de pluma. Enseñarlos todos
+   sería pedir treinta datos para capturar cinco. */
+function atributosCamposHTML(cat, valores){
+  const campos = camposDe(cat);
+  const v = valores || {};
+
+  const control = c => {
+    if(c.tipo === 'opcion') return `
+      <select id="at-${c.k}" data-at="${c.k}">
+        <option value="">—</option>
+        ${c.opciones.map(o=>`<option value="${esc(o)}"${v[c.k]===o?' selected':''}>${esc(o)}</option>`).join('')}
+      </select>`;
+    if(c.tipo === 'num') return `
+      <input type="number" id="at-${c.k}" data-at="${c.k}" min="0" step="any"
+             value="${v[c.k] ?? ''}" placeholder="${esc(c.unidad||'')}">`;
+    return `<input type="text" id="at-${c.k}" data-at="${c.k}" maxlength="60" value="${esc(v[c.k] ?? '')}">`;
+  };
+
+  return `
+    <h3>Ficha técnica <span class="hint">(${esc(cat || 'sin categoría')})</span></h3>
+    <p class="sub">Esto es lo que se puede filtrar y comparar; las «especificaciones» de arriba
+      son sólo el resumen que sale en la tarjeta. <strong>Las horas son el dato que más
+      se busca</strong> en maquinaria usada: sin capturarlas, el equipo desaparece de ese
+      filtro. Deja vacío lo que no apliqué.</p>
+    <div class="form-grid">
+      ${campos.map(c=>`
+        <div class="field">
+          <label for="at-${c.k}">${esc(c.etq)}${c.unidad?` <span class="hint">(${esc(c.unidad)})</span>`:''}</label>
+          ${control(c)}
+        </div>`).join('')}
+    </div>
+    <p class="sub">Los campos cambian según la categoría. Si la cambias, se conservan
+      sólo los datos que sigan aplicando.</p>`;
+}
+
+/**
+ * Redibuja los campos técnicos al cambiar de categoría.
+ *
+ * Se toca SÓLO ese bloque, no el formulario entero: renderAdmin() lo
+ * reconstruye desde `products` y se llevaría por delante todo lo que se haya
+ * escrito y no esté guardado — precio, descripción, fotos recién subidas.
+ */
+function refrescarAtributos(){
+  const box = $('#atributosBox');
+  const cat = $('#f-cat');
+  if(!box || !cat) return;
+  if(box.dataset.cat === cat.value.trim()) return;   // nada que rehacer
+  box.dataset.cat = cat.value.trim();
+  box.innerHTML = atributosCamposHTML(cat.value.trim(), leerAtributosForm());
+}
+
+/** Lee los campos técnicos que estén en pantalla ahora mismo. */
+function leerAtributosForm(){
+  const crudo = {};
+  $$('#pForm [data-at]').forEach(el => { crudo[el.dataset.at] = el.value });
+  return limpiarAtributos(crudo);
 }
 
 function readForm(){
@@ -597,7 +817,14 @@ function readForm(){
     specs: val('f-specs').split(',').map(s=>s.trim()).filter(Boolean),
     desc: val('f-desc'),
     svgKey: val('f-svg'),
-    disponibilidad: val('f-disp') || 'disponible'
+    disponibilidad: val('f-disp') || 'disponible',
+    /* videoId() devuelve null si lo pegado no es un enlace de YouTube
+       reconocible. Eso se avisa en saveProductForm: guardar en silencio un
+       equipo sin el video que se acaba de pegar es el fallo que parece que
+       funcionó. */
+    video: videoId(val('f-video')),
+    videoCrudo: val('f-video'),
+    atributos: leerAtributosForm()
   };
 }
 
@@ -729,6 +956,15 @@ async function saveProductForm(){
   if(data.price === null || data.price < 0){ $('[data-f="price"]').classList.add('err'); ok = false }
   if(!ok){ showToast('Revisa los campos marcados', true); return }
 
+  /* Un enlace de video que no se reconoce se avisa y se detiene el guardado.
+     Aceptarlo en silencio dejaría al equipo sin video sin que nadie lo supiera
+     hasta abrir la ficha publicada. */
+  if(data.videoCrudo && !data.video){
+    showToast('Ese enlace de video no es de YouTube. Copia la dirección desde la barra del navegador o desde «Compartir».', true);
+    return;
+  }
+  delete data.videoCrudo;
+
   // Un "precio anterior" que no sea mayor no representa un descuento.
   if(data.original !== null && data.original <= data.price) data.original = null;
 
@@ -798,7 +1034,15 @@ async function duplicateProduct(id){
   /* La copia nace SIN publicar. Duplicar es el atajo para dar de alta un
      equipo parecido, no para poner dos anuncios idénticos en el sitio: sale
      como borrador y se publica cuando ya tiene sus propios datos. */
-  const copia = {...p, id: null, name: nombre, slug: slugDesdeNombre(nombre), hot: false, publicado: false};
+  /* El video NO se copia. La ficha técnica sí.
+
+     La diferencia: los datos técnicos de una máquina parecida son un buen
+     punto de partida y se corrigen a ojo. El video es de ESA máquina —con sus
+     horas en el tablero y sus rayones— y publicarlo en otra es enseñar una
+     máquina que el cliente no va a recibir. Ése es un problema distinto y peor
+     que un dato desactualizado. */
+  const copia = {...p, id: null, name: nombre, slug: slugDesdeNombre(nombre),
+                 hot: false, publicado: false, video: null};
 
   try{
     const guardado = await remotoGuardarEquipo(copia);

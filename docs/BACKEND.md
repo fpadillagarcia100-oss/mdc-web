@@ -190,3 +190,76 @@ cierra cuatro rendijas del esquema de origen. La primera era explotable:
    comentario decía "el personal ve todo". Esa creencia falsa es de donde
    salen los permisos abiertos de más. No se amplió nada: la decisión está
    planteada en la migración para que la tomes tú.
+
+## Lo que se añadió después: video, ficha técnica y preguntas
+
+Migración
+[`…_video_ficha_preguntas.sql`](../supabase/migrations/20260806000006_video_ficha_preguntas.sql).
+
+### Video: se guarda el identificador, no la dirección
+
+`equipos.video_url` acepta exactamente once caracteres alfanuméricos y nada
+más. Una columna de texto libre aquí sería una puerta abierta: bastaría con
+guardar `javascript:…` o el dominio de un tercero para incrustar algo ajeno
+dentro de las fichas, que es donde más caro sale.
+
+Con once caracteres no cabe una dirección. El sitio arma el enlace hacia
+`youtube-nocookie.com`, y ese dominio es el único que la CSP permite meter en
+un marco (`frame-src`). Dos cierres independientes para la misma cosa.
+
+El reproductor **no se carga hasta que alguien le da al play**. Antes de eso la
+página no habla con ningún tercero: se ve una portada y un botón. No es sólo
+privacidad — es que una ficha con un iframe de YouTube pesa varios cientos de
+kilobytes más, y se abre desde una obra con mala señal.
+
+El video **no se sube a nuestro almacenamiento** a propósito. Treinta megas
+vistos doscientas veces son seis gigas de tráfico al mes, y el plan da cinco.
+
+### Ficha técnica: `jsonb` con claves conocidas
+
+`equipos.atributos` guarda `{"horas": 2400, "peso": 20}`. El catálogo de claves
+vive en [`assets/js/atributos.js`](../assets/js/atributos.js) y lo comparten el
+panel, los filtros, el comparador y el generador de fichas — **un solo sitio**,
+porque dos listas de campos acaban no diciendo lo mismo y el fallo aparece sólo
+en las páginas publicadas.
+
+Es `jsonb` y no columnas porque una grúa torre y un minicargador casi no
+comparten datos: en columnas serían treinta, veinticinco nulas por renglón.
+
+Como es la única columna del esquema donde cabe cualquier forma, lleva su tope
+(`pg_column_size <= 4096`) y las claves desconocidas se descartan al normalizar.
+
+### Preguntas: la tabla no tiene política de `INSERT`
+
+Es la decisión que sostiene todo lo demás. Si el público pudiera insertar
+directo, tendría que poder nombrar todas las columnas — incluidas `respuesta` y
+`publicada`. Un `with check` lo taparía hoy, y cada columna nueva volvería a
+abrir el hueco hasta que alguien se acordara de actualizarlo.
+
+La única puerta es `preguntar(slug, nombre, pregunta)`, `security definer` con
+`search_path = ''`. Lo que decide el servidor no se puede ni nombrar desde
+fuera: una pregunta **nace sin responder y sin publicar, siempre**.
+
+Dos frenos, porque son dos problemas distintos:
+
+- **cinco por equipo cada diez minutos** — contra el que aporrea el botón;
+- **treinta sin contestar por equipo** — contra el que vuelve mañana. Una
+  bandeja con cien preguntas basura es una bandeja que nadie abre, y ahí se
+  pierden las de verdad. Se libera sola conforme se contestan.
+
+Y una diferencia deliberada con las solicitudes: **las preguntas sí se pueden
+borrar.** Una solicitud es registro comercial y evidencia del consentimiento con
+que alguien dio sus datos. Una pregunta de spam no es registro de nada.
+
+### Lo que se publica pasa por el compilador, no por el navegador
+
+Las preguntas contestadas viajan **dentro del sitio**, como el resto del
+catálogo: `npm run db:export` se trae las publicadas y `npm run build` las
+escribe en cada ficha, con sus datos estructurados.
+
+Se pensó en pedirlas desde el navegador para que una respuesta se viera al
+momento. Se descartó por tres motivos, en este orden: Google no indexaría lo que
+sólo existe tras ejecutar JavaScript (y ésa es la mitad de la razón de tenerlas
+en público), sería una petición por visita, y una dependencia más que puede
+caerse. El precio es que una respuesta nueva se ve al publicar — igual que un
+precio nuevo.

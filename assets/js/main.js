@@ -50,6 +50,12 @@ document.addEventListener('click', e => {
   const solBtn = t.closest('[data-sol]');
   if(solBtn){ cambiarEstadoSolicitud(Number(solBtn.dataset.sol), solBtn.dataset.estado); return }
 
+  const respBtn = t.closest('[data-resp]');
+  if(respBtn){ responderPregunta(Number(respBtn.dataset.resp)); return }
+
+  const qDel = t.closest('[data-qdel]');
+  if(qDel){ borrarPregunta(Number(qDel.dataset.qdel)); return }
+
   const dupBtn = t.closest('[data-dup]');
   if(dupBtn){ duplicateProduct(Number(dupBtn.dataset.dup)); return }
 
@@ -96,6 +102,10 @@ document.addEventListener('click', e => {
 
   const galGo = t.closest('[data-gal-go]');
   if(galGo){ irGaleria(Number(galGo.dataset.galGo)); return }
+
+  // Ver el video: primero la portada, y sólo al pulsar el play entra YouTube.
+  if(t.closest('[data-gal-video]')){ verVideo(); return }
+  if(t.closest('[data-gal-play]')){ reproducirVideo(); return }
 
   const openBtn = t.closest('[data-open]');
   if(openBtn){ openModal(Number(openBtn.dataset.open)); return }
@@ -162,6 +172,22 @@ document.addEventListener('change', e => {
     }
     state.page = 1; render(); return;
   }
+  /* Filtros de ficha técnica. Comparten forma con los de precio pero no el
+     manejador: el de precio intercambia mínimo y máximo si vienen al revés, y
+     aquí "hasta 3,000 horas" no tiene pareja con la que intercambiarse. */
+  const tec = e.target.closest('[data-tec]');
+  if(tec){
+    const v = tec.value === '' ? null : Math.max(0, Number(tec.value));
+    state[tec.dataset.tec] = Number.isFinite(v) ? v : null;
+    if(state.pesoMin!=null && state.pesoMax!=null && state.pesoMin > state.pesoMax){
+      [state.pesoMin, state.pesoMax] = [state.pesoMax, state.pesoMin];
+    }
+    state.page = 1; render(); return;
+  }
+
+  /* Cambiar la categoría cambia qué datos técnicos aplican. */
+  if(e.target.id === 'f-cat'){ refrescarAtributos(); return }
+
   const price = e.target.closest('[data-price]');
   if(price){
     const v = price.value === '' ? null : Math.max(0, Number(price.value));
@@ -209,10 +235,12 @@ function submitCurrentForm(channel){
 
 document.addEventListener('submit', async e => {
   const id = e.target.id;
-  if(!['sellForm','quoteForm','acctForm'].includes(id)) return;
+  if(!['sellForm','quoteForm','acctForm','qaForm'].includes(id)) return;
   e.preventDefault();
 
   if(id==='sellForm' || id==='quoteForm'){ submitCurrentForm('wa'); return }
+
+  if(id==='qaForm'){ await enviarPregunta(e.target); return }
 
   if(id==='acctForm'){
     const v = readAndValidate([

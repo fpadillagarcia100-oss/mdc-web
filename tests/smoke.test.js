@@ -476,6 +476,208 @@ const ev = code => window.eval(code);
   check('Llamar a renderAdmin() sin sesión devuelve al acceso',
     $('#mailInput') !== null && $('.adm-table') === null);
 
+  ev('closeAll()');
+
+  /* ══ VIDEO ══
+     Un video de 30 segundos con el motor encendido vende maquinaria usada
+     mejor que ocho fotos. Lo que se comprueba aquí no es que se vea —jsdom no
+     reproduce nada— sino que YouTube NO entre hasta que alguien lo pida. */
+  const idVideo = 'dQw4w9WgXcQ';
+  ev(`products[0].video = '${idVideo}'; products[0].imgs = ${JSON.stringify(fotos)};
+      products[0].img = products[0].imgs[0]; render()`);
+
+  check('La tarjeta anuncia que hay video',
+    ($('.pcard-fotos') || {}).textContent.includes('▶'),
+    ($('.pcard-fotos') || {}).textContent);
+
+  ev(`openModal(${equipo.id})`);
+  check('La ficha empieza en las fotos, no en el video',
+    $('.gal-main') !== null && $('.gal-frame') === null);
+  check('Hay una miniatura para el video', $('.gal-thumb-video') !== null);
+
+  $('[data-gal-video]').click();
+  check('La miniatura del video lleva a la portada del video, no al reproductor',
+    $('.gal-facade') !== null && $('.gal-frame') === null);
+
+  check('Sin darle al play NO se ha pedido nada a YouTube',
+    !$('#modalImg').innerHTML.includes('youtube'),
+    'una sola mención bastaría para filtrar la visita a un tercero');
+
+  $('[data-gal-play]').click();
+  const marco = $('.gal-frame');
+  check('Al darle al play entra el reproductor', marco !== null);
+  check('El reproductor es el que no pone cookies de rastreo',
+    marco !== null && marco.getAttribute('src').startsWith('https://www.youtube-nocookie.com/'),
+    marco ? marco.getAttribute('src') : 'no hay iframe');
+
+  /* Un video que sigue sonando con la ficha cerrada es de los fallos que hacen
+     que la gente cierre la pestaña entera. */
+  ev('closeAll()');
+  check('Cerrar la ficha quita el reproductor, no sólo lo esconde',
+    $('.gal-frame') === null);
+
+  // Las flechas del teclado no pueden dejar la galería en un estado sin salida.
+  ev(`openModal(${equipo.id}); verVideo(); moverGaleria(1)`);
+  check('Salir del video con las flechas devuelve a las fotos',
+    $('.gal-main') !== null && $('.gal-frame') === null);
+  ev('closeAll()');
+
+  // Un equipo sin fotos pero con video: el video ES la galería.
+  ev(`products[1].imgs = []; products[1].img = null; products[1].video = '${idVideo}';
+      openModal(products[1].id)`);
+  check('Un equipo sólo con video enseña el video, no un ícono roto',
+    $('.gal-facade') !== null);
+  ev(`closeAll(); products[1].video = null`);
+
+  /* La política de seguridad tiene que dejar pasar el reproductor Y NADA MÁS.
+     Si dijera `frame-src https:` el video funcionaría igual y cualquier
+     dominio del mundo podría incrustarse en la página. */
+  const csp = /content="([^"]*)"/.exec(
+    /<meta http-equiv="Content-Security-Policy"[^>]*>/i.exec(html)[0])[1];
+  check('La política permite el reproductor de YouTube',
+    /frame-src\s+https:\/\/www\.youtube-nocookie\.com\s*;/.test(csp),
+    (/frame-src[^;]*/.exec(csp) || ['sin frame-src'])[0]);
+  check('Y no abre el marco a cualquier dominio',
+    !/frame-src[^;]*(\*|https:\s|'unsafe)/.test(csp));
+
+  /* ══ FICHA TÉCNICA ══ */
+  ev(`products[0].atributos = {horas: 2400, peso: 20, potencia: 148};
+      openModal(${equipo.id})`);
+  const ft = $('#modalInfo .ft-tabla');
+  check('La ficha muestra la tabla de datos técnicos', ft !== null);
+  check('Los datos salen con su unidad',
+    ft !== null && ft.textContent.includes('2,400 h') && ft.textContent.includes('148 HP'),
+    ft ? ft.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) : '');
+  ev('closeAll()');
+
+  ev(`products[1].atributos = {}; openModal(products[1].id)`);
+  check('Un equipo sin datos técnicos no enseña una tabla vacía',
+    $('#modalInfo .ft-tabla') === null);
+  ev('closeAll()');
+
+  /* Los filtros nuevos tienen que existir en la pantalla, no sólo en el
+     estado: un predicado que nadie puede activar no filtra nada. */
+  check('El catálogo ofrece filtrar por horas y por peso',
+    $('#filterCardDesktop [data-tec="horasMax"]') !== null &&
+    $('#filterCardDesktop [data-tec="pesoMin"]') !== null);
+
+  const filtroHoras = $('#filterCardDesktop [data-tec="horasMax"]');
+  filtroHoras.value = '1000';
+  filtroHoras.dispatchEvent(new window.Event('change', { bubbles: true }));
+  check('Filtrar por horas desde la pantalla reduce los resultados',
+    ev('state.horasMax') === 1000 && ev("filterAll().every(p => p.cond === 'Nuevo' || (p.atributos.horas ?? 0) <= 1000)"),
+    `quedan ${ev('filterAll().length')} de ${ev('products.length')}`);
+  check('El filtro aparece como etiqueta que se puede quitar',
+    $('#activeFilters').textContent.includes('1,000 h'),
+    $('#activeFilters').textContent.trim());
+
+  ev('clearFilters()');
+  check('Limpiar filtros también borra los técnicos',
+    ev('state.horasMax') === null && ev('state.pesoMin') === null && ev('state.pesoMax') === null);
+
+  /* El comparador tiene que aprovechar los datos nuevos: comparar dos máquinas
+     sin poder decir cuál tiene menos horas no es comparar. */
+  ev(`products[1].atributos = {horas: 8000, peso: 25};
+      state.compare = [products[0].id, products[1].id]; openPage('comparar')`);
+  const tabla = $('#pageBody .cmp-tabla');
+  check('El comparador incluye los datos técnicos',
+    tabla !== null && tabla.textContent.includes('Horas de uso') && tabla.textContent.includes('Peso operativo'));
+  const filaHoras = [...$$('#pageBody .cmp-tabla tbody tr')]
+    .find(tr => tr.querySelector('th') && tr.querySelector('th').textContent === 'Horas de uso');
+  check('Menos horas gana el renglón, no más',
+    filaHoras !== undefined && filaHoras.querySelectorAll('td')[0].classList.contains('cmp-gana')
+      && !filaHoras.querySelectorAll('td')[1].classList.contains('cmp-gana'),
+    filaHoras ? filaHoras.textContent.replace(/\s+/g, ' ').trim() : 'no está el renglón');
+  ev('clearCompare(); closeAll()');
+
+  /* ══ PREGUNTAS Y RESPUESTAS ══ */
+  ev(`products[0].qa = [{nombre:'Ana', pregunta:'¿Tiene factura?',
+        respuesta:'Sí, factura de origen a nombre del comprador.', fecha:'2026-07-01'}];
+      openModal(${equipo.id})`);
+
+  check('La ficha muestra las preguntas contestadas',
+    $$('#modalInfo .qa-item').length === 1 &&
+    $('#modalInfo .qa-item').textContent.includes('factura de origen'));
+
+  check('La ficha invita a preguntar', $('#qaForm') !== null);
+
+  /* Enviar sin nombre no puede acabar en la base ni fingir que sí. La
+     validación de verdad la hace el servidor; ésta es la que evita el viaje. */
+  let pedidos = [];
+  ev(`window.fetch = (url, opts) => { globalThis.__pedidos.push(String(url));
+      return Promise.resolve({ok:true, json:()=>Promise.resolve({})}) }`);
+  ev('globalThis.__pedidos = []');
+
+  $('#qa-nombre').value = '';
+  $('#qa-texto').value = 'Una pregunta cualquiera';
+  submit('#qaForm');
+  await waitFor(() => true, 'un ciclo del bucle de eventos');
+  pedidos = JSON.parse(ev('JSON.stringify(globalThis.__pedidos)'));
+  check('Una pregunta sin nombre no sale del navegador', pedidos.length === 0);
+
+  $('#qa-nombre').value = 'Luis Gómez';
+  $('#qa-texto').value = '¿Cuántas horas reales tiene?';
+  submit('#qaForm');
+  await waitFor(() => JSON.parse(ev('JSON.stringify(globalThis.__pedidos)')).length > 0,
+    'que la pregunta salga');
+  pedidos = JSON.parse(ev('JSON.stringify(globalThis.__pedidos)'));
+  check('Una pregunta completa se manda por la función que la valida en el servidor',
+    pedidos.some(u => u.includes('/rpc/preguntar')), pedidos.join(' '));
+
+  await waitFor(() => $('.qa-ok') !== null, 'el acuse de recibo');
+  /* No se pinta la pregunta como si ya estuviera publicada: quien la escribió
+     se iría creyendo que su duda ya está en la ficha para todos. */
+  check('Se acusa recibo sin fingir que ya está publicada',
+    $('.qa-ok') !== null && $$('#modalInfo .qa-item').length === 1);
+
+  // La trampa oculta: un bot rellena todo, incluso lo que no se ve.
+  /* El vaciado va DESPUÉS de abrir la ficha: abrirla suma una vista, que
+     también es una petición. Contar peticiones a secas daría un fallo que no
+     tiene nada que ver con lo que se prueba. */
+  ev(`closeAll(); openModal(${equipo.id}); globalThis.__pedidos = []`);
+  $('#hp_pregunta').value = 'soy un bot';
+  $('#qa-nombre').value = 'Bot';
+  $('#qa-texto').value = 'Compre nuestras pastillas milagrosas';
+  submit('#qaForm');
+  await waitFor(() => true, 'un ciclo del bucle de eventos');
+  check('La trampa oculta detiene al bot sin decírselo',
+    !JSON.parse(ev('JSON.stringify(globalThis.__pedidos)')).some(u => u.includes('preguntar')));
+  ev('closeAll()');
+
+  /* ══ PANEL ══
+     Estas pantallas viven detrás de la sesión, así que no se pueden abrir
+     desde aquí. Lo que sí se puede —y es donde estaría el error tonto— es
+     comprobar que las funciones que las dibujan producen algo coherente. */
+  check('El formulario ofrece los campos técnicos de la categoría del equipo',
+    ev(`atributosCamposHTML('Excavación', {horas:2400}).includes('at-profundidad')`) &&
+    ev(`atributosCamposHTML('Excavación', {}).includes('at-horas')`) &&
+    !ev(`atributosCamposHTML('Excavación', {}).includes('at-pluma')`),
+    'una excavadora excava; no tiene pluma de grúa');
+
+  check('El formulario trae capturado lo que ya estaba guardado',
+    ev(`atributosCamposHTML('Excavación', {horas:2400}).includes('value="2400"')`));
+
+  check('El video se enseña como enlace pegable, no como identificador suelto',
+    ev(`videoPagina('${idVideo}')`) === `https://www.youtube.com/watch?v=${idVideo}`);
+
+  /* Duplicar un equipo no puede arrastrar el video: sería enseñar en un
+     anuncio una máquina que el cliente no va a recibir. */
+  check('Una copia nace sin el video del original',
+    ev(`typeof duplicateProduct === 'function'`) &&
+    fs.readFileSync(path.join(ROOT, 'assets/js/admin.js'), 'utf8').includes('video: null'));
+
+  check('La bandeja de preguntas dibuja lo pendiente y lo contestado',
+    ev(`preguntas = [
+        {id:1, slug:'x', nombre:'Ana', pregunta:'¿Tiene factura?', respuesta:null, publicada:false, creado_en:'2026-07-01T10:00:00Z'},
+        {id:2, slug:'x', nombre:'Luis', pregunta:'¿Horas?', respuesta:'2400', publicada:true, creado_en:'2026-07-02T10:00:00Z'}
+      ]; preguntasAdminHTML()`).includes('Sin contestar') &&
+    ev('preguntasAdminHTML()').includes('Publicada') &&
+    ev('preguntasPendientes()') === 1);
+
+  check('Lo que falta por contestar sale arriba, aunque sea lo más viejo',
+    ev(`preguntasAdminHTML().indexOf('¿Tiene factura?') < preguntasAdminHTML().indexOf('¿Horas?')`),
+    'es una bandeja de trabajo: arriba va lo que falta por hacer');
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;

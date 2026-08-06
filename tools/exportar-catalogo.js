@@ -113,11 +113,35 @@ const limpiar = (o, campos) => {
 };
 
 (async () => {
-  const [ajustesFilas, sucursales, equipos] = await Promise.all([
+  const [ajustesFilas, sucursales, equipos, preguntas] = await Promise.all([
     consultar('ajustes?select=*&limit=1'),
     consultar('sucursales?select=nombre,direccion,telefono,horario&order=orden.asc'),
     consultar('catalogo_publico?select=*'),
+    /* Las preguntas contestadas y publicadas viajan DENTRO del sitio, como
+       todo lo demás. Se pensó en pedirlas desde el navegador para que una
+       respuesta nueva se viera al momento, y se descartó: sería una petición
+       por visita, una dependencia más que puede caerse, y sobre todo Google no
+       las indexaría — que es la mitad del motivo de tenerlas en público.
+
+       El filtro se repite aquí aunque la política ya lo aplica. Cuesta nada, y
+       el día que alguien afloje la política esto sigue sin publicar preguntas
+       a medio contestar. */
+    consultar('preguntas?select=slug,nombre,pregunta,respuesta,respondida_en' +
+              '&publicada=eq.true&respuesta=not.is.null&order=respondida_en.asc'),
   ]);
+
+  /* Agrupadas por equipo antes de armar la salida: recorrer la lista entera
+     por cada máquina sería cuadrático y, con el tiempo, lento sin motivo. */
+  const qaPorSlug = new Map();
+  for (const q of preguntas) {
+    if (!qaPorSlug.has(q.slug)) qaPorSlug.set(q.slug, []);
+    qaPorSlug.get(q.slug).push({
+      nombre: q.nombre,
+      pregunta: q.pregunta,
+      respuesta: q.respuesta,
+      fecha: q.respondida_en ? q.respondida_en.slice(0, 10) : null,
+    });
+  }
 
   if (!ajustesFilas.length) throw new Error('La tabla `ajustes` está vacía. ¿Corriste las migraciones?');
   if (!equipos.length) {
@@ -181,12 +205,16 @@ const limpiar = (o, campos) => {
       img: e.img,
       imgs: Array.isArray(e.imgs) ? e.imgs : (e.img ? [e.img] : []),
       disponibilidad: e.disponibilidad || 'disponible',
+      video: e.video || null,
+      atributos: e.atributos && typeof e.atributos === 'object' ? e.atributos : {},
+      qa: qaPorSlug.get(e.slug) || [],
       hot: e.hot,
-    }, [])),
+    }, ['video'])),
   };
 
   fs.writeFileSync(DESTINO, JSON.stringify(salida, null, 2) + '\n', 'utf8');
-  console.log(`✓ data/catalogo.json — ${salida.equipos.length} equipos, ${salida.sucursales.length} sucursales`);
+  console.log(`✓ data/catalogo.json — ${salida.equipos.length} equipos, ${salida.sucursales.length} sucursales, ` +
+    `${preguntas.length} preguntas contestadas`);
   console.log('  Ahora corre `npm run build` para regenerar las fichas y el sitemap.');
 })().catch(err => {
   console.error('✗ ' + err.message);

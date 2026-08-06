@@ -768,3 +768,98 @@ body.con-cmp{padding-bottom:78px}
   .similar h3{font-size:13px}
   .similar-precio{font-size:15px}
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   VIDEO, FICHA TÉCNICA Y PREGUNTAS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Video ──
+   La "fachada": una portada con un botón de play. El reproductor de YouTube no
+   entra hasta que alguien lo pide, así que estas reglas tienen que aguantar
+   los dos estados sin que la caja cambie de tamaño y salte la página. */
+.gal-video{background:#111}
+.gal-facade,.fvideo-facade{position:relative;display:block;width:100%;height:100%;
+  border:none;padding:0;background:#111;cursor:pointer;overflow:hidden}
+.gal-facade img,.fvideo-facade img{width:100%;height:100%;object-fit:cover;display:block;
+  opacity:.55;transition:opacity .2s,transform .3s}
+.gal-facade:hover img,.fvideo-facade:hover img{opacity:.7;transform:scale(1.03)}
+
+.gal-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);
+  width:66px;height:66px;border-radius:50%;background:rgba(0,0,0,.68);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+  padding-left:5px;pointer-events:none;transition:background .2s}
+.gal-facade:hover .gal-play,.fvideo-facade:hover .gal-play{background:var(--y);color:#1A1A1A}
+.gal-play.chico{width:26px;height:26px;font-size:11px;padding-left:2px;transform:translate(-50%,-50%)}
+
+.gal-facade-txt{position:absolute;left:0;right:0;bottom:14px;text-align:center;
+  color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.8);pointer-events:none}
+.gal-video-nota{position:absolute;left:0;right:0;bottom:-2px;text-align:center;
+  font-size:10px;color:rgba(255,255,255,.55);margin:0;pointer-events:none}
+
+.gal-frame{width:100%;height:100%;border:none;display:block}
+.gal-thumb-video{position:relative;background:#111}
+.gal-thumb-video img{opacity:.6}
+
+/* Sin foto de portada la miniatura del video quedaría vacía y no se vería que
+   hay algo ahí. Un fondo oscuro basta: el ▶ va encima. */
+.gal-thumb-video:not(:has(img)){background:#222}
+
+/* En la ficha estática el video va en su propia sección, ancho completo. */
+.fvideo{max-width:1080px;margin:0 auto;padding:8px 20px 24px}
+.fvideo h2{font-size:19px;margin-bottom:12px}
+.fvideo-caja{position:relative;aspect-ratio:16/9;background:#111;border-radius:10px;overflow:hidden}
+.fvideo-frame{width:100%;height:100%;border:none;display:block}
+.fvideo-nota{font-size:11px;color:var(--muted);margin-top:8px}
+
+/* ── Ficha técnica ── */
+.ft{margin:18px 0}
+.ft-titulo{font-size:15px;font-weight:700;margin-bottom:8px}
+.ft-tabla{width:100%;border-collapse:collapse;font-size:13px}
+.ft-tabla th,.ft-tabla td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+.ft-tabla th{font-weight:500;color:var(--muted);width:52%}
+.ft-tabla td{font-weight:600}
+.ft-tabla tr:last-child th,.ft-tabla tr:last-child td{border-bottom:none}
+.ft-tabla tr:nth-child(odd){background:#FAFAFA}
+
+/* ── Preguntas y respuestas ── */
+.qa{margin-top:22px;border-top:1px solid var(--border);padding-top:16px}
+.qa-n{background:var(--y);color:#1A1A1A;border-radius:20px;padding:1px 8px;font-size:12px;vertical-align:middle}
+.qa-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.qa-p,.qa-r{font-size:13.5px;line-height:1.55;margin:0;display:flex;gap:8px;align-items:flex-start}
+.qa-p{font-weight:600}
+.qa-r{margin-top:6px;color:var(--muted)}
+.qa-etq{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:#ECEFF1;color:#546E7A;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.qa-etq.r{background:var(--y);color:#1A1A1A}
+.qa-meta{font-size:11px;color:var(--light);margin:6px 0 0 28px}
+.qa-vacio{font-size:13px;color:var(--muted);line-height:1.6;margin:6px 0 14px}
+
+.qa-form{margin-top:14px;background:#FAFAFA;border:1px solid var(--border);border-radius:8px;padding:14px}
+.qa-form .field{margin-bottom:10px}
+.qa-aviso{font-size:11px;color:var(--light);margin-top:8px;line-height:1.5}
+.qa-ok{font-size:13px;color:#2E7D32;font-weight:600;line-height:1.6;margin:0}
+
+/* Las preguntas de la ficha estática: mismo aspecto, otro contenedor. */
+.fqa{max-width:1080px;margin:0 auto;padding:8px 20px 24px}
+.fqa h2{font-size:19px;margin-bottom:8px}
+.fqa-nota{font-size:12px;color:var(--muted);margin-top:14px}
+
+/* ── Panel: bandeja de preguntas ── */
+.tab-n{background:#D32F2F;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px}
+.adm-pregunta{border:1px solid var(--border);border-radius:8px;padding:14px}
+.adm-pregunta.pendiente{border-left:3px solid var(--y);background:#FFFDF5}
+
+@media (max-width:560px){
+  .ft-tabla th{width:auto}
+  .gal-play{width:52px;height:52px;font-size:19px}
+}
+
+@media print{
+  /* En papel: el video es un botón que no sirve y las preguntas son
+     conversación, no documento comercial. La ficha técnica SÍ se imprime —es
+     justamente el dato que el cliente se lleva para comparar. */
+  .fvideo,.gal-video,.gal-facade,.gal-frame,.fvideo-caja{display:none!important}
+  .qa,.fqa{display:none!important}
+  .ft{page-break-inside:avoid}
+  .ft-tabla tr:nth-child(odd){background:none!important}
+}

@@ -179,6 +179,36 @@ document.addEventListener('click', e => {
   if (e.target.closest && e.target.closest('[data-imprimir]')) window.print();
 });
 
+/**
+ * El video, sólo cuando lo piden.
+ *
+ * La ficha se sirve con una portada y un botón. El reproductor de YouTube
+ * —varios cientos de kilobytes, más las cookies de Google— entra al pulsar.
+ *
+ * Quien sólo mira las fotos ni descarga eso ni queda fichado por un tercero
+ * sin haber pedido nada, y la ficha abre rápido en un celular con señal de
+ * obra, que es donde se mira de verdad.
+ */
+document.addEventListener('click', e => {
+  const boton = e.target.closest && e.target.closest('[data-video]');
+  if (!boton) return;
+
+  const id = boton.dataset.video;
+  /* Se vuelve a comprobar aunque el HTML lo generó nuestro compilador. Es lo
+     que separa "de aquí sale una URL a youtube-nocookie" de "de aquí sale la
+     URL que hubiera en el atributo". */
+  if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return;
+
+  const marco = document.createElement('iframe');
+  marco.className = 'fvideo-frame';
+  marco.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1';
+  marco.title = boton.getAttribute('aria-label') || 'Video del equipo';
+  marco.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  marco.referrerPolicy = 'strict-origin-when-cross-origin';
+  marco.allowFullscreen = true;
+  boton.parentNode.replaceChild(marco, boton);
+});
+
 /* Primer pintado en las páginas estáticas. En la aplicación lo dispara
    openModal, porque ahí la calculadora nace después de este evento. */
 document.addEventListener('DOMContentLoaded', () => {

@@ -55,6 +55,25 @@ function cargarIconos() {
 }
 
 /**
+ * Toma el catálogo de datos técnicos del mismo archivo que usa la aplicación.
+ *
+ * Copiar aquí la lista de campos sería garantizar que un día no digan lo
+ * mismo: se añade "horas de motor" en el panel, se olvida aquí, y las fichas
+ * publicadas —las que ve Google— se quedan sin ese dato sin que nadie lo note.
+ *
+ * Por esto atributos.js no toca el DOM: aquí no hay `document`.
+ */
+function cargarAtributos() {
+  const ctx = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/atributos.js'), 'utf8'), ctx,
+    { filename: 'atributos.js' });
+  return {
+    fichaTecnica: vm.runInContext('fichaTecnica', ctx),
+    videoId: vm.runInContext('videoId', ctx),
+  };
+}
+
+/**
  * Toma la calculadora del propio ficha.js en vez de copiar su HTML aquí.
  * Copiarlo significaría que un cambio en la aplicación no llega a las páginas
  * estáticas, y nadie se enteraría hasta ver dos calculadoras distintas.
@@ -201,6 +220,50 @@ function similaresHTML(eq, catalogo, iconos) {
   </section>`;
 }
 
+/**
+ * Preguntas contestadas, en la ficha.
+ *
+ * Es lo que convierte una página de producto en una que sirve para más de una
+ * persona: la duda que alguien tuvo la semana pasada ya está resuelta para
+ * quien llegue hoy, y es texto propio que Google indexa con la máquina.
+ */
+function preguntasFichaHTML(eq) {
+  const qa = Array.isArray(eq.qa) ? eq.qa : [];
+  if (!qa.length) return '';
+
+  return `
+  <section class="fqa">
+    <h2>Preguntas sobre este equipo</h2>
+    ${qa.map(q => `
+      <article class="qa-item">
+        <p class="qa-p"><span class="qa-etq" aria-hidden="true">P</span>${esc(q.pregunta)}</p>
+        <p class="qa-r"><span class="qa-etq r" aria-hidden="true">R</span>${esc(q.respuesta)}</p>
+        <p class="qa-meta">${esc(q.nombre || 'Cliente')}${q.fecha ? ` · ${esc(q.fecha)}` : ''}</p>
+      </article>`).join('')}
+    <p class="fqa-nota">¿Tu duda no está aquí? Pregúntala desde el catálogo o
+      escríbenos por WhatsApp: contestamos el mismo día.</p>
+  </section>`;
+}
+
+/** El video: portada estática y, sólo si lo piden, el reproductor (ver ficha.js). */
+function videoFichaHTML(eq, poster) {
+  if (!eq.video) return '';
+  return `
+  <section class="fvideo">
+    <h2>Ve la máquina trabajando</h2>
+    <div class="fvideo-caja">
+      <button class="fvideo-facade" type="button" data-video="${esc(eq.video)}"
+              aria-label="Reproducir el video de ${esc(eq.name)}">
+        ${poster ? `<img src="${esc(poster)}" alt="" aria-hidden="true" loading="lazy">` : ''}
+        <span class="gal-play" aria-hidden="true">▶</span>
+        <span class="gal-facade-txt">Ver el video</span>
+      </button>
+    </div>
+    <p class="fvideo-nota">El video se carga desde YouTube sólo cuando le das al play.
+      Hasta entonces esta página no habla con ningún tercero.</p>
+  </section>`;
+}
+
 /* ── 2. Una página por equipo ── */
 function fichaHTML(eq, catalogo, iconos) {
   const a = catalogo.ajustes;
@@ -257,6 +320,17 @@ function fichaHTML(eq, catalogo, iconos) {
         seller: { '@type': 'Organization', name: a.vendedor },
       };
 
+  /* La ficha técnica va como `additionalProperty` CON NOMBRE, al revés que las
+     especificaciones libres.
+
+     La diferencia importa: {name:"Especificación", value:"148 HP"} le dice a
+     Google que hay un dato, no cuál. {name:"Potencia", value:148, unitText:"HP"}
+     sí se puede entender, comparar y enseñar en una tabla de resultados. Es lo
+     mismo que ganamos nosotros con los filtros, aplicado a quien busca fuera. */
+  const tecnicos = fichaTecnica(eq).map(f => ({
+    '@type': 'PropertyValue', name: f.etq, value: f.valor,
+  }));
+
   const datos = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -267,10 +341,30 @@ function fichaHTML(eq, catalogo, iconos) {
     image: publicas.length ? publicas : imagen,
     brand: { '@type': 'Brand', name: eq.brand },
     offers: oferta,
-    additionalProperty: eq.specs.map(s => ({
-      '@type': 'PropertyValue', name: 'Especificación', value: s,
-    })),
+    additionalProperty: [
+      ...tecnicos,
+      ...eq.specs.map(s => ({ '@type': 'PropertyValue', name: 'Especificación', value: s })),
+    ],
   };
+
+  /* Preguntas y respuestas como FAQPage.
+
+     Sin promesas de más: desde 2023 Google reserva el resultado enriquecido de
+     FAQ para sitios de gobierno y salud, así que esto NO va a pintar las
+     preguntas desplegables en los resultados. Lo que sí hace es dejar
+     explícito que ese texto son preguntas de clientes con respuesta del
+     vendedor —contenido propio, no relleno—, y otros buscadores y asistentes sí
+     lo usan. El valor principal sigue siendo para quien abre la página. */
+  const qa = Array.isArray(eq.qa) ? eq.qa : [];
+  const datosFAQ = qa.length ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: qa.map(q => ({
+      '@type': 'Question',
+      name: q.pregunta,
+      acceptedAnswer: { '@type': 'Answer', text: q.respuesta },
+    })),
+  } : null;
 
   const mensajeWa = `Hola ${marca}, me interesa el ${eq.name} (${url}). ¿Me pueden dar más información?`;
   const wa = `https://wa.me/${String(a.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWa)}`;
@@ -302,7 +396,7 @@ function fichaHTML(eq, catalogo, iconos) {
 <title>${esc(titulo)}</title>
 <meta name="description" content="${esc(resumen)}">
 <meta name="theme-color" content="#1A1A1A">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="canonical" href="${url}">
 <meta property="og:type" content="product">
 <meta property="og:url" content="${url}">
@@ -320,6 +414,9 @@ function fichaHTML(eq, catalogo, iconos) {
 <script type="application/ld+json">
 ${JSON.stringify(datos, null, 2)}
 </script>
+${datosFAQ ? `<script type="application/ld+json">
+${JSON.stringify(datosFAQ, null, 2)}
+</script>` : ''}
 </head>
 <body>
 
@@ -379,6 +476,16 @@ ${JSON.stringify(datos, null, 2)}
 
       <p class="ficha-desc">${esc(eq.desc)}</p>
 
+      ${tecnicos.length ? `
+      <div class="ft">
+        <h2 class="ft-titulo">Ficha técnica</h2>
+        <table class="ft-tabla">
+          <tbody>
+            ${fichaTecnica(eq).map(f => `<tr><th scope="row">${esc(f.etq)}</th><td>${esc(f.texto)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+
       <div class="ficha-acciones">
         <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar este equipo</a>
         <a class="btn-ghost" href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">📞 ${esc(a.telefono)}</a>
@@ -387,7 +494,11 @@ ${JSON.stringify(datos, null, 2)}
     </div>
   </div>
 
+  ${videoFichaHTML(eq, publicas[0] || null)}
+
   ${esRenta ? '' : calculadoraHTML(eq.price, { msi: eq.finance })}
+
+  ${preguntasFichaHTML(eq)}
 
   ${similaresHTML(eq, catalogo, iconos)}
 
@@ -456,6 +567,7 @@ ${urls.join('\n')}
 const catalogo = leerCatalogo();
 const iconos = cargarIconos();
 const calculadoraHTML = cargarCalculadora();
+const { fichaTecnica } = cargarAtributos();
 
 const faltantes = catalogo.equipos.filter(e => !e.slug);
 if (faltantes.length) {

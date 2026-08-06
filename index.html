@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#1A1A1A">
 <!-- Defensa en profundidad: aunque alguien lograra inyectar contenido, no puede
      cargar scripts externos, incrustar iframes ni sacar datos a otro servidor. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; form-action 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231A1A1A'/><text y='68' x='50' font-size='42' text-anchor='middle' fill='%23F5C400' font-family='sans-serif' font-weight='bold'>MDC</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -79,6 +79,9 @@
 <!-- Generado por "npm run build" desde data/catalogo.json. Debe ir antes de config.js. -->
 <script src="assets/js/catalogo-datos.js" defer></script>
 <script src="assets/js/config.js" defer></script>
+<!-- El catálogo de datos técnicos. Va antes que storage.js, que lo usa para
+     limpiar lo que entra, y antes que remoto.js, que lo usa al guardar. -->
+<script src="assets/js/atributos.js" defer></script>
 <script src="assets/js/backend.js" defer></script>
 <script src="assets/js/auth.js" defer></script>
 <script src="assets/js/remoto.js" defer></script>
@@ -278,6 +281,7 @@
     <div class="admin-tabs" role="tablist" id="adminTabs" hidden>
       <button class="admin-tab" role="tab" data-tab="products" aria-selected="true">📦 Equipos</button>
       <button class="admin-tab" role="tab" data-tab="solicitudes" aria-selected="false">📨 Cotizaciones</button>
+      <button class="admin-tab" role="tab" data-tab="preguntas" aria-selected="false">💬 Preguntas <span class="tab-n" id="tabPreguntasN" hidden>0</span></button>
       <button class="admin-tab" role="tab" data-tab="brand" aria-selected="false">🎨 Logo y marca</button>
       <button class="admin-tab" role="tab" data-tab="site" aria-selected="false">🌐 Textos del sitio</button>
       <button class="admin-tab" role="tab" data-tab="backup" aria-selected="false">💾 Respaldo</button>

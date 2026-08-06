@@ -27,9 +27,11 @@ const ctx = vm.createContext({
   Intl, Math, Date, JSON, Set, Number, String, Array, Object, RegExp,
   console, TextEncoder,
 });
-// El orden importa: catalogo-datos.js define CATALOGO, del que depende config.js.
-['icons.js', 'catalogo-datos.js', 'config.js', 'utils.js', 'security.js', 'storage.js', 'state.js',
- 'ficha.js']
+/* El orden importa: catalogo-datos.js define CATALOGO, del que depende
+   config.js; atributos.js define videoId y limpiarAtributos, de los que
+   depende storage.js al normalizar. Es el mismo orden del index.html. */
+['icons.js', 'catalogo-datos.js', 'config.js', 'atributos.js', 'utils.js', 'security.js',
+ 'storage.js', 'state.js', 'ficha.js']
   .forEach(f => vm.runInContext(load(f), ctx, { filename: f }));
 
 const run = expr => vm.runInContext(expr, ctx);
@@ -242,6 +244,168 @@ test('Oscurecer un color devuelve hexadecimal válido', () => {
 
 test('Un color inválido no rompe el sitio', () => {
   assert.strictEqual(run(`darken('no es un color')`), '#D4A900');
+});
+
+
+/* ══════════════════ VIDEO ══════════════════ */
+
+test('Se reconoce el enlace de YouTube en las formas que la gente copia', () => {
+  const id = 'dQw4w9WgXcQ';
+  const formas = [
+    'https://www.youtube.com/watch?v=' + id,
+    'https://www.youtube.com/watch?v=' + id + '&t=30s',
+    'https://youtu.be/' + id,
+    'https://www.youtube.com/embed/' + id,
+    'https://www.youtube.com/shorts/' + id,
+    '  ' + id + '  ',
+  ];
+  for (const f of formas) {
+    assert.strictEqual(run(`videoId(${JSON.stringify(f)})`), id, `no reconoció: ${f}`);
+  }
+});
+
+test('Lo que no es un video de YouTube se descarta, no se guarda a medias', () => {
+  /* Devolver el texto tal cual sería lo cómodo y lo peligroso: acabaría en la
+     base una cadena que el sitio metería dentro de un iframe. */
+  for (const malo of ['', null, undefined, 'javascript:alert(1)', 'https://ejemplo.com/video.mp4',
+                      'https://www.youtube.com/watch?v=corto', '<script>x</script>']) {
+    assert.strictEqual(run(`videoId(${JSON.stringify(malo ?? null)})`), null,
+      `debió rechazar: ${malo}`);
+  }
+});
+
+test('El video se reproduce sin cookies hasta que lo piden', () => {
+  const url = run(`videoEmbed('dQw4w9WgXcQ')`);
+  assert.ok(url.startsWith('https://www.youtube-nocookie.com/'),
+    'un embed de youtube.com pondría cookies de rastreo nada más cargar: ' + url);
+});
+
+/* ══════════════════ FICHA TÉCNICA ══════════════════ */
+
+test('Sólo se guardan las claves del catálogo de atributos', () => {
+  const r = JSON.parse(run(`JSON.stringify(limpiarAtributos(
+    {horas: 2400, potencia: '148', inventado: 'x', __proto__: 'y'}))`));
+  assert.deepStrictEqual(r, { horas: 2400, potencia: 148 });
+});
+
+test('Un número imposible se descarta en vez de guardarse', () => {
+  // Un peso negativo rompería el filtro sin que nadie lo notara hasta que un
+  // equipo dejara de aparecer en las búsquedas.
+  const r = JSON.parse(run(`JSON.stringify(limpiarAtributos(
+    {horas: -50, peso: 'no es número', potencia: 148}))`));
+  assert.deepStrictEqual(r, { potencia: 148 });
+});
+
+test('Una opción fuera de la lista no pasa', () => {
+  assert.deepStrictEqual(
+    JSON.parse(run(`JSON.stringify(limpiarAtributos({traccion: 'lo que sea'}))`)), {});
+  assert.deepStrictEqual(
+    JSON.parse(run(`JSON.stringify(limpiarAtributos({traccion: '4WD'}))`)), { traccion: '4WD' });
+});
+
+test('Los campos técnicos dependen de la categoría', () => {
+  const exc = JSON.parse(run(`JSON.stringify(camposDe('Excavación').map(c=>c.k))`));
+  const gru = JSON.parse(run(`JSON.stringify(camposDe('Elevación').map(c=>c.k))`));
+
+  assert.ok(exc.includes('profundidad'), 'una excavadora excava');
+  assert.ok(!gru.includes('profundidad'), 'una grúa torre no');
+  assert.ok(gru.includes('pluma'));
+
+  // Una categoría inventada desde el panel se queda con los universales, no con
+  // una lista vacía: las horas y el peso los tiene cualquier máquina.
+  const rara = JSON.parse(run(`JSON.stringify(camposDe('Categoría que no existe').map(c=>c.k))`));
+  assert.deepStrictEqual(rara, ['horas', 'peso', 'potencia', 'motor', 'cabina']);
+});
+
+test('Los valores se muestran con su unidad', () => {
+  const filas = JSON.parse(run(
+    `JSON.stringify(fichaTecnica({atributos:{horas:2400, peso:20, alcance:6.5}}))`));
+  const texto = Object.fromEntries(filas.map(f => [f.k, f.texto]));
+  assert.strictEqual(texto.horas, '2,400 h');
+  assert.strictEqual(texto.peso, '20 t', 'un entero no lleva decimales de adorno');
+  assert.strictEqual(texto.alcance, '6.5 m', 'un decimal sí conserva el suyo');
+});
+
+test('La ficha técnica sale en el orden del catálogo, no en el que se capturó', () => {
+  const orden = JSON.parse(run(
+    `JSON.stringify(fichaTecnica({atributos:{potencia:148, horas:2400, peso:20}}).map(f=>f.k))`));
+  assert.deepStrictEqual(orden, ['horas', 'peso', 'potencia'],
+    'las horas van primero: es el dato que más se busca en maquinaria usada');
+});
+
+/* ══════════════════ FILTROS DE FICHA TÉCNICA ══════════════════ */
+
+/**
+ * Prepara un catálogo de prueba, aplica los filtros REALES del sitio y deja
+ * todo como estaba.
+ *
+ * Se restaura `products` a propósito: es una variable global del contexto, y
+ * una prueba que se lo deja pisado al siguiente hace fallar a otra por un
+ * motivo que no tiene nada que ver con lo que prueba. Eso se persigue durante
+ * horas.
+ */
+function conCatalogo(equipos, filtros) {
+  const antes = run('products');
+  try {
+    run(`products = normalizeProducts(${JSON.stringify(equipos)})`);
+    run(`Object.assign(state, {cat:'Todos',conds:[],brands:[],locations:[],finance:[],
+         onlyFavs:false,min:null,max:null,q:'',horasMax:null,pesoMin:null,pesoMax:null})`);
+    run(`Object.assign(state, ${JSON.stringify(filtros)})`);
+    return JSON.parse(run('JSON.stringify(filterAll().map(p=>p.name))'));
+  } finally {
+    ctx.products = antes;
+    run(`Object.assign(state, {horasMax:null, pesoMin:null, pesoMax:null})`);
+  }
+}
+
+test('Filtrar por horas deja fuera lo que no cumple', () => {
+  const eq = [
+    { name: 'Poco usada', cond: 'Usado', atributos: { horas: 1200 } },
+    { name: 'Muy usada',  cond: 'Usado', atributos: { horas: 9000 } },
+  ];
+  assert.deepStrictEqual(conCatalogo(eq, { horasMax: 3000 }), ['Poco usada']);
+  assert.deepStrictEqual(conCatalogo(eq, {}).length, 2, 'sin filtro salen las dos');
+});
+
+test('Un equipo nuevo pasa el filtro de horas aunque no las tenga capturadas', () => {
+  /* Es la decisión que hace que el filtro sirva: un nuevo tiene cero horas por
+     definición y esconderlo de "hasta 3,000 h" sería absurdo. */
+  const eq = [
+    { name: 'Nuevo sin dato',  cond: 'Nuevo', atributos: {} },
+    { name: 'Usado sin dato',  cond: 'Usado', atributos: {} },
+  ];
+  assert.deepStrictEqual(conCatalogo(eq, { horasMax: 3000 }), ['Nuevo sin dato'],
+    'un usado sin horas capturadas no puede prometerse como de pocas horas');
+});
+
+test('El filtro de peso deja pasar lo que no tiene el dato', () => {
+  /* Al revés que las horas, y a propósito: el peso se deduce del modelo, y
+     quien busca "de 15 a 25 t" prefiere ver una de más y descartarla él. */
+  const eq = [
+    { name: 'Chica',   cond: 'Usado', atributos: { peso: 4 } },
+    { name: 'Mediana', cond: 'Usado', atributos: { peso: 20 } },
+    { name: 'Sin dato', cond: 'Usado', atributos: {} },
+  ];
+  assert.deepStrictEqual(conCatalogo(eq, { pesoMin: 15, pesoMax: 25 }), ['Mediana', 'Sin dato']);
+});
+
+test('Los filtros nuevos cuentan en el contador de filtros activos', () => {
+  run(`Object.assign(state, {horasMax:3000, pesoMin:10, pesoMax:null})`);
+  assert.strictEqual(run('activeFilterCount()'), 2);
+  run(`Object.assign(state, {horasMax:null, pesoMin:null, pesoMax:null})`);
+});
+
+/* ══════════════════ PREGUNTAS ══════════════════ */
+
+test('Una pregunta sin respuesta no llega a la ficha', () => {
+  /* Publicar una pregunta colgada sin contestar dice de la empresa justo lo
+     contrario de lo que se busca al abrir este canal. */
+  const qa = JSON.parse(run(`JSON.stringify(normalizeProducts([{name:'X', qa:[
+    {nombre:'Ana', pregunta:'¿Tiene factura?', respuesta:'Sí, factura A.'},
+    {nombre:'Luis', pregunta:'¿Cuántas horas?'}
+  ]}])[0].qa)`));
+  assert.strictEqual(qa.length, 1);
+  assert.strictEqual(qa[0].nombre, 'Ana');
 });
 
 console.log(`\n${pass}/${pass + fail} pruebas unitarias pasaron`);

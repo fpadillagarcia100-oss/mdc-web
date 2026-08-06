@@ -207,6 +207,73 @@ const resumen = r => `HTTP ${r.estado}${r.cuerpo?.message ? ' · ' + String(r.cu
     return `HTTP ${r.status}`;
   });
 
+  /* ── Preguntas públicas ──
+     Un canal nuevo por el que entra texto de desconocidos y que se publica en
+     las fichas. Si algo va a salir mal aquí, va a salir mal en público. */
+
+  await prueba('Sólo se ven las preguntas ya contestadas y aprobadas', async () => {
+    const r = await api('preguntas?select=id,pregunta,respuesta,publicada');
+    afirmar(r.ok, `el público no puede leer las preguntas contestadas: ${resumen(r)}`);
+    const coladas = r.cuerpo.filter(q => !q.publicada || q.respuesta === null);
+    afirmar(coladas.length === 0,
+      `${coladas.length} preguntas sin contestar o sin aprobar son visibles al público`);
+    return `${r.cuerpo.length} visibles`;
+  });
+
+  await prueba('⚠️ No se puede escribir directo en la tabla de preguntas', async () => {
+    /* La tabla no tiene política de INSERT: la única puerta es preguntar().
+       Si alguien le añadiera una "para simplificar", quien pregunta podría
+       mandar también `respuesta` y `publicada` — o sea, publicar el texto que
+       quisiera dentro de tus fichas. */
+    const r = await api('preguntas', {
+      method: 'POST',
+      body: JSON.stringify({
+        slug: 'excavadora-cat-320-gc', nombre: 'Intruso',
+        pregunta: 'Texto colado directo', respuesta: 'Y su propia respuesta', publicada: true,
+      }),
+    });
+    afirmar(fueRechazado(r), '¡se insertó una pregunta YA PUBLICADA con la llave pública!');
+    return resumen(r);
+  });
+
+  await prueba('No se puede responder ni publicar una pregunta ajena', async () => {
+    const r = await api('preguntas?id=gt.0', {
+      method: 'PATCH',
+      body: JSON.stringify({ respuesta: 'Respuesta falsificada', publicada: true }),
+    });
+    const despues = await api('preguntas?select=respuesta&limit=50');
+    if (despues.ok) {
+      afirmar(!despues.cuerpo.some(q => q.respuesta === 'Respuesta falsificada'),
+        '¡SE MODIFICÓ UNA RESPUESTA con la llave pública!');
+    }
+    return resumen(r);
+  });
+
+  await prueba('No se pueden borrar preguntas', async () => {
+    const antes = await api('preguntas?select=id');
+    await api('preguntas?id=gt.0', { method: 'DELETE' });
+    const despues = await api('preguntas?select=id');
+    afirmar(despues.cuerpo.length === antes.cuerpo.length,
+      `¡se borraron preguntas! quedaban ${antes.cuerpo.length}, ahora ${despues.cuerpo.length}`);
+    return `siguen ${despues.cuerpo.length}`;
+  });
+
+  await prueba('Las métricas no se pueden leer ni falsear', async () => {
+    const lectura = await api('metricas?select=*');
+    if (lectura.ok) {
+      afirmar(lectura.cuerpo.length === 0,
+        `se leyeron ${lectura.cuerpo.length} filas de métricas con la llave pública`);
+    }
+    /* Si se pudieran escribir a mano, los números dejarían de servir para
+       decidir qué bajar de precio — que es lo único para lo que existen. */
+    const escritura = await api('metricas', {
+      method: 'POST',
+      body: JSON.stringify({ slug: 'excavadora-cat-320-gc', vistas: 999999 }),
+    });
+    afirmar(fueRechazado(escritura), '¡se pudo escribir un contador a mano!');
+    return resumen(escritura);
+  });
+
   /* ── Pruebas que escriben ── */
 
   if (!PUEDE_ESCRIBIR) {
@@ -341,10 +408,49 @@ const resumen = r => `HTTP ${r.estado}${r.cuerpo?.message ? ' · ' + String(r.cu
       return resumen(ultima);
     });
 
+    /* ── El canal de preguntas, ejercitado de verdad ── */
+
+    await prueba('Una pregunta legítima entra por su función', async () => {
+      const r = await fetch(`${URL_BASE}/rest/v1/rpc/preguntar`, {
+        method: 'POST',
+        headers: { apikey: LLAVE, Authorization: `Bearer ${LLAVE}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          p_slug: 'excavadora-cat-320-gc', p_nombre: 'Prueba de seguridad',
+          p_pregunta: '¿Esta pregunta de prueba llegó bien a la base?',
+        }),
+      });
+      afirmar(r.ok, `una pregunta válida fue rechazada: HTTP ${r.status} ${(await r.text()).slice(0, 120)}`);
+      return `HTTP ${r.status}`;
+    });
+
+    await prueba('Una pregunta nace SIN publicar', async () => {
+      /* Lo importante del canal entero. Si naciera publicada, el formulario de
+         preguntas sería un formulario para escribir en tus fichas. */
+      const r = await api('preguntas?select=pregunta,publicada,respuesta' +
+        '&pregunta=eq.' + encodeURIComponent('¿Esta pregunta de prueba llegó bien a la base?'));
+      afirmar(!r.ok || r.cuerpo.length === 0,
+        '¡la pregunta recién creada ya es visible al público sin haber sido contestada!');
+      return r.ok ? 'invisible al público, como debe' : resumen(r);
+    });
+
+    await prueba('No se puede preguntar sobre un equipo que no existe', async () => {
+      const r = await fetch(`${URL_BASE}/rest/v1/rpc/preguntar`, {
+        method: 'POST',
+        headers: { apikey: LLAVE, Authorization: `Bearer ${LLAVE}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          p_slug: 'equipo-que-no-existe', p_nombre: 'Intruso',
+          p_pregunta: 'Sembrando filas para llenar la tabla',
+        }),
+      });
+      afirmar(!r.ok, '¡se creó una pregunta sobre un equipo inexistente! La tabla se puede llenar de basura.');
+      return `HTTP ${r.status}`;
+    });
+
     // No se pueden contar desde aquí: el RLS las esconde, que es justo lo que
     // debe pasar. Se avisa a ciegas.
     console.log(`\n  Nota: quedaron solicitudes de prueba con teléfonos ${Object.values(TEL)[0]}–${Object.values(TEL).at(-1)}.`);
     console.log('  Fíltralas por "999" en el panel y márcalas como spam (no se borran, por diseño).');
+    console.log('  También quedó una pregunta de prueba: bórrala desde la pestaña Preguntas (ésas sí se borran).');
   }
 
   console.log(`\n${pasan}/${pasan + fallan} comprobaciones de seguridad pasaron`);

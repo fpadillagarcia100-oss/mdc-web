@@ -52,6 +52,27 @@ function normalizeImgs(p){
   return crudas.filter(imgOk).slice(0, MAX_FOTOS);
 }
 
+/**
+ * Preguntas ya contestadas de un equipo, tal como vienen del sitio publicado.
+ *
+ * Se filtra por "tiene respuesta" aquí ADEMÁS de en la base. No es duplicar
+ * por gusto: un respaldo importado a mano no pasa por ninguna política, y una
+ * pregunta sin contestar pintada en la ficha se lee como si la empresa la
+ * hubiera ignorado.
+ */
+function normalizeQA(p){
+  if(!Array.isArray(p.qa)) return [];
+  return p.qa
+    .filter(q => q && typeof q==='object' && q.pregunta && q.respuesta)
+    .slice(0, 40)
+    .map(q => ({
+      nombre: String(q.nombre || 'Cliente').slice(0, 60),
+      pregunta: String(q.pregunta).slice(0, 300),
+      respuesta: String(q.respuesta).slice(0, 1000),
+      fecha: typeof q.fecha === 'string' ? q.fecha : null
+    }));
+}
+
 function normalizeProducts(list){
   if(!Array.isArray(list)) return DEFAULT_PRODUCTS.map(p=>({...p}));
   return list.filter(p=>p && typeof p==='object' && p.name).map((p,i)=>{
@@ -80,7 +101,14 @@ function normalizeProducts(list){
     hot: !!p.hot,
     // Un valor desconocido se trata como disponible: mas vale que una etiqueta
     // no aparezca a que un equipo se marque "vendido" por un dato raro.
-    disponibilidad: ['apartado','vendido'].includes(p.disponibilidad) ? p.disponibilidad : 'disponible'
+    disponibilidad: ['apartado','vendido'].includes(p.disponibilidad) ? p.disponibilidad : 'disponible',
+    /* Sólo el identificador de YouTube. videoId() devuelve null ante cualquier
+       otra cosa, así que una dirección ajena colada en un respaldo no llega a
+       convertirse en un iframe dentro de la ficha. */
+    video: videoId(p.video),
+    // Se filtran las claves desconocidas: ver limpiarAtributos en atributos.js.
+    atributos: limpiarAtributos(p.atributos),
+    qa: normalizeQA(p)
   }});
 }
 

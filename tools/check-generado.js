@@ -100,6 +100,30 @@ for (const eq of catalogo.equipos) {
   if (catalogo.equipos.length > 3 && !html.includes('class="similar"')) {
     problemas.push(`${eq.slug}: la ficha no ofrece equipos similares.`);
   }
+
+  /* El video y las preguntas viven en la base y viajan al sitio al publicar.
+     Que se pierdan por el camino es invisible: la ficha se ve bien, sólo que
+     sin lo que más cuesta conseguir. Por eso se comprueba que lleguen. */
+  if (eq.video && !html.includes(`data-video="${eq.video}"`)) {
+    problemas.push(`${eq.slug}: tiene video en el catálogo pero la ficha no lo incluye.`);
+  }
+
+  if (Array.isArray(eq.qa) && eq.qa.length) {
+    if (!html.includes('class="fqa"')) {
+      problemas.push(`${eq.slug}: tiene ${eq.qa.length} preguntas contestadas y la ficha no las muestra.`);
+    }
+    if (!html.includes('"FAQPage"')) {
+      problemas.push(`${eq.slug}: las preguntas no salen como datos estructurados.`);
+    }
+  }
+
+  /* Un dato técnico capturado que no llega a los datos estructurados es
+     trabajo tirado: es justo lo que permite que un buscador entienda que esa
+     máquina pesa 20 toneladas en vez de leer "20 ton" como texto suelto. */
+  const tecnicos = Object.keys(eq.atributos || {}).length;
+  if (tecnicos && !html.includes('class="ft-tabla"')) {
+    problemas.push(`${eq.slug}: tiene ficha técnica capturada y la página no la publica.`);
+  }
 }
 
 if (problemas.length) {

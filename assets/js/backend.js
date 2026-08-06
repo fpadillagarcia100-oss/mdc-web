@@ -128,3 +128,50 @@ function contar(slug, tipo) {
     keepalive: true,
   }).catch(() => {});
 }
+
+
+/**
+ * Deja una pregunta pública sobre un equipo.
+ *
+ * ── Por qué ésta SÍ avisa si falla, al revés que las otras dos ──
+ *
+ * Registrar una solicitud y contar una vista ocurren detrás de algo que el
+ * cliente ya vio funcionar: su mensaje de WhatsApp salió, su ficha se abrió.
+ * Que fallen en silencio es lo correcto.
+ *
+ * Una pregunta no tiene otro camino. Alguien escribió tres renglones y le dio
+ * a enviar; si esto falla callado, se queda esperando una respuesta que nunca
+ * va a llegar porque la pregunta no existe en ningún lado. Aquí el silencio
+ * sería mentir.
+ *
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+async function preguntar(slug, nombre, pregunta) {
+  if (!BACKEND || typeof fetch !== 'function') {
+    return { ok: false, error: 'Las preguntas no están disponibles ahora. Escríbenos por WhatsApp.' };
+  }
+
+  try {
+    const r = await fetch(`${BACKEND.url}/rest/v1/rpc/preguntar`, {
+      method: 'POST',
+      headers: {
+        apikey: BACKEND.llave,
+        Authorization: `Bearer ${BACKEND.llave}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_slug: slug, p_nombre: nombre, p_pregunta: pregunta }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (r.ok) return { ok: true };
+
+    /* Los mensajes de la función están escritos para leerse tal cual ("Espera
+       unos minutos", "Escribe tu nombre"): se validan en el servidor porque es
+       el único sitio donde la validación cuenta, y se redactan pensando en que
+       van a acabar delante de una persona. */
+    const d = await r.json().catch(() => ({}));
+    return { ok: false, error: d.message || 'No se pudo enviar tu pregunta. Inténtalo de nuevo.' };
+  } catch {
+    return { ok: false, error: 'No se pudo enviar tu pregunta. Revisa tu conexión.' };
+  }
+}

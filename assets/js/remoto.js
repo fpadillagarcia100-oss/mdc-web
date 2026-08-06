@@ -98,6 +98,8 @@ function equipoDesdeFila(f) {
     hot: f.destacado,
     publicado: f.publicado,
     disponibilidad: f.disponibilidad || 'disponible',
+    video: f.video_url || null,
+    atributos: f.atributos || {},
   };
 }
 
@@ -135,6 +137,11 @@ function filaDesdeEquipo(p) {
     destacado: !!p.hot,
     publicado: p.publicado !== false,
     disponibilidad: ['disponible','apartado','vendido'].includes(p.disponibilidad) ? p.disponibilidad : 'disponible',
+    /* La base sólo acepta 11 caracteres alfanuméricos, así que mandar la
+       dirección completa la haría rechazar el guardado ENTERO del equipo —
+       precio incluido— por un campo secundario. Se normaliza aquí. */
+    video_url: videoId(p.video),
+    atributos: limpiarAtributos(p.atributos),
   };
 }
 
@@ -437,4 +444,50 @@ function fotoSrcset(url) {
 /** Contadores por equipo. Sólo los ve un administrador. */
 async function remotoMetricas() {
   return apiRemota('metricas?select=*&order=vistas.desc');
+}
+
+
+/* ── Preguntas del público ─────────────────────────────────────────────────
+   Con sesión de administrador se ven TODAS, incluidas las que aún no tienen
+   respuesta. Sin sesión, la política de la base sólo deja ver las contestadas
+   y publicadas — que es lo que lee el exportador para armar las fichas. */
+
+/** Todas las preguntas, las más nuevas primero. */
+async function remotoPreguntas() {
+  return apiRemota('preguntas?select=*&order=creado_en.desc&limit=300');
+}
+
+/**
+ * Contesta una pregunta y decide si se enseña en la ficha.
+ *
+ * Son dos cosas separadas a propósito. A veces se contesta algo que no
+ * conviene publicar —un descuento, un dato de un cliente— y hace falta poder
+ * cerrarla sin que salga en la página.
+ *
+ * `respondida_en` la pone el servidor sólo la primera vez: es cuándo se
+ * atendió, no cuándo se corrigió una errata tres semanas después.
+ */
+async function remotoResponderPregunta(id, respuesta, publicada, yaRespondida) {
+  const cambios = {
+    respuesta: respuesta ? String(respuesta).slice(0, 1000) : null,
+    publicada: !!publicada,
+  };
+  if (respuesta && !yaRespondida) cambios.respondida_en = new Date().toISOString();
+
+  const filas = await apiRemota(`preguntas?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH', body: JSON.stringify(cambios),
+  });
+  if (!filas || !filas.length) throw new Error('No se guardó la respuesta. ¿Sigue abierta tu sesión?');
+  return filas[0];
+}
+
+/**
+ * Borra una pregunta.
+ *
+ * Aquí SÍ se puede borrar, al revés que en las solicitudes: una pregunta de
+ * spam no es registro comercial de nada, y dejarla sólo sirve para tener que
+ * volver a mirarla cada vez que se abre la bandeja.
+ */
+async function remotoBorrarPregunta(id) {
+  await apiRemota(`preguntas?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

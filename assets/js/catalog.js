@@ -52,6 +52,23 @@ function filterHTML(){
       <p class="price-hint">Los equipos en renta se comparan por su costo mensual.</p>
     </div>
     <div class="filter-group">
+      <div class="filter-group-title">Horas de uso</div>
+      <div class="price-inputs">
+        <input class="price-input" type="number" min="0" step="500" data-tec="horasMax"
+               aria-label="Horas de uso máximas" placeholder="Hasta…" value="${state.horasMax ?? ''}">
+      </div>
+      <p class="price-hint">Los equipos nuevos aparecen siempre. Los usados sin horas
+        capturadas no salen con este filtro puesto.</p>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-title">Peso operativo (toneladas)</div>
+      <div class="price-inputs">
+        <input class="price-input" type="number" min="0" step="1" data-tec="pesoMin" aria-label="Peso mínimo" placeholder="Mínimo" value="${state.pesoMin ?? ''}">
+        <span class="price-sep" aria-hidden="true">—</span>
+        <input class="price-input" type="number" min="0" step="1" data-tec="pesoMax" aria-label="Peso máximo" placeholder="Máximo" value="${state.pesoMax ?? ''}">
+      </div>
+    </div>
+    <div class="filter-group">
       <div class="filter-group-title">Financiamiento</div>
       ${FINANCE_OPTS.map(o=>checkboxRow('fin',o.value,o.label,
         finBase.filter(p=>o.value==='msi'?!!p.finance:!!p.leasing).length)).join('')}
@@ -73,9 +90,13 @@ function filterHTML(){
 function renderFilters(){
   const active = document.activeElement;
   const card = active && active.closest ? active.closest('.filter-card') : null;
+  /* Los filtros se redibujan enteros en cada cambio (los conteos dependen del
+     resto), así que hay que devolver el foco al control donde estaba o se
+     pierde a media escritura. */
   const mark = card ? (active.dataset.filter
       ? `[data-filter="${active.dataset.filter}"]${active.value?`[value="${active.value}"]`:''}`
-      : active.dataset.price ? `[data-price="${active.dataset.price}"]` : null) : null;
+      : active.dataset.price ? `[data-price="${active.dataset.price}"]`
+      : active.dataset.tec ? `[data-tec="${active.dataset.tec}"]` : null) : null;
 
   const html = filterHTML();
   $('#filterCardDesktop').innerHTML = html;
@@ -151,7 +172,8 @@ function cardHTML(p){
   return `<article class="pcard${agotado?' agotado':''}">
     <div class="pcard-img">
       ${productMedia(p)}
-      ${p.imgs.length>1?`<span class="pcard-fotos" aria-label="${p.imgs.length} fotos">📷 ${p.imgs.length}</span>`:''}
+      ${p.imgs.length>1||p.video?`<span class="pcard-fotos" aria-label="${p.imgs.length} fotos${p.video?' y video':''}">${
+        p.imgs.length>1?`📷 ${p.imgs.length}`:''}${p.imgs.length>1&&p.video?' · ':''}${p.video?'▶':''}</span>`:''}
       ${badgeHTML(p)}
       <button class="pcard-fav" type="button" data-fav="${p.id}" aria-pressed="${fav}"
               aria-label="${fav?'Quitar de':'Guardar en'} favoritos: ${esc(p.name)}">${fav?'♥':'♡'}</button>
@@ -288,6 +310,9 @@ function renderChips(){
   state.finance.forEach(v=>chips.push({type:'fin',value:v,label:FINANCE_OPTS.find(o=>o.value===v).label}));
   if(state.min!=null) chips.push({type:'min',value:'',label:'Desde '+fmtCompact(state.min)});
   if(state.max!=null) chips.push({type:'max',value:'',label:'Hasta '+fmtCompact(state.max)});
+  if(state.horasMax!=null) chips.push({type:'horasMax',value:'',label:`Hasta ${nf.format(state.horasMax)} h`});
+  if(state.pesoMin!=null) chips.push({type:'pesoMin',value:'',label:`Desde ${state.pesoMin} t`});
+  if(state.pesoMax!=null) chips.push({type:'pesoMax',value:'',label:`Hasta ${state.pesoMax} t`});
   if(state.q) chips.push({type:'q',value:'',label:`“${state.q}”`});
   if(state.onlyFavs) chips.push({type:'fav',value:'',label:'♥ Favoritos'});
 
