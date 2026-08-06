@@ -359,39 +359,82 @@ async function remotoEstadoSolicitud(id, estado) {
  * @param {Blob} archivo   ya redimensionado y comprimido por el panel
  * @param {string} slug    para agrupar las fotos por equipo
  */
-async function remotoSubirFoto(archivo, slug) {
+/**
+ * Sube una foto en dos tamaños y devuelve la dirección de la grande.
+ *
+ * ── Por qué dos ──
+ *
+ * La tarjeta del catálogo enseña la foto a unos 380 px de ancho. Mandarle una
+ * de 1400 es hacer que el cliente descargue cuatro veces más de lo que su
+ * pantalla puede aprovechar. Con nueve tarjetas eso es más de un megabyte de
+ * más, y en una obra con señal de celular son varios segundos mirando huecos
+ * grises.
+ *
+ * ── Cómo se relacionan ──
+ *
+ * Los nombres terminan en `-w1400` y `-w700`. Sólo se guarda la grande; la
+ * pequeña se deduce cambiando el sufijo.
+ *
+ * El sufijo NO es decorativo: es lo que permite distinguir las fotos nuevas de
+ * las que se subieron antes de esto. Sin él habría que adivinar si existe la
+ * versión pequeña, y adivinar mal significa una imagen rota.
+ *
+ * Si falla cualquiera de las dos subidas, no se guarda ninguna. Media foto
+ * subida es una imagen rota esperando a que alguien la mire.
+ */
+async function remotoSubirFoto(archivo, slug, hacerPequena) {
   const token = await tokenValido();
   if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
 
-  const ext = (archivo.type.split('/')[1] || 'webp').replace('jpeg', 'jpg');
-  /* El nombre lleva un sufijo aleatorio a propósito. Con un nombre fijo por
-     equipo, cambiar la foto dejaría la vieja en el caché del CDN y de los
-     navegadores durante horas: subirías una nueva y seguirías viendo la
-     anterior sin entender por qué. Un nombre distinto se ve al instante. */
-  const sufijo = Math.random().toString(36).slice(2, 10);
-  const ruta = `${slug || 'equipo'}/${Date.now()}-${sufijo}.${ext}`;
+  const base = `${slug || 'equipo'}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-  const r = await fetch(`${BACKEND.url}/storage/v1/object/equipos/${ruta}`, {
-    method: 'POST',
-    headers: {
-      apikey: BACKEND.llave,
-      Authorization: `Bearer ${token}`,
-      'Content-Type': archivo.type,
-    },
-    body: archivo,
-    signal: AbortSignal.timeout(60000),
-  });
+  const subir = async (blob, sufijo) => {
+    const r = await fetch(`${BACKEND.url}/storage/v1/object/equipos/${base}${sufijo}.webp`, {
+      method: 'POST',
+      headers: {
+        apikey: BACKEND.llave,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': blob.type || 'image/webp',
+      },
+      body: blob,
+      signal: AbortSignal.timeout(60000),
+    });
 
-  if (!r.ok) {
-    const detalle = await r.text();
-    if (/exceeded the maximum allowed size/i.test(detalle)) {
-      throw new Error('La foto pesa demasiado. El límite del servidor son 3 MB.');
+    if (!r.ok) {
+      const detalle = await r.text();
+      if (/exceeded the maximum allowed size/i.test(detalle)) {
+        throw new Error('la foto pesa más de 3 MB');
+      }
+      if (r.status === 401 || r.status === 403) {
+        throw new Error('sin permiso, ¿sigue abierta tu sesión?');
+      }
+      throw new Error(detalle.slice(0, 120));
     }
-    if (r.status === 401 || r.status === 403) {
-      throw new Error('No tienes permiso para subir fotos. ¿Sigue abierta tu sesión?');
-    }
-    throw new Error('No se pudo subir la foto: ' + detalle.slice(0, 150));
+    return `${BACKEND.url}/storage/v1/object/public/equipos/${base}${sufijo}.webp`;
+  };
+
+  /* La pequeña primero. Si va a fallar algo —cuota, permisos, red— que falle
+     con el archivo ligero, no después de haber subido el pesado. */
+  if (typeof hacerPequena === 'function') {
+    await subir(await hacerPequena(), '-w700');
   }
+  return subir(archivo, '-w1400');
+}
 
-  return `${BACKEND.url}/storage/v1/object/public/equipos/${ruta}`;
+/**
+ * Construye el `srcset` de una foto, si tiene versión pequeña.
+ *
+ * Devuelve cadena vacía para las fotos anteriores a este cambio: no tienen
+ * `-w1400` en el nombre, así que no existe la pequeña y anunciarla sería
+ * prometer un archivo que da 404.
+ */
+function fotoSrcset(url) {
+  if (typeof url !== 'string' || !url.includes('-w1400.webp')) return '';
+  return `${url.replace('-w1400.webp', '-w700.webp')} 700w, ${url} 1400w`;
+}
+
+
+/** Contadores por equipo. Sólo los ve un administrador. */
+async function remotoMetricas() {
+  return apiRemota('metricas?select=*&order=vistas.desc');
 }

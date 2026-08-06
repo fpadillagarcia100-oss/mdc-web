@@ -122,9 +122,21 @@ function badgeHTML(p){
    dibujado de la pagina. Con nueve tarjetas y fotos de verdad, la diferencia
    se nota en un celular de obra: la pagina responde mientras las imagenes
    siguen llegando, en vez de quedarse tiesa. */
-const productMedia = (p, alt=true) => p.img
-  ? `<img src="${esc(p.img)}" alt="${alt?esc(p.name):''}" loading="lazy" decoding="async">`
-  : (svgs[p.svgKey] || svgs.excavadora);
+const productMedia = (p, alt=true) => {
+  if(!p.img) return svgs[p.svgKey] || svgs.excavadora;
+
+  /* `sizes` le dice al navegador cuanto ancho ocupara la foto ANTES de
+     descargarla, para que elija el archivo adecuado. Sin esto supone que
+     ocupa toda la pantalla y se baja siempre la grande, que es justo lo que
+     veniamos a evitar.
+
+     Los valores siguen la rejilla: tres columnas en escritorio, dos en
+     tableta, una en movil. */
+  const set = typeof fotoSrcset === 'function' ? fotoSrcset(p.img) : '';
+  return `<img src="${esc(p.img)}" alt="${alt?esc(p.name):''}" loading="lazy" decoding="async"` +
+    (set ? ` srcset="${esc(set)}" sizes="(max-width:560px) 92vw, (max-width:1024px) 46vw, 30vw"` : '') +
+    '>';
+};
 
 function priceHTML(p){
   if(p.cond==='Renta') return `<span class="pcard-price">${fmtCompact(p.price)}<small> /mes</small></span>`;

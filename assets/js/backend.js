@@ -96,3 +96,35 @@ async function registrarSolicitud(s) {
     return false;
   }
 }
+
+
+/**
+ * Suma una vista o una cotización a un equipo.
+ *
+ * Nunca espera, nunca avisa, nunca falla hacia fuera. Contar es lo último que
+ * importa de la página: si el contador se cae, el cliente no debe enterarse
+ * ni esperar un milisegundo por ello.
+ *
+ * No hay cookies ni identificación. Sólo se suma uno a un contador por
+ * equipo — no se puede saber quién miró, sólo cuántas veces se miró.
+ *
+ * @param {string} slug   dirección del equipo
+ * @param {'vista'|'cotizacion'} tipo
+ */
+function contar(slug, tipo) {
+  if (!BACKEND || typeof fetch !== 'function' || !slug) return;
+
+  fetch(`${BACKEND.url}/rest/v1/rpc/contar`, {
+    method: 'POST',
+    headers: {
+      apikey: BACKEND.llave,
+      Authorization: `Bearer ${BACKEND.llave}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_slug: slug, p_tipo: tipo }),
+    /* `keepalive` deja que la petición termine aunque la persona cierre la
+       pestaña justo después. Sin esto se perderían precisamente las visitas
+       de quien mira y se va — que son la mayoría. */
+    keepalive: true,
+  }).catch(() => {});
+}

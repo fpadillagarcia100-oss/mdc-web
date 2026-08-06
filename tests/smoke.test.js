@@ -450,6 +450,18 @@ const ev = code => window.eval(code);
   check('La galeria se corta en el tope de 8 que acepta la base',
     ev("filaDesdeEquipo({imgs: Array.from({length:20},(_,i)=>'https://a/'+i+'.webp')}).imagenes.length === 8"));
 
+  /* Las fotos anteriores a la doble subida no tienen version pequena.
+     Anunciarla en el srcset seria prometer un archivo que da 404. */
+  check('Solo se ofrece la foto pequena cuando existe',
+    ev("fotoSrcset('https://x/a-w1400.webp').includes('-w700.webp')") === true &&
+    ev("fotoSrcset('https://x/vieja.webp')") === '' &&
+    ev("fotoSrcset(null)") === '');
+
+  /* Contar no puede estorbar: si el contador falla o no hay conexion, la
+     pagina sigue igual. Por eso no devuelve nada ni lanza. */
+  check('Contar nunca lanza ni bloquea',
+    ev("(function(){ try{ contar('x','vista'); contar(null,'vista'); return true }catch{ return false } })()"));
+
   check('Las fotos ya no se guardan como texto incrustado',
     ev('typeof fileToBlob') === 'function' && ev('typeof remotoSubirFoto') === 'function');
 

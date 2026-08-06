@@ -241,6 +241,7 @@ function renderAdmin(){
   if(form) form.addEventListener('submit', e=>{ e.preventDefault(); saveProductForm() });
 
   if(adminTab==='solicitudes' && solicitudes === null) cargarSolicitudes();
+  if(adminTab==='products' && metricas === null) cargarMetricas();
 
   // El botón se vuelve a dibujar en cada render: hay que devolverle la cuenta
   // atrás, o cambiar de pestaña serviría para saltarse la espera.
@@ -348,6 +349,63 @@ async function cambiarEstadoSolicitud(id, estado){
   }
 }
 
+/* ══════════════════ QUÉ SE MIRA Y QUÉ SE COTIZA ══════════════════
+
+   Dos números por equipo, contados en tu propia base. Sin cookies, sin
+   scripts de terceros y sin poder saber quién miró: sólo cuántas veces.
+
+   Lo que se busca no es "cuál se mira más" — eso ya se intuye. Es el equipo
+   que se mira MUCHO y se cotiza POCO: ése tiene el precio fuera de mercado,
+   las fotos malas o la descripción incompleta. Es el único dato que dice
+   dónde tocar. */
+let metricas = null;
+
+async function cargarMetricas(){
+  try{
+    metricas = await remotoMetricas();
+  }catch{
+    metricas = [];   // sin métricas el panel sigue sirviendo: no se avisa
+  }
+  if(isAdmin && adminTab==='products' && editingId === null) renderAdmin();
+}
+
+function metricasHTML(){
+  if(metricas === null || !metricas.length) return '';
+
+  const total = metricas.reduce((n,m)=>n+Number(m.vistas||0), 0);
+  if(!total) return '';
+
+  /* Se ordena por vistas SIN cotización, no por vistas a secas: lo que hay
+     que enseñar arriba es dónde se está perdiendo gente. */
+  const conNombre = metricas.map(m => {
+    const eq = products.find(p => p.slug === m.slug);
+    const vistas = Number(m.vistas||0), cot = Number(m.cotizaciones||0);
+    return { nombre: eq ? eq.name : m.slug, vistas, cot, perdidas: vistas - cot };
+  }).filter(m => m.vistas > 0).sort((a,b) => b.perdidas - a.perdidas).slice(0, 6);
+
+  return `
+    <div class="adm-section">
+      <h3>Qué miran tus clientes</h3>
+      <p class="sub">${total} fichas abiertas en total. Se cuenta en tu propia base,
+        sin cookies ni rastreo: no se sabe quién miró, sólo cuántas veces.
+        <strong>Fíjate en el que tiene muchas vistas y pocas cotizaciones</strong> —
+        ése suele ser el que tiene el precio alto o las fotos flojas.</p>
+      <table class="adm-table">
+        <thead><tr><th>Equipo</th><th>Vistas</th><th>Cotizado</th><th></th></tr></thead>
+        <tbody>
+          ${conNombre.map(m => `<tr>
+            <td>${esc(m.nombre)}</td>
+            <td>${m.vistas}</td>
+            <td>${m.cot}</td>
+            <td style="font-size:12px;color:var(--muted)">${
+              m.vistas >= 5 && m.cot === 0 ? 'Se mira y nadie cotiza' : ''
+            }</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
 /* ── Listado de equipos ── */
 function productListHTML(){
   const q = adminQuery.toLowerCase();
@@ -358,6 +416,7 @@ function productListHTML(){
       <button class="btn-primary" type="button" data-action="admin-new">+ Nuevo equipo</button>
     </div>
     ${publicarHTML()}
+    ${metricasHTML()}
     ${!list.length ? `<div class="empty-state" style="border:none;background:#FAFAFA">
         <div class="icon">📦</div><h3>${products.length?'Sin coincidencias':'Catálogo vacío'}</h3>
         <p>${products.length?'Prueba con otra búsqueda.':'Publica tu primer equipo para que aparezca en la tienda.'}</p></div>` : `
@@ -1087,8 +1146,10 @@ async function handleImageFiles(files, target){
   const fallidas = [];
   for(const file of aceptadas){
     try{
-      const comprimida = await fileToBlob(file, 1400, .82);
-      fotos.push(await remotoSubirFoto(comprimida, slug));
+      const grande = await fileToBlob(file, 1400, .82);
+      // La chica se genera bajo demanda: si la grande falla, no se gasta
+      // tiempo comprimiendo una miniatura que nadie va a usar.
+      fotos.push(await remotoSubirFoto(grande, slug, () => fileToBlob(file, 700, .78)));
     }catch(err){
       fallidas.push(`${file.name || 'una imagen'} (${err.message})`);
     }

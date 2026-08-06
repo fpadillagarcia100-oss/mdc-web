@@ -55,6 +55,14 @@ function deliver(channel, subject, body, datos){
   if(datos && typeof registrarSolicitud === 'function'){
     registrarSolicitud(datos);   // no se espera: es una mejora, no un requisito
   }
+
+  /* Se cuenta qué equipos terminan en cotización. Junto con las vistas, es lo
+     que responde la pregunta que importa: no "cuál se mira más" sino "cuál se
+     mira mucho y no se cotiza" — ése es el que tiene el precio mal o las
+     fotos malas. */
+  if(datos && Array.isArray(datos.carrito) && typeof contar === 'function'){
+    datos.carrito.forEach(i => contar(i.slug, 'cotizacion'));
+  }
   setTimeout(closeAll, 600);
 }
 

@@ -109,6 +109,10 @@ function fichaPie(p){
 function openModal(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
+
+  // Se cuenta al abrir, no al cargar el catálogo: ver una tarjeta de paso no
+  // es lo mismo que abrir la ficha. Sólo lo segundo dice que hubo interés.
+  if(typeof contar === 'function' && !isAdmin) contar(p.slug, 'vista');
   closeAll();
   lastFocused = document.activeElement;
 
