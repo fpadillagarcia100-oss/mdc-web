@@ -1414,6 +1414,12 @@ async function handleImageFiles(files, target){
  * es justamente lo que dejamos de hacer.
  */
 async function fileToBlob(file, maxW = 1400, quality = 0.82){
+  /* Un video arrastrado a la zona de fotos es el error MÁS probable aquí, y
+     "no es una imagen" no le dice a nadie qué hacer con él. La respuesta —que
+     el video va por su propio campo, como enlace— cabe en el mismo aviso. */
+  if(file.type.startsWith('video/')){
+    throw new Error('los videos no se suben aquí: súbelo a YouTube y pega el enlace en el campo «Video de YouTube»');
+  }
   if(!file.type.startsWith('image/')) throw new Error('no es una imagen');
 
   // Los SVG no se rasterizan: son vectores y pesan poco. Van tal cual.

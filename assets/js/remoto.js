@@ -64,6 +64,20 @@ async function apiRemota(recurso, opciones = {}) {
     if (/violates check constraint/.test(detalle)) {
       throw new Error('Algún dato no es válido. Revisa precios, año y textos.');
     }
+    /* PGRST204 = el panel mandó una columna que la base no tiene.
+
+       Siempre significa lo mismo: el código va por delante de las migraciones.
+       El mensaje original ("Could not find the 'video_url' column of 'equipos'
+       in the schema cache") no le dice a nadie qué hacer, y el guardado falla
+       ENTERO — incluido el precio que se venía a cambiar. */
+    if (/PGRST204|schema cache/.test(detalle)) {
+      const col = (/'([a-z_]+)' column/.exec(detalle) || [])[1];
+      throw new Error(
+        `A la base le falta el campo "${col || 'nuevo'}". Corre las migraciones ` +
+        `pendientes en Supabase → SQL Editor y vuelve a intentar. ` +
+        `Mientras tanto no se puede guardar nada de este equipo.`
+      );
+    }
     throw new Error(detalle.slice(0, 200) || `Error ${r.status}`);
   }
 
