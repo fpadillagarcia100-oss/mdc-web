@@ -297,32 +297,13 @@ async function remotoPublicar() {
   const token = await tokenValido();
   if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
 
-  /* Dos direcciones porque hay dos hospedajes durante la mudanza: Cloudflare
-     sirve la función en /api/, Netlify en /.netlify/functions/. El mismo
-     código tiene que funcionar en los dos sin saber dónde está corriendo.
+  const r = await fetch('/api/publicar', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(20000),
+  });
 
-     Se prueba Cloudflare primero y sólo se pasa a Netlify si esa ruta NO
-     EXISTE (404). Un 401 o un 403 son respuestas legítimas —"no tienes
-     permiso"— y ahí hay que detenerse: reintentar en la otra plataforma
-     convertiría un "no" claro en un mensaje confuso.
-
-     Cuando Netlify se apague, se borra la segunda línea y ya. */
-  const rutas = ['/api/publicar', '/.netlify/functions/publicar'];
-  let ultima;
-
-  for (const ruta of rutas) {
-    const r = await fetch(ruta, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(20000),
-    });
-
-    if (r.status === 404) { ultima = r; continue; }   // esa ruta no vive aquí
-
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || `No se pudo publicar (${r.status}).`);
-    return d;
-  }
-
-  throw new Error(`No se encontró el servicio de publicación (${ultima?.status || 404}).`);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || `No se pudo publicar (${r.status}).`);
+  return d;
 }
