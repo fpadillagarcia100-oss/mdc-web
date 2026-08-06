@@ -329,20 +329,29 @@ const submit = form =>
   check('Limpiar cierra la comparación y esconde la barra',
     ev('state.compare.length') === 0 && $('#cmpBar').hidden === true);
 
-  /* ── Seguridad del PIN ── */
-  const ajustes = JSON.parse(window.localStorage.getItem('mdc_v1_settings') || '{}');
-  check('El PIN NO se guarda en claro',
-    !('pin' in ajustes) && !JSON.stringify(ajustes).includes('2580'));
-  check('El PIN se guarda hasheado',
-    typeof ajustes.pinHash === 'string' && /^(sha256|fnv):/.test(ajustes.pinHash),
-    ajustes.pinHash ? ajustes.pinHash.slice(0, 18) + '…' : 'sin hash');
-
+  /* ── Acceso al panel ──
+     Ya no hay PIN: el acceso es con cuenta de Supabase y lo comprueba el
+     servidor. Aquí sólo se verifica que la puerta esté cerrada y que no quede
+     ningún rastro del PIN viejo, que se comparaba en el navegador. */
   $('#adminEntry').click();
-  check('El panel pide PIN', $('#pinInput') !== null);
-  for (let i = 0; i < 5; i++) { $('#pinInput').value = '0000'; $('#pinBtn').click() }
 
-  await waitFor(() => $('#pinInput').disabled === true, 'el bloqueo por intentos fallidos');
-  check('Bloquea tras 5 intentos fallidos', true, $('#pinErr').textContent);
+  check('El panel pide correo y contraseña',
+    $('#mailInput') !== null && $('#passInput') !== null);
+
+  check('Ya no hay campo de PIN', $('#pinInput') === null);
+
+  const ajustes = JSON.parse(window.localStorage.getItem('mdc_v1_settings') || '{}');
+  check('No queda ningún PIN guardado en el navegador',
+    !('pin' in ajustes) && !JSON.stringify(ajustes).includes('2580'));
+
+  /* Entrar con credenciales falsas debe fallar CONTRA EL SERVIDOR, no aquí.
+     En las pruebas no hay red, así que lo comprobable es que no se conceda
+     acceso por el simple hecho de escribir algo. */
+  $('#mailInput').value = 'intruso@ejemplo.com';
+  $('#passInput').value = 'loquesea';
+  $('#pinBtn').click();
+  await waitFor(() => ev('isAdmin') === false, 'que el acceso siga cerrado');
+  check('Escribir cualquier cosa no abre el panel', ev('isAdmin') === false);
 
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));

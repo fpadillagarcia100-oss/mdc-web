@@ -21,6 +21,13 @@
   # más vale no desplegar que publicar un catálogo vacío.
   command = "npm run db:export && npm run build"
 
+# El botón "Publicar" del panel llama aquí. La función comprueba que quien
+# pide sea administrador antes de disparar la reconstrucción — por eso la
+# dirección secreta del build hook vive en el servidor y no en el navegador.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[headers]]
   for = "/*"
   [headers.values]

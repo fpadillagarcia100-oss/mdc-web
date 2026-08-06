@@ -23,8 +23,7 @@ document.addEventListener('click', e => {
     const b = settings.branches[i];
     if(b && confirm(`¿Eliminar la sucursal "${b.name}"?`)){
       settings.branches.splice(i,1);
-      saveSettings(); renderAdmin();
-      showToast('Sucursal eliminada');
+      guardarSucursalesRemoto(); renderAdmin();
     }
     return;
   }
@@ -58,9 +57,9 @@ document.addEventListener('click', e => {
     if(a==='home'){ e.preventDefault(); clearFilters(); $('#catalogo').scrollIntoView({block:'start'}); return }
     if(a==='admin-new'){ editingId = 0; draftImgs = undefined; openAdmin('products'); return }
     if(a==='admin-cancel'){ editingId = null; draftImgs = undefined; renderAdmin(); return }
-    if(a==='logo-remove'){ settings.logo = null; saveSettings(); applyBranding(); renderAdmin(); return }
-    if(a==='hero-remove'){ settings.heroImage = null; saveSettings(); applyBranding(); renderAdmin(); return }
-    if(a==='accent-reset'){ settings.accent = DEFAULT_SETTINGS.accent; saveSettings(); applyBranding(); renderAdmin(); return }
+    if(a==='logo-remove'){ settings.logo = null; applyBranding(); guardarAjustesRemoto(); renderAdmin(); return }
+    if(a==='hero-remove'){ settings.heroImage = null; applyBranding(); guardarAjustesRemoto(); renderAdmin(); return }
+    if(a==='accent-reset'){ settings.accent = DEFAULT_SETTINGS.accent; applyBranding(); guardarAjustesRemoto(); renderAdmin(); return }
     if(a==='fin-wa'){
       const msg = financiamientoPayload();
       if(msg) window.open(waLink(msg), '_blank', 'noopener');
@@ -71,10 +70,10 @@ document.addEventListener('click', e => {
     if(a==='export'){ exportBackup(); return }
     if(a==='import'){ $('#importInput').click(); return }
     if(a==='reset'){ resetAll(); return }
+    if(a==='publicar'){ publicarSitio(); return }
     if(a==='branch-add'){
       settings.branches = [...(settings.branches||[]), {name:'Nueva sucursal',address:'',phone:'',hours:''}];
-      saveSettings(); renderAdmin();
-      showToast('Sucursal agregada'); return;
+      guardarSucursalesRemoto(); renderAdmin(); return;
     }
     if(a==='acct-clear'){
       if(!confirm('Se borrarán tus datos de contacto y el historial de solicitudes de este dispositivo.\n\n¿Continuar?')) return;
@@ -172,7 +171,7 @@ document.addEventListener('change', e => {
   const branchField = e.target.closest('[data-branch]');
   if(branchField){
     const b = settings.branches[Number(branchField.dataset.branch)];
-    if(b){ b[branchField.dataset.bfield] = branchField.value.trim(); saveSettings() }
+    if(b){ b[branchField.dataset.bfield] = branchField.value.trim(); guardarSucursalesRemoto() }
     return;
   }
 
@@ -181,8 +180,9 @@ document.addEventListener('change', e => {
   if(setter){
     const key = setter.dataset.set;
     const val = setter.value.trim();
-    settings[key] = (key==='pin' && !val) ? DEFAULT_SETTINGS.pin : val;
-    saveSettings(); applyBranding();
+    settings[key] = val;
+    applyBranding();
+    guardarAjustesRemoto();
   }
 });
 
@@ -203,7 +203,7 @@ function submitCurrentForm(channel){
 
 document.addEventListener('submit', async e => {
   const id = e.target.id;
-  if(!['sellForm','quoteForm','acctForm','pinChangeForm'].includes(id)) return;
+  if(!['sellForm','quoteForm','acctForm'].includes(id)) return;
   e.preventDefault();
 
   if(id==='sellForm' || id==='quoteForm'){ submitCurrentForm('wa'); return }
@@ -221,22 +221,6 @@ document.addEventListener('submit', async e => {
     return;
   }
 
-  if(id==='pinChangeForm'){
-    const nuevo = $('#p-new'), conf = $('#p-confirm');
-    [nuevo, conf].forEach(el=>el.closest('.field').classList.remove('err'));
-    if(!/^\d{4,8}$/.test(nuevo.value)){
-      nuevo.closest('.field').classList.add('err'); nuevo.focus();
-      showToast('El PIN debe tener entre 4 y 8 dígitos', true); return;
-    }
-    if(nuevo.value !== conf.value){
-      conf.closest('.field').classList.add('err'); conf.focus();
-      showToast('Los PIN no coinciden', true); return;
-    }
-    settings.pinHash = await hashPin(nuevo.value);
-    delete settings.pin;
-    saveSettings(); renderAdmin();
-    showToast('PIN actualizado');
-  }
 });
 
 /* Vista previa en vivo del color de acento */
@@ -309,4 +293,3 @@ applyBranding();
 updateAcctLabel();
 render();
 renderCart();
-ensurePinHash();

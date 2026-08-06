@@ -48,7 +48,10 @@ const BACKEND = (typeof BACKEND_CONFIG !== 'undefined' && BACKEND_CONFIG) || nul
  * @returns {Promise<boolean>}
  */
 async function registrarSolicitud(s) {
-  if (!BACKEND) return false;
+  // Sin credenciales, o en un entorno sin fetch (las pruebas con jsdom), no hay
+  // nada que intentar. Devolver false en silencio es lo correcto: quien llama
+  // ya tiene su camino de WhatsApp asegurado.
+  if (!BACKEND || typeof fetch !== 'function') return false;
 
   try {
     const r = await fetch(`${BACKEND.url}/rest/v1/solicitudes`, {

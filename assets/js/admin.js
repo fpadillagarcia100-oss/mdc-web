@@ -53,57 +53,112 @@ function openAdmin(tab){
   f.focus();
 }
 
+/**
+ * Acceso con cuenta de Supabase.
+ *
+ * Sustituye al PIN, que se comparaba aquí en el navegador y por tanto no era
+ * una barrera: bastaba con editar el JavaScript para entrar. Sólo protegía
+ * porque los cambios se quedaban en el localStorage de quien los hacía.
+ *
+ * Ahora el panel escribe en una base compartida y la comprobación ocurre en
+ * el servidor: sin un token válido, cada guardado es rechazado sin importar
+ * lo que crea la página.
+ */
 function renderLogin(){
   $('#adminTabs').hidden = true;
+
+  if(!BACKEND){
+    $('#adminBody').innerHTML = `
+      <div class="login-box">
+        <div class="dz-icon">🔌</div>
+        <h3>Sin conexión a la base de datos</h3>
+        <p>Este sitio se compiló sin credenciales, así que el panel no puede
+           guardar nada. Es lo normal al abrirlo en local sin un archivo
+           <code>.env</code>.</p>
+      </div>`;
+    return;
+  }
+
   $('#adminBody').innerHTML = `
     <div class="login-box">
       <div class="dz-icon">🔒</div>
       <h3>Acceso de administrador</h3>
-      <p>Ingresa tu PIN para editar el catálogo, las imágenes y el logo.</p>
-      <label class="sr-only" for="pinInput">PIN</label>
-      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
+      <p>Entra con tu cuenta para editar el catálogo. Los cambios se guardan
+         en la base y los ve todo el equipo, desde cualquier dispositivo.</p>
+      <label class="sr-only" for="mailInput">Correo</label>
+      <input id="mailInput" type="email" autocomplete="username" placeholder="tucorreo@ejemplo.com">
+      <label class="sr-only" for="passInput">Contraseña</label>
+      <input id="passInput" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
       <div class="err" id="pinErr"></div>
       <button class="btn-primary" type="button" id="pinBtn" style="width:100%;margin-top:10px;padding:12px">Entrar</button>
-      <p style="margin-top:14px;font-size:11px">PIN inicial: <strong>${FIRST_PIN}</strong> — cámbialo en la pestaña Respaldo.</p>
     </div>`;
 
-  const input = $('#pinInput'), btn = $('#pinBtn'), err = $('#pinErr');
-
-  const refreshLock = ()=>{
-    const left = pinLockedFor();
-    if(left > 0){
-      input.disabled = btn.disabled = true;
-      err.textContent = `Demasiados intentos. Espera ${Math.ceil(left/1000)} s.`;
-      setTimeout(refreshLock, 1000);
-    } else if(input.disabled){
-      input.disabled = btn.disabled = false;
-      err.textContent = '';
-      input.focus();
-    }
-  };
-  refreshLock();
+  const mail = $('#mailInput'), pass = $('#passInput'), btn = $('#pinBtn'), err = $('#pinErr');
 
   const submit = async ()=>{
-    if(pinLockedFor() > 0) return;
-    await ensurePinHash();          // por si el hash aún no se había calculado
-    const attempt = await hashPin(input.value);
-    if(attempt === settings.pinHash){
-      sessionStorage.setItem('mdc_pin_tries','0');
+    err.textContent = '';
+    if(!mail.value.trim() || !pass.value){
+      err.textContent = 'Escribe tu correo y tu contraseña.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Entrando…';
+    try{
+      await iniciarSesion(mail.value.trim(), pass.value);
+
+      /* Tener sesión no basta: una cuenta de personal entra pero no administra.
+         Se pregunta a la base en vez de suponerlo. */
+      if(!await esAdministrador()){
+        await cerrarSesion();
+        throw new Error('Tu cuenta no tiene permisos de administrador.');
+      }
+
       isAdmin = true;
       sessionStorage.setItem('mdc_admin','1');
       document.body.classList.add('is-admin');
       adminTab = 'products';
+
+      // Traer lo que hay en la base ANTES de pintar el panel: editar sobre una
+      // copia vieja es como dos personas se pisan los cambios sin enterarse.
+      await sincronizarDesdeLaBase();
       renderAdmin(); render();
-      showToast('Modo administrador activado');
-    } else {
-      const left = registerPinFailure();
-      input.value = '';
-      if(left === 0) refreshLock();
-      else { err.textContent = `PIN incorrecto. Te quedan ${left} intentos.`; input.focus() }
+    }catch(e){
+      err.textContent = e.message;
+      pass.value = '';
+      pass.focus();
+    }finally{
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
     }
   };
+
   btn.addEventListener('click', submit);
-  input.addEventListener('keydown', e=>{ if(e.key==='Enter') submit() });
+  [mail, pass].forEach(el => el.addEventListener('keydown', e=>{ if(e.key==='Enter') submit() }));
+}
+
+/**
+ * Reemplaza el catálogo en memoria por el de la base.
+ *
+ * Nunca escribe en localStorage: la base es la única fuente de verdad. Lo que
+ * se guardaba antes en este navegador queda ignorado a propósito — si se
+ * mezclaran las dos, ganaría cualquiera de las dos según el orden de carga, y
+ * ese es justo el problema que se venía a resolver.
+ */
+async function sincronizarDesdeLaBase(){
+  const datos = await remotoCargarTodo();
+
+  products = normalizeProducts(datos.equipos).map((p, i) => ({
+    ...p,
+    // El id y el estado de publicación vienen de la base, no del normalizador.
+    id: datos.equipos[i].id,
+    publicado: datos.equipos[i].publicado,
+  }));
+
+  if(datos.ajustes) Object.assign(settings, datos.ajustes);
+  if(datos.sucursales) settings.branches = datos.sucursales;
+
+  applyBranding();
 }
 
 /** Dibuja el panel y reconecta los widgets que necesitan listeners propios. */
@@ -144,6 +199,7 @@ function productListHTML(){
       <input class="adm-search" type="search" id="admSearch" placeholder="Buscar por nombre, marca, categoría…" value="${esc(adminQuery)}">
       <button class="btn-primary" type="button" data-action="admin-new">+ Nuevo equipo</button>
     </div>
+    ${publicarHTML()}
     ${!list.length ? `<div class="empty-state" style="border:none;background:#FAFAFA">
         <div class="icon">📦</div><h3>${products.length?'Sin coincidencias':'Catálogo vacío'}</h3>
         <p>${products.length?'Prueba con otra búsqueda.':'Publica tu primer equipo para que aparezca en la tienda.'}</p></div>` : `
@@ -319,7 +375,91 @@ function readForm(){
   };
 }
 
-function saveProductForm(){
+/* ══════════════════ GUARDADO EN LA BASE ══════════════════
+
+   Los ajustes se editan campo por campo, y cada uno dispara un guardado. Sin
+   agrupar, cambiar cuatro textos de la portada serían cuatro peticiones que
+   además pueden llegar desordenadas: la segunda respuesta pisando a la
+   tercera deja guardado un valor que ya no es el que se ve en pantalla.
+
+   Se espera un momento a que la persona termine y se manda una sola vez. */
+let tempAjustes = null, tempSucursales = null;
+
+function guardarAjustesRemoto(){
+  clearTimeout(tempAjustes);
+  tempAjustes = setTimeout(async ()=>{
+    try{
+      await remotoGuardarAjustes(settings);
+      showToast('Cambios guardados');
+    }catch(err){
+      showToast('No se guardó: ' + err.message, true);
+    }
+  }, 800);
+}
+
+function guardarSucursalesRemoto(){
+  clearTimeout(tempSucursales);
+  tempSucursales = setTimeout(async ()=>{
+    try{
+      /* Se sustituye la lista por la que devuelve la base, no por la que
+         creemos haber mandado. Si el servidor rechazó un teléfono con letras,
+         la pantalla debe enseñar lo que de verdad quedó guardado. */
+      settings.branches = await remotoGuardarSucursales(settings.branches || []);
+      showToast('Sucursales guardadas');
+      if(isAdmin && adminTab==='site') renderAdmin();
+    }catch(err){
+      showToast('No se guardaron las sucursales: ' + err.message, true);
+    }
+  }, 800);
+}
+
+/**
+ * Publica: reconstruye el sitio con lo que hay ahora en la base.
+ *
+ * Hace falta un botón porque son dos cosas distintas. Guardar deja el cambio
+ * en la base —y otro administrador lo ve al instante—, pero el sitio público
+ * es HTML escrito de antemano. Hasta que no se reconstruye, el visitante
+ * sigue viendo lo anterior.
+ *
+ * Que sea explícito además permite preparar varios cambios y publicarlos
+ * juntos, en vez de que el sitio se reconstruya en cada tecla.
+ */
+async function publicarSitio(){
+  const btn = document.querySelector('[data-action="publicar"]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Publicando…' }
+  try{
+    const r = await remotoPublicar();
+    showToast(r.mensaje || 'Publicando…');
+  }catch(err){
+    showToast(err.message, true);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '🚀 Publicar cambios' }
+  }
+}
+
+/**
+ * Convierte un nombre en la dirección web del equipo.
+ *
+ * El slug es lo que aparece en la URL de la ficha, así que una vez publicado
+ * NO se toca: cambiarlo rompe los enlaces que ya circulan por WhatsApp y borra
+ * el posicionamiento que esa página haya ganado en Google. Por eso sólo se
+ * calcula al dar de alta.
+ */
+function slugDesdeNombre(nombre){
+  const base = nombre
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')   // quita acentos
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'equipo';
+
+  // Si ya existe, se numera. Dos "Excavadora CAT 320" no pueden compartir URL.
+  let slug = base, n = 2;
+  while(products.some(p => p.slug === slug)) slug = `${base}-${n++}`;
+  return slug;
+}
+
+async function saveProductForm(){
   const data = readForm();
   let ok = true;
   $$('#pForm .field').forEach(f=>f.classList.remove('err'));
@@ -335,47 +475,77 @@ function saveProductForm(){
   // img es la portada derivada; se guarda junto a imgs para que el resto del
   // sitio (tarjetas, respaldos viejos, generador) siga leyendo un solo campo.
   const galeria = {imgs: fotos, img: fotos[0] || null};
-  const snapshot = prev ? {...prev} : null;
 
-  if(prev) Object.assign(prev, data, galeria);
-  else {
-    const nextId = products.reduce((m,p)=>Math.max(m,p.id), 0) + 1;
-    products.unshift({id: nextId, ...data, ...galeria});
+  const aGuardar = prev
+    ? {...prev, ...data, ...galeria}
+    : {...data, ...galeria, slug: slugDesdeNombre(data.name), publicado: true};
+
+  const btn = $('#pForm button[type="submit"]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Guardando…' }
+
+  try{
+    /* Se guarda en la base ANTES de tocar la pantalla.
+
+       El orden importa: si primero se actualizara la lista y el guardado
+       fallara, el administrador vería su cambio hecho y se iría tranquilo con
+       un precio que en realidad sigue igual. Más vale un error visible que un
+       éxito falso. */
+    const guardado = await remotoGuardarEquipo(aGuardar);
+
+    if(prev) Object.assign(prev, guardado);
+    else products.unshift(guardado);
+
+    showToast(prev ? 'Equipo actualizado' : 'Equipo dado de alta');
+    editingId = null; draftImgs = undefined;
+    navSignature = '';
+    renderAdmin(); render(); renderCart();
+  }catch(err){
+    showToast(err.message, true);
+  }finally{
+    if(btn && document.contains(btn)){ btn.disabled = false; btn.textContent = 'Guardar' }
   }
-
-  if(!saveProducts()){
-    // Sin espacio: revertimos para que la pantalla no mienta sobre lo guardado.
-    if(prev) Object.assign(prev, snapshot); else products.shift();
-    return;
-  }
-
-  showToast(prev ? 'Equipo actualizado' : 'Equipo publicado');
-  editingId = null; draftImgs = undefined;
-  navSignature = '';
-  renderAdmin(); render(); renderCart();
 }
 
-function deleteProduct(id){
+async function deleteProduct(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
   if(!confirm(`¿Eliminar "${p.name}"?\n\nEsta acción no se puede deshacer.`)) return;
+
+  try{
+    await remotoBorrarEquipo(id);
+  }catch(err){
+    showToast(err.message, true);
+    return;   // no se quita de la pantalla algo que sigue en la base
+  }
+
   products = products.filter(x=>x.id!==id);
   cart = cart.filter(x=>x.id!==id);
   favorites.delete(id);
-  saveProducts(); saveCart(); saveFavs();
+  saveCart(); saveFavs();
   editingId = null; draftImgs = undefined;
   navSignature = '';
   renderAdmin(); render(); renderCart();
   showToast('Equipo eliminado');
 }
 
-function duplicateProduct(id){
+async function duplicateProduct(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
-  const nextId = products.reduce((m,x)=>Math.max(m,x.id), 0) + 1;
-  products.splice(products.indexOf(p)+1, 0, {...p, id: nextId, name: p.name + ' (copia)', hot: false});
-  saveProducts(); renderAdmin(); render();
-  showToast('Equipo duplicado');
+
+  const nombre = p.name + ' (copia)';
+  /* La copia nace SIN publicar. Duplicar es el atajo para dar de alta un
+     equipo parecido, no para poner dos anuncios idénticos en el sitio: sale
+     como borrador y se publica cuando ya tiene sus propios datos. */
+  const copia = {...p, id: null, name: nombre, slug: slugDesdeNombre(nombre), hot: false, publicado: false};
+
+  try{
+    const guardado = await remotoGuardarEquipo(copia);
+    products.splice(products.indexOf(p)+1, 0, guardado);
+    renderAdmin(); render();
+    showToast('Copia creada como borrador');
+  }catch(err){
+    showToast(err.message, true);
+  }
 }
 
 /* ── Logo y marca ── */
@@ -443,6 +613,24 @@ function brandHTML(){
 }
 
 /* ── Textos del sitio ── */
+/**
+ * Bloque de publicación.
+ *
+ * Se explica la diferencia en el propio panel porque es la parte que confunde:
+ * "ya lo cambié y no se ve". Un cartel de dos líneas ahorra esa llamada.
+ */
+function publicarHTML(){
+  return `
+    <div class="adm-section" style="border-left:3px solid var(--accent);padding-left:14px">
+      <h3>Publicar en el sitio</h3>
+      <p class="sub">Guardar deja el cambio en la base y el equipo lo ve al instante.
+        Los visitantes siguen viendo lo anterior hasta que publiques: la página
+        pública se arma de antemano, por eso carga rápido y no se cae aunque la
+        base falle. Tarda un par de minutos.</p>
+      <button class="btn-primary" type="button" data-action="publicar">🚀 Publicar cambios</button>
+    </div>`;
+}
+
 function siteHTML(){
   const f = (id,label,hint) => `
     <div class="field${['heroText','footerAbout','topbarMsg'].includes(id)?' full':''}">
@@ -452,7 +640,10 @@ function siteHTML(){
         : `<input type="text" id="s-${id}" data-set="${id}" value="${esc(settings[id])}">`}
     </div>`;
   return `
-    <p class="adm-note">Los cambios se guardan al salir de cada campo y se ven en la página al instante.</p>
+    <p class="adm-note">Los cambios se guardan en la base al salir de cada campo,
+      y el resto del equipo los ve al momento. Para que los vean los
+      <strong>visitantes</strong>, hay que publicar.</p>
+    ${publicarHTML()}
     <div class="adm-section">
       <h3>Encabezado y banner</h3>
       <div class="form-grid">
@@ -528,25 +719,15 @@ function backupHTML(){
     </div>
 
     <div class="adm-section">
-      <h3>PIN de acceso</h3>
-      <p class="sub">Se guarda hasheado, así que no aparece en claro ni en el navegador ni en tus respaldos,
-        y se bloquea 60 segundos tras 5 intentos fallidos. Aun así, <strong>no es seguridad real:</strong>
-        la comprobación ocurre en el navegador del visitante. La protección de verdad llega con el servidor.</p>
-      <form id="pinChangeForm" class="form-grid" novalidate>
-        <div class="field">
-          <label for="p-new">Nuevo PIN <span class="hint">(4 a 8 dígitos)</span></label>
-          <input type="password" id="p-new" maxlength="8" inputmode="numeric" autocomplete="new-password">
-          <span class="errmsg">Usa entre 4 y 8 dígitos.</span>
-        </div>
-        <div class="field">
-          <label for="p-confirm">Confirmar</label>
-          <input type="password" id="p-confirm" maxlength="8" inputmode="numeric" autocomplete="new-password">
-          <span class="errmsg">No coincide.</span>
-        </div>
-        <div class="field full">
-          <button class="btn-primary" type="submit" style="justify-self:start">Cambiar PIN</button>
-        </div>
-      </form>
+      <h3>Tu cuenta</h3>
+      <p class="sub">El acceso ya no es un PIN, sino una cuenta con correo y contraseña.
+        Quien decide si puedes guardar algo es el servidor, no esta página — y ahí
+        está la diferencia: el PIN se comparaba aquí mismo, así que cualquiera con
+        las herramientas del navegador podía saltarlo.</p>
+      <p class="sub">Para cambiar tu contraseña o dar de alta a alguien del equipo,
+        entra al panel de Supabase → <strong>Authentication</strong>.
+        En una computadora compartida, cierra sesión: queda abierta aunque
+        cierres el navegador.</p>
     </div>
 
     <div class="adm-section">
@@ -568,36 +749,87 @@ function exportBackup(){
   showToast('Respaldo descargado');
 }
 
+/**
+ * Importa un respaldo AL CATÁLOGO DE LA BASE, equipo por equipo.
+ *
+ * Antes esto sobrescribía el localStorage y listo. Ya no sirve: el catálogo
+ * vive en la base, así que un import que sólo tocara este navegador enseñaría
+ * un catálogo que nadie más ve y que se esfuma al recargar. Eso es peor que
+ * no funcionar, porque parece que funcionó.
+ *
+ * Se guardan en secuencia, uno a uno. Es más lento que mandarlos todos juntos,
+ * pero si el equipo número 12 trae un año imposible, los once anteriores ya
+ * quedaron guardados y el aviso dice exactamente cuál falló. En bloque, un
+ * solo dato malo tira la importación entera sin decir dónde.
+ *
+ * NO borra nada: se cruza por slug o por nombre, así que un respaldo actualiza
+ * lo que ya existe y da de alta lo que falta. Un import no debería poder
+ * vaciarte el catálogo por descuido.
+ */
 async function importBackup(file){
+  let data;
   try{
-    const data = JSON.parse(await file.text());
+    data = JSON.parse(await file.text());
     if(!data || !Array.isArray(data.products)) throw new Error('formato');
-    if(!confirm(`Se reemplazará el catálogo actual (${products.length} equipos) por el del respaldo (${data.products.length} equipos).\n\n¿Continuar?`)) return;
-    products = normalizeProducts(data.products);
-    settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || {});
-    cart = cart.filter(c=>products.some(p=>p.id===c.id));
-    favorites = new Set([...favorites].filter(id=>products.some(p=>p.id===id)));
-    saveProducts(); saveSettings(); saveCart(); saveFavs();
-    navSignature = '';
-    await ensurePinHash();   // un respaldo viejo puede no traer el PIN hasheado
-    applyBranding(); renderAdmin(); render(); renderCart();
-    showToast(`Respaldo importado: ${products.length} equipos`);
   }catch{
     showToast('El archivo no es un respaldo válido', true);
+    return;
   }
+
+  if(!confirm(`Se guardarán ${data.products.length} equipos en la base de datos.
+
+Los que ya existan se actualizan; los nuevos se dan de alta. Nada se borra.
+
+¿Continuar?`)) return;
+
+  let guardados = 0;
+  for(const crudo of normalizeProducts(data.products)){
+    try{
+      const existente = products.find(p => (crudo.slug && p.slug === crudo.slug) || p.name === crudo.name);
+      await remotoGuardarEquipo({
+        ...crudo,
+        id: existente ? existente.id : null,
+        slug: existente ? existente.slug : (crudo.slug || slugDesdeNombre(crudo.name)),
+      });
+      guardados++;
+    }catch(err){
+      showToast(`Se guardaron ${guardados}. Falló en "${crudo.name}": ${err.message}`, true);
+      await sincronizarDesdeLaBase();
+      renderAdmin(); render();
+      return;
+    }
+  }
+
+  if(data.settings){
+    try{ await remotoGuardarAjustes({...settings, ...data.settings}) }catch{}
+  }
+
+  await sincronizarDesdeLaBase();
+  navSignature = '';
+  renderAdmin(); render(); renderCart();
+  showToast(`Respaldo importado: ${guardados} equipos en la base`);
 }
 
+/**
+ * "Restablecer" ya no aplica.
+ *
+ * Antes vaciaba el localStorage y volvía al catálogo de ejemplo. Hoy el
+ * catálogo vive en la base: hacer lo mismo dejaría la pantalla con datos de
+ * ejemplo mientras la base sigue intacta, y al recargar volvería todo. Un
+ * botón que finge borrar es peor que ninguno.
+ *
+ * Borrar de verdad los 18 equipos con un par de confirmaciones tampoco es
+ * aceptable: es irreversible y compartido. Si de verdad hace falta vaciar el
+ * catálogo, se hace equipo por equipo, o desde el panel de Supabase donde
+ * queda registrado en la bitácora quién lo hizo.
+ */
 async function resetAll(){
-  if(!confirm('Se borrarán TODOS tus equipos, fotos y ajustes, y se volverá al catálogo de ejemplo.\n\n¿Seguro que quieres continuar?')) return;
-  if(!confirm('Última confirmación: esta acción no se puede deshacer.')) return;
-  products = normalizeProducts(DEFAULT_PRODUCTS);
-  settings = {...DEFAULT_SETTINGS, branches: DEFAULT_SETTINGS.branches.map(b=>({...b}))};
-  cart = []; favorites = new Set();
-  saveProducts(); saveSettings(); saveCart(); saveFavs();
-  navSignature = '';
-  await ensurePinHash();   // vuelve a dejar el PIN en 2580, ya hasheado
-  applyBranding(); renderAdmin(); render(); renderCart();
-  showToast('Todo restablecido · el PIN volvió a ser '+FIRST_PIN);
+  alert(`Esta opción ya no existe.
+
+El catálogo vive en la base de datos y lo comparte todo el equipo, así que no
+se puede restablecer desde un solo navegador.
+
+Para quitar equipos, bórralos uno por uno desde la pestaña Equipos.`);
 }
 
 /* ── Carga de imágenes ── */
@@ -689,11 +921,19 @@ function wireDropzone(zoneId, inputId, target){
   input.addEventListener('change', ()=>handleImageFiles(input.files, target));
 }
 
-function logoutAdmin(){
+async function logoutAdmin(){
   isAdmin = false;
   sessionStorage.removeItem('mdc_admin');
   document.body.classList.remove('is-admin');
   editingId = null; draftImgs = undefined;
-  closeAll(); render();
-  showToast('Sesión de administrador cerrada');
+
+  /* Se borra el token de este dispositivo y se le avisa al servidor.
+     Importa porque la sesión vive en localStorage y sobrevive al cierre del
+     navegador: en una computadora compartida, cerrar la pestaña NO basta. */
+  await cerrarSesion();
+
+  /* Se recarga para volver al catálogo publicado. Sin esto quedaría en
+     pantalla lo que se trajo de la base -- incluidos los borradores sin
+     publicar, que no debe seguir viendo quien ya salió. */
+  location.reload();
 }
