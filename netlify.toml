@@ -28,6 +28,21 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[build.environment]
+  # Netlify revisa el sitio generado buscando valores de variables de entorno,
+  # y tumba el despliegue si encuentra alguno. Es una red de seguridad muy
+  # buena: evita publicar una credencial por descuido.
+  #
+  # Estas dos son la excepción, y a propósito. La dirección del proyecto y la
+  # llave `publishable` TIENEN que viajar en el sitio —van en la CSP, en el
+  # index.html y en catalogo-datos.js— porque el navegador es quien habla con
+  # Supabase. Lo que las protege son las políticas RLS, no esconderlas.
+  #
+  # Lo importante: NETLIFY_BUILD_HOOK NO está en esta lista. Ésa sí es secreta
+  # de verdad, y si algún día apareciera en el sitio generado, el despliegue
+  # debe fallar. Ahí es donde queremos la red puesta.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY"
+
 [[headers]]
   for = "/*"
   [headers.values]
