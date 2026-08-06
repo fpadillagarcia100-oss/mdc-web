@@ -353,6 +353,25 @@ const submit = form =>
   await waitFor(() => ev('isAdmin') === false, 'que el acceso siga cerrado');
   check('Escribir cualquier cosa no abre el panel', ev('isAdmin') === false);
 
+  /* ── El panel no se abre con marcas del propio navegador ──
+     Esto existe por un fallo real: `isAdmin` se leía de sessionStorage, resto
+     del PIN viejo. Cualquiera podía ponerla desde las herramientas de
+     desarrollador y el panel se abría sin contraseña.
+
+     Que el servidor rechazara igual las escrituras no lo salvaba: un panel
+     que se abre, deja tocarlo todo y falla al guardar es una trampa. */
+  ev("window.sessionStorage.setItem('mdc_admin','1')");
+  ev("window.localStorage.setItem('mdc_sesion', JSON.stringify(" +
+     "{access_token:'inventado', refresh_token:'x', expira: Date.now()+9e9, correo:'a@b.c'}))");
+  ev('closeAll()');
+  $('#adminEntry').click();
+
+  check('Una marca en sessionStorage NO abre el panel',
+    ev('isAdmin') === false && $('#mailInput') !== null);
+
+  check('Un token inventado en localStorage tampoco',
+    ev('isAdmin') === false);
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;

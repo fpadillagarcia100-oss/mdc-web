@@ -115,7 +115,6 @@ function renderLogin(){
       }
 
       isAdmin = true;
-      sessionStorage.setItem('mdc_admin','1');
       document.body.classList.add('is-admin');
       adminTab = 'products';
 
@@ -159,6 +158,37 @@ async function sincronizarDesdeLaBase(){
   if(datos.sucursales) settings.branches = datos.sucursales;
 
   applyBranding();
+}
+
+/**
+ * Devuelve el modo administrador al recargar la página, si de verdad procede.
+ *
+ * "Si de verdad procede" es todo el asunto: se le pregunta al servidor. Aquí
+ * no basta con que exista un token guardado —eso lo puede inventar
+ * cualquiera—, hace falta que Supabase lo reconozca y que la tabla `perfiles`
+ * diga que esa persona es admin.
+ *
+ * Es asíncrono, así que durante un instante tras cargar la página el panel
+ * está cerrado aunque tengas sesión. Es el orden correcto: se abre al
+ * confirmar, no mientras se confirma.
+ */
+async function restaurarSesion(){
+  if(!BACKEND || !auth.haySesion()) return;
+
+  if(await esAdministrador()){
+    isAdmin = true;
+    document.body.classList.add('is-admin');
+    try{
+      await sincronizarDesdeLaBase();
+      render();
+    }catch{
+      // Sin conexión se sigue viendo el catálogo publicado. No es motivo
+      // para echar a nadie de su sesión.
+    }
+  }else{
+    // El token caducó, fue revocado, o la cuenta perdió el rol de admin.
+    auth.olvidar();
+  }
 }
 
 /** Dibuja el panel y reconecta los widgets que necesitan listeners propios. */
@@ -923,7 +953,6 @@ function wireDropzone(zoneId, inputId, target){
 
 async function logoutAdmin(){
   isAdmin = false;
-  sessionStorage.removeItem('mdc_admin');
   document.body.classList.remove('is-admin');
   editingId = null; draftImgs = undefined;
 

@@ -285,7 +285,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ══════════════════ INIT ══════════════════ */
-if(isAdmin) document.body.classList.add('is-admin');
+restaurarSesion();   // asíncrono: el panel se abre al confirmar, no antes
 cart = cart.filter(c=>products.some(p=>p.id===c.id));
 favorites = new Set([...favorites].filter(id=>products.some(p=>p.id===id)));
 if(!Array.isArray(settings.branches)) settings.branches = DEFAULT_SETTINGS.branches.map(b=>({...b}));

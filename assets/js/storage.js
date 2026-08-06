@@ -71,7 +71,18 @@ let products = normalizeProducts(store.read(K.products, null) || DEFAULT_PRODUCT
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.read(K.settings, {}));
 let cart = store.read(K.cart, []);
 let favorites = new Set(store.read(K.favs, []));
-let isAdmin = sessionStorage.getItem('mdc_admin')==='1';
+/* Arranca SIEMPRE en falso, y sólo lo levanta restaurarSesion() tras
+   comprobar contra el servidor que hay una sesión de administrador.
+
+   Antes esto salía de una marca en sessionStorage. Era el resto del PIN, y
+   estaba mal por lo obvio: una marca que pone el propio navegador la puede
+   poner cualquiera desde las herramientas de desarrollador, y el panel se
+   abría sin contraseña.
+
+   Que las escrituras igual las rechazara el servidor no lo justifica. Un
+   panel que se abre y deja tocarlo todo, para luego fallar al guardar, es
+   una trampa: parece que funciona. */
+let isAdmin = false;
 
 const saveProducts = () => store.write(K.products, products);
 const saveSettings = () => store.write(K.settings, settings);
