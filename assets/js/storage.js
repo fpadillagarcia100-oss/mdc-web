@@ -26,11 +26,25 @@ const store = {
   }
 };
 
-/* Una imagen sólo puede ser una foto incrustada o un archivo del propio sitio.
-   Todo lo demás se descarta: una URL "javascript:" o de otro dominio en un
-   respaldo importado sería código o rastreo ajeno corriendo en la página. */
-const imgOk = s => typeof s==='string' &&
-  (s.startsWith('data:image') || (s.startsWith('/') && !s.startsWith('//')));
+/* De dónde puede venir una imagen: del propio sitio, incrustada, o del
+   almacenamiento de Supabase — y de ningún otro lado.
+
+   La lista es cerrada a propósito. Un respaldo importado puede traer una URL
+   "javascript:" o una imagen de un dominio ajeno, que serviría para ejecutar
+   código o para rastrear a quien visita tu página desde fuera.
+
+   Se compara contra la dirección exacta del proyecto, no contra "cualquier
+   https". Aceptar cualquier dominio seguro seguiría dejando pasar rastreo de
+   terceros, que es la mitad del motivo por el que existe esta comprobación. */
+const ORIGEN_FOTOS = (typeof BACKEND_CONFIG !== 'undefined' && BACKEND_CONFIG)
+  ? BACKEND_CONFIG.url + '/storage/v1/object/public/'
+  : null;
+
+const imgOk = s => typeof s==='string' && (
+  s.startsWith('data:image') ||
+  (s.startsWith('/') && !s.startsWith('//')) ||
+  (ORIGEN_FOTOS !== null && s.startsWith(ORIGEN_FOTOS))
+);
 
 /** Devuelve la galería de un equipo, acepte el formato nuevo (imgs) o el viejo (img). */
 function normalizeImgs(p){

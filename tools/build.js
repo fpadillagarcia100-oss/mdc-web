@@ -107,6 +107,19 @@ function configBackend() {
   return JSON.stringify(cred, null, 2);
 }
 
+/* Dominio del que pueden venir las fotos, para la CSP de las fichas.
+
+   Antes decía `https:` a secas: cualquier dominio del mundo. Bastaba con que
+   una URL ajena entrara al catálogo para incrustar una imagen de terceros en
+   tus páginas —y con ella, un rastreador que ve quién las visita.
+
+   Sin credenciales al compilar no hay fotos remotas que permitir, así que se
+   cierra del todo. */
+const ORIGEN_FOTOS = (() => {
+  const cred = require('./entorno').credenciales();
+  return cred ? cred.url : "'none'";
+})();
+
 /* ── 1. Datos para la aplicación ── */
 function generarDatos(catalogo) {
   const destino = path.join(ROOT, 'assets/js/catalogo-datos.js');
@@ -226,7 +239,7 @@ function fichaHTML(eq, catalogo, iconos) {
 <title>${esc(titulo)}</title>
 <meta name="description" content="${esc(resumen)}">
 <meta name="theme-color" content="#1A1A1A">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="canonical" href="${url}">
 <meta property="og:type" content="product">
 <meta property="og:url" content="${url}">
