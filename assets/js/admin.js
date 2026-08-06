@@ -241,6 +241,10 @@ function renderAdmin(){
   if(form) form.addEventListener('submit', e=>{ e.preventDefault(); saveProductForm() });
 
   if(adminTab==='solicitudes' && solicitudes === null) cargarSolicitudes();
+
+  // El botón se vuelve a dibujar en cada render: hay que devolverle la cuenta
+  // atrás, o cambiar de pestaña serviría para saltarse la espera.
+  if(Date.now() - ultimaPublicacion < ESPERA_PUBLICAR) cuentaAtrasPublicar();
 }
 
 /* ══════════════════ COTIZACIONES ══════════════════
@@ -587,17 +591,53 @@ function guardarSucursalesRemoto(){
  * Que sea explícito además permite preparar varios cambios y publicarlos
  * juntos, en vez de que el sitio se reconstruya en cada tecla.
  */
+/* Momento en que se lanzó la última publicación. Vive fuera de la función
+   para sobrevivir a los redibujados del panel: si se guardara dentro, cambiar
+   de pestaña reactivaría el botón y volveríamos a lo mismo. */
+let ultimaPublicacion = 0;
+const ESPERA_PUBLICAR = 120000;   // 2 minutos, lo que tarda una compilación
+
 async function publicarSitio(){
   const btn = document.querySelector('[data-action="publicar"]');
+
+  /* La petición devuelve enseguida —Cloudflare acepta y compila aparte—, así
+     que sin esta espera el botón vuelve a estar activo en un segundo. Y ahí
+     está la trampa: parece que no pasó nada, se vuelve a pulsar, y Cloudflare
+     rechaza el segundo disparo con un error 502 que no explica nada.
+
+     Cada clic además consume una compilación de las 500 del mes. */
+  const restan = ESPERA_PUBLICAR - (Date.now() - ultimaPublicacion);
+  if(restan > 0){
+    showToast(`Ya se está publicando. Espera ${Math.ceil(restan/1000)} s.`, true);
+    return;
+  }
+
   if(btn){ btn.disabled = true; btn.textContent = 'Publicando…' }
   try{
     const r = await remotoPublicar();
+    ultimaPublicacion = Date.now();
     showToast(r.mensaje || 'Publicando…');
+    cuentaAtrasPublicar();
   }catch(err){
     showToast(err.message, true);
-  }finally{
     if(btn){ btn.disabled = false; btn.textContent = '🚀 Publicar cambios' }
   }
+}
+
+/** Enseña cuánto falta, para que la espera no parezca que se colgó. */
+function cuentaAtrasPublicar(){
+  const btn = document.querySelector('[data-action="publicar"]');
+  const restan = ESPERA_PUBLICAR - (Date.now() - ultimaPublicacion);
+
+  if(!btn) return;   // se cambió de pestaña; al volver, renderAdmin lo recalcula
+  if(restan <= 0){
+    btn.disabled = false;
+    btn.textContent = '🚀 Publicar cambios';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = `Publicando… ${Math.ceil(restan/1000)} s`;
+  setTimeout(cuentaAtrasPublicar, 1000);
 }
 
 /**
