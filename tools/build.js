@@ -77,6 +77,36 @@ function huellaFuente() {
   return require('crypto').createHash('sha256').update(crudo).digest('hex').slice(0, 16);
 }
 
+/**
+ * Credenciales del backend para el navegador, tomadas del entorno.
+ *
+ * Se inyectan al compilar en vez de escribirse en un archivo del repositorio
+ * para que exista un solo lugar donde cambiarlas: las variables de Netlify.
+ * El día que haya que rotar la llave, no hay que buscarla repartida en el
+ * código.
+ *
+ * Sin credenciales devuelve `null`, y el sitio sigue funcionando — sólo que
+ * las cotizaciones no quedan registradas. Es lo correcto para desarrollo
+ * local: nadie debería necesitar una base de datos para ver la portada.
+ */
+function configBackend() {
+  let cred;
+  try {
+    // Rechaza la llave de servicio. Aquí importa más que en ningún otro lado:
+    // esto se escribe en un archivo que descarga cada visitante del sitio.
+    cred = require('./entorno').credenciales();
+  } catch (err) {
+    console.error('✗ ' + err.message);
+    process.exit(1);
+  }
+
+  if (!cred) {
+    console.warn('  ⚠ Sin SUPABASE_URL/ANON_KEY: las cotizaciones NO se registrarán.');
+    return 'null';
+  }
+  return JSON.stringify(cred, null, 2);
+}
+
 /* ── 1. Datos para la aplicación ── */
 function generarDatos(catalogo) {
   const destino = path.join(ROOT, 'assets/js/catalogo-datos.js');
@@ -95,6 +125,17 @@ const CATALOGO_HUELLA = '${huellaFuente()}';
 const CATALOGO = ${JSON.stringify(
     { ajustes: catalogo.ajustes, sucursales: catalogo.sucursales, equipos: catalogo.equipos },
     null, 2)};
+
+/* Adónde manda backend.js las solicitudes de cotización.
+
+   La llave es la 'publishable': está pensada para viajar en el navegador y
+   cualquiera puede leerla aquí. Lo que impide que sirva para algo son las
+   políticas RLS — con ella sólo se puede insertar una solicitud. Ni leer la
+   cartera de clientes, ni tocar precios. Verificado en tests/seguridad.test.js.
+
+   Si al compilar no hay credenciales en el entorno, esto queda en null y el
+   sitio funciona como siempre: las cotizaciones salen sólo por WhatsApp. */
+const BACKEND_CONFIG = ${configBackend()};
 `;
   fs.writeFileSync(destino, cuerpo, 'utf8');
   return destino;

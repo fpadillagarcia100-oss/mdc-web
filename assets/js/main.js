@@ -194,11 +194,11 @@ function submitCurrentForm(channel){
 
   // Validar SIEMPRE antes del filtro anti-bot: si no, el usuario recibiría un
   // "vuelve a enviar" genérico en lugar de ver qué campo tiene mal.
-  const body = currentPage === 'vender' ? sellPayload() : quotePayload();
-  if(!body) return;
+  const payload = currentPage === 'vender' ? sellPayload() : quotePayload();
+  if(!payload) return;
 
   if(botCheck() !== 'ok') return;
-  deliver(channel, subject, body);
+  deliver(channel, subject, payload.texto, payload.datos);
 }
 
 document.addEventListener('submit', async e => {

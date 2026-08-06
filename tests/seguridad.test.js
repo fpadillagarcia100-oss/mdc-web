@@ -27,14 +27,7 @@ const path = require('path');
 
 /* ── Credenciales ── */
 const ROOT = path.join(__dirname, '..');
-(function cargarEnv() {
-  const archivo = path.join(ROOT, '.env');
-  if (!fs.existsSync(archivo)) return;
-  for (const linea of fs.readFileSync(archivo, 'utf8').split('\n')) {
-    const m = linea.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
-  }
-})();
+require('../tools/entorno').cargarEnv();
 
 const URL_BASE = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const LLAVE = process.env.SUPABASE_ANON_KEY || '';

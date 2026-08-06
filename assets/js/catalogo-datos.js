@@ -486,3 +486,17 @@ const CATALOGO = {
     }
   ]
 };
+
+/* Adónde manda backend.js las solicitudes de cotización.
+
+   La llave es la 'publishable': está pensada para viajar en el navegador y
+   cualquiera puede leerla aquí. Lo que impide que sirva para algo son las
+   políticas RLS — con ella sólo se puede insertar una solicitud. Ni leer la
+   cartera de clientes, ni tocar precios. Verificado en tests/seguridad.test.js.
+
+   Si al compilar no hay credenciales en el entorno, esto queda en null y el
+   sitio funciona como siempre: las cotizaciones salen sólo por WhatsApp. */
+const BACKEND_CONFIG = {
+  "url": "https://qqvwrwsxdgmhhacvgowy.supabase.co",
+  "llave": "sb_publishable_cL0Nxnx-ViiZWq9HAswzOA_GjiT5R_k"
+};

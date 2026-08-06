@@ -29,11 +29,32 @@ function saveRequest(type, summary){
   store.write(K.requests, reqs.slice(0, 30));
 }
 
-function deliver(channel, subject, body){
-  saveRequest(subject, body.split('\n')[0]);
+/* Abre WhatsApp o el correo. El registro en la base ocurre aparte, en
+   deliver(), y a propósito no puede estorbar este camino. */
+function abrirCanal(channel, subject, body){
   if(channel==='wa') window.open(waLink(body), '_blank', 'noopener');
   else window.location.href = mailLink(subject, body);
+}
+
+function deliver(channel, subject, body, datos){
+  saveRequest(subject, body.split('\n')[0]);
+
+  /* WhatsApp PRIMERO, y sin esperar a la base.
+
+     El orden importa más de lo que parece. Los navegadores bloquean las
+     ventanas emergentes que no salen de un clic del usuario; si primero se
+     esperara la respuesta de la base, para cuando llegara ya se habría
+     perdido ese permiso y WhatsApp no abriría. El cliente vería que "no pasa
+     nada" al enviar.
+
+     Así que el canal se abre de inmediato y el registro va detrás, en
+     segundo plano. Si falla, el cliente ni se entera: su mensaje ya salió. */
+  abrirCanal(channel, subject, body);
   showToast('Solicitud lista para enviar');
+
+  if(datos && typeof registrarSolicitud === 'function'){
+    registrarSolicitud(datos);   // no se espera: es una mejora, no un requisito
+  }
   setTimeout(closeAll, 600);
 }
 
@@ -332,7 +353,27 @@ function sellPayload(){
   ]);
   if(!v) return null;
   const g = id => $('#'+id).value.trim();
-  return `Hola ${settings.brandMain}${settings.brandAccent}, quiero vender/consignar mi equipo:
+
+  /* Se devuelven dos cosas del mismo formulario: el texto que lee una persona
+     en WhatsApp y los campos sueltos que entiende la base. Separarlos evita
+     tener que reconstruir el teléfono a partir de un mensaje escrito. */
+  const datos = {
+    tipo: 'publicacion',
+    nombre: v['v-name'],
+    telefono: v['v-phone'],
+    correo: v['v-email'] || null,
+    mensaje: [
+      `Equipo: ${g('v-brand')}`,
+      `Tipo: ${g('v-type')}`,
+      `Año: ${g('v-year') || 'no especificado'}`,
+      `Horas: ${g('v-hours') || 'no especificado'}`,
+      `Condición: ${g('v-cond')}`,
+      `Precio esperado: ${g('v-price') ? '$' + g('v-price') + ' MXN' : 'a valuar'}`,
+      g('v-notes') ? `Comentarios: ${g('v-notes')}` : '',
+    ].filter(Boolean).join('\n').slice(0, 4000),
+  };
+
+  const texto = `Hola ${settings.brandMain}${settings.brandAccent}, quiero vender/consignar mi equipo:
 
 Equipo: ${g('v-brand')}
 Tipo: ${g('v-type')}
@@ -344,6 +385,8 @@ Precio esperado: ${g('v-price') ? '$'+g('v-price')+' MXN' : 'a valuar'}
 Mis datos:
 ${v['v-name']} · Tel. ${v['v-phone']}${v['v-email'] ? ' · '+v['v-email'] : ''}
 ${g('v-notes') ? '\nComentarios: '+g('v-notes') : ''}`;
+
+  return { texto, datos };
 }
 
 /* ── Solicitar cotización ── */
@@ -403,7 +446,25 @@ function quotePayload(){
   const rent = lines.filter(i=>i.cond==='Renta').reduce((s,i)=>s+i.price*i.qty,0);
   const company = $('#c-company').value.trim(), notes = $('#c-notes').value.trim();
 
-  return `Hola ${settings.brandMain}${settings.brandAccent}, solicito cotización formal de:
+  const datos = {
+    tipo: 'cotizacion',
+    nombre: v['c-name'],
+    telefono: v['c-phone'],
+    correo: v['c-email'] || null,
+    empresa: company || null,
+    mensaje: notes.slice(0, 4000),
+    /* Sólo lo indispensable de cada equipo. La base topa el carrito en 16 KB
+       —lo puso la migración de endurecimiento— y mandar el objeto completo,
+       con descripción y especificaciones, lo rebasaría con pocos renglones.
+       El slug basta para reconstruir la ficha; el precio se guarda porque es
+       el que vio el cliente ese día, y puede cambiar después. */
+    carrito: lines.map(i => ({
+      slug: i.slug, nombre: i.name, cantidad: i.qty,
+      precio: i.price, renta: i.cond === 'Renta',
+    })),
+  };
+
+  const texto = `Hola ${settings.brandMain}${settings.brandAccent}, solicito cotización formal de:
 
 ${lines.map(i=>`• ${i.qty}× ${i.name} — ${fmtFull(i.price)}${i.cond==='Renta'?'/mes':''}`).join('\n')}
 
@@ -412,6 +473,8 @@ Total estimado: ${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+
 Mis datos:
 ${v['c-name']}${company ? ' · '+company : ''}
 Tel. ${v['c-phone']}${v['c-email'] ? ' · '+v['c-email'] : ''}${notes ? '\n\nComentarios: '+notes : ''}`;
+
+  return { texto, datos };
 }
 
 /* ── Mi cuenta ── */

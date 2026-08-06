@@ -35,15 +35,7 @@ const DESTINO = path.join(ROOT, 'data', 'catalogo.json');
 
 /* ── Credenciales ──
    Del entorno, o de un .env local que git ya ignora. Nunca del repositorio. */
-function cargarEnv() {
-  const archivo = path.join(ROOT, '.env');
-  if (!fs.existsSync(archivo)) return;
-  for (const linea of fs.readFileSync(archivo, 'utf8').split('\n')) {
-    const m = linea.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
-  }
-}
-cargarEnv();
+require('./entorno').cargarEnv();
 
 const URL_BASE = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const LLAVE = process.env.SUPABASE_ANON_KEY || '';
