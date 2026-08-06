@@ -193,6 +193,17 @@ async function restaurarSesion(){
 
 /** Dibuja el panel y reconecta los widgets que necesitan listeners propios. */
 function renderAdmin(){
+  /* El cerrojo va AQUI, no solo en quien llama.
+
+     El fallo que motivo esta linea: openAdmin() si comprobaba la sesion, pero
+     el clic en una pestana llamaba a renderAdmin() directo. Una sola via sin
+     revisar basta para que sobre todo lo demas.
+
+     Regla: la comprobacion se pone en el sitio por el que hay que pasar
+     obligatoriamente, no en cada camino que lleva a el. Los caminos se
+     multiplican; el sitio es uno. */
+  if(!isAdmin){ renderLogin(); return }
+
   $('#adminTabs').hidden = false;
   $$('#adminTabs .admin-tab').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===adminTab)));
 

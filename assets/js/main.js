@@ -33,7 +33,10 @@ document.addEventListener('click', e => {
   if(admOpen){ editingId = null; draftImgs = undefined; openAdmin(admOpen.dataset.adminOpen); return }
 
   const tabBtn = t.closest('.admin-tab');
-  if(tabBtn){ adminTab = tabBtn.dataset.tab; editingId = null; draftImgs = undefined; renderAdmin(); return }
+  if(tabBtn){
+    if(!isAdmin) return;   // sin sesión, una pestaña no es una puerta
+    adminTab = tabBtn.dataset.tab; editingId = null; draftImgs = undefined; renderAdmin(); return;
+  }
 
   const editBtn = t.closest('[data-edit]');
   if(editBtn){ editingId = Number(editBtn.dataset.edit); draftImgs = undefined; openAdmin('products'); return }

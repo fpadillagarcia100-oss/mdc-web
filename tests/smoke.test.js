@@ -372,6 +372,22 @@ const submit = form =>
   check('Un token inventado en localStorage tampoco',
     ev('isAdmin') === false);
 
+  /* ── Las pestañas del panel no son una puerta ──
+     Fallo real, encontrado probando el sitio publicado: la barra de pestañas
+     seguía visible en la pantalla de acceso (el CSS le ganaba al atributo
+     hidden), y el clic llamaba a renderAdmin() directo, sin pasar por la
+     comprobación de sesión. Se entraba al panel completo sin contraseña. */
+  check('Las pestañas están ocultas sin sesión',
+    $('#adminTabs').hidden === true);
+
+  $$('#adminTabs .admin-tab').forEach(b => b.click());
+  check('Hacer clic en las pestañas NO abre el panel',
+    $('#mailInput') !== null && $('.adm-table') === null);
+
+  ev('renderAdmin()');
+  check('Llamar a renderAdmin() sin sesión devuelve al acceso',
+    $('#mailInput') !== null && $('.adm-table') === null);
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;

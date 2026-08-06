@@ -303,6 +303,10 @@ body.is-admin .pcard-edit{display:flex}
 .admin-head .close{margin-left:auto;background:none;border:1px solid #555;color:#ddd;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:20px;line-height:1}
 .admin-head .close:hover{border-color:var(--y);color:var(--y)}
 .admin-tabs{display:flex;background:#F8F8F8;border-bottom:1px solid var(--border);overflow-x:auto}
+/* El atributo hidden vale display:none, pero cualquier display del autor le gana.
+   Sin esta línea, `hidden = true` no esconde nada: las pestañas del panel seguían
+   a la vista en la pantalla de acceso, y desde ahí se entraba sin contraseña. */
+.admin-tabs[hidden]{display:none}
 .admin-tab{padding:12px 18px;background:none;border:none;border-bottom:2px solid transparent;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap}
 .admin-tab:hover{color:var(--dark)}
 .admin-tab[aria-selected="true"]{color:var(--dark);border-bottom-color:var(--y);font-weight:600;background:var(--white)}
