@@ -64,12 +64,58 @@ if (fs.existsSync(dirFichas)) {
   }
 }
 
+/* 3.b ¿Cada categoría tiene su página, y sin sobrar ninguna?
+
+   Una categoría sin página es la búsqueda genérica perdida —«excavadora usada
+   en chiapas»—, que es de donde llega casi todo el mundo. Y una página de una
+   categoría que ya no tiene equipos es peor: queda publicada e indexada
+   enseñando una rejilla vacía. */
+const slugCategoria = c => String(c)
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+const porCategoria = new Map();
+for (const eq of catalogo.equipos) {
+  if (!porCategoria.has(eq.cat)) porCategoria.set(eq.cat, []);
+  porCategoria.get(eq.cat).push(eq);
+}
+
+const dirCats = path.join(ROOT, 'maquinaria');
+for (const [cat, equipos] of porCategoria) {
+  const pagina = path.join(dirCats, slugCategoria(cat), 'index.html');
+  if (!fs.existsSync(pagina)) {
+    problemas.push(`La categoría "${cat}" (${equipos.length} equipos) no tiene página.`);
+    continue;
+  }
+  const html = fs.readFileSync(pagina, 'utf8');
+  const faltan = equipos.filter(e => !html.includes(`/equipos/${e.slug}/`));
+  if (faltan.length) {
+    problemas.push(`La página de "${cat}" no enlaza ${faltan.length} de sus equipos: ` +
+      faltan.slice(0, 3).map(e => e.slug).join(', '));
+  }
+}
+
+if (fs.existsSync(dirCats)) {
+  const vigentes = new Set([...porCategoria.keys()].map(slugCategoria));
+  const sobran = fs.readdirSync(dirCats).filter(d => !vigentes.has(d));
+  if (sobran.length) {
+    problemas.push(`${sobran.length} páginas de categorías sin equipos: ${sobran.join(', ')}. ` +
+      'Quedarían publicadas y vacías.');
+  }
+}
+
 /* 4. ¿El sitemap lista todo? */
 const sitemap = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
 const faltanEnSitemap = catalogo.equipos.filter(
   eq => !sitemap.includes(`/equipos/${eq.slug}/`));
 if (faltanEnSitemap.length) {
   problemas.push(`${faltanEnSitemap.length} equipos no aparecen en sitemap.xml. Google no los encontrará.`);
+}
+
+const catsFuera = [...porCategoria.keys()]
+  .filter(c => !sitemap.includes(`/maquinaria/${slugCategoria(c)}/`));
+if (catsFuera.length) {
+  problemas.push(`${catsFuera.length} categorías no aparecen en sitemap.xml: ${catsFuera.join(', ')}`);
 }
 
 /* 5. ¿Cada ficha dice la verdad sobre la disponibilidad y ofrece alternativas?

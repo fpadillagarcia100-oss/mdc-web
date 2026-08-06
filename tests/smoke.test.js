@@ -59,7 +59,12 @@ const dom = new JSDOM(html, {
         cond: 'Nuevo', price: 1, location: 'X', year: 2020, specs: [], desc: '' },
     ]));
     w.localStorage.setItem('mdc_v1_settings', JSON.stringify({ brandFull: 'MARCA FANTASMA' }));
-    // jsdom no implementa estas APIs de imagen; las simulamos.
+    /* jsdom no calcula diseño, así que no trae scrollIntoView. No es un vacío
+       inofensivo: el botón de buscar la llama, y sin esto la prueba falla por
+       una función que no existe en vez de por lo que venía a comprobar. */
+    w.Element.prototype.scrollIntoView = function () {};
+
+    // Tampoco implementa estas APIs de imagen; las simulamos.
     w.createImageBitmap = async () => ({ width: 100, height: 100, close() {} });
     w.HTMLCanvasElement.prototype.getContext = () => ({ fillRect() {}, drawImage() {}, set fillStyle(v) {} });
     w.HTMLCanvasElement.prototype.toDataURL = () => 'data:image/webp;base64,AAAA';
@@ -710,6 +715,85 @@ const ev = code => window.eval(code);
   check('Lo que falta por contestar sale arriba, aunque sea lo más viejo',
     ev(`preguntasAdminHTML().indexOf('¿Tiene factura?') < preguntasAdminHTML().indexOf('¿Horas?')`),
     'es una bandeja de trabajo: arriba va lo que falta por hacer');
+
+  /* ══ BUSCADOR, DESDE LA CAJA DE VERDAD ══
+     Las pruebas unitarias comprueban la función. Esto comprueba que lo que se
+     teclea en la caja llega hasta ella: entre las dos hay un retardo, un
+     recorte y un `render()`, y ahí se ha roto antes. */
+  ev('clearFilters()');
+  $('#searchInput').value = 'escabadora';
+  $('#searchBtn').click();
+  await waitFor(() => ev('state.q') === 'escabadora', 'que la búsqueda se aplique');
+  check('Escribir con errata encuentra igual',
+    $$('.pcard').length > 0, `${$$('.pcard').length} resultados para "escabadora"`);
+
+  check('La etiqueta enseña lo que se escribió, no lo normalizado',
+    $('#activeFilters').textContent.includes('escabadora'));
+
+  $('#searchInput').value = 'zapatos';
+  $('#searchBtn').click();
+  await waitFor(() => ev('state.q') === 'zapatos', 'la segunda búsqueda');
+  check('Lo que no existe sigue sin salir',
+    $$('.pcard').length === 0 && $('.empty-state') !== null);
+  ev('clearFilters()');
+
+  /* ══ PÁGINAS DE CATEGORÍA ══
+     La puerta de entrada desde Google. Se revisan sobre el archivo generado
+     porque es lo que Google va a leer — no lo que el sitio dibuja después. */
+  const dirCats = path.join(ROOT, 'maquinaria');
+  const cats = fs.existsSync(dirCats) ? fs.readdirSync(dirCats) : [];
+  check('Se genera una página por categoría', cats.length >= 3, cats.join(', '));
+
+  if (cats.length) {
+    const pagina = fs.readFileSync(path.join(dirCats, cats[0], 'index.html'), 'utf8');
+    check('La categoría tiene un solo H1 y describe lo que vende',
+      (pagina.match(/<h1[ >]/g) || []).length === 1 && /en Chiapas/.test(pagina));
+    check('Le dice a Google que es un listado, no un texto con enlaces',
+      pagina.includes('"ItemList"') && pagina.includes('"BreadcrumbList"'));
+    check('Cada equipo enlaza a su ficha',
+      (pagina.match(/\/equipos\/[a-z0-9-]+\//g) || []).length > 0);
+    check('La categoría se puede indexar sin ejecutar JavaScript',
+      !pagina.includes('<script src'), 'ni un script: es HTML puro');
+    check('Y declara la misma política de seguridad que el resto',
+      pagina.includes("script-src 'self'") && !pagina.includes('unsafe-inline; script'));
+  }
+
+  /* Google llega a una página por los enlaces que apuntan a ella. Una página
+     de categoría perfecta a la que no enlaza nadie es una página que no
+     existe. */
+  const pieCats = [...$$('#footCats a')];
+  check('El pie de la portada enlaza a las categorías de verdad',
+    pieCats.length > 0 && pieCats.every(a => a.getAttribute('href').startsWith('/maquinaria/')),
+    pieCats.map(a => a.getAttribute('href')).join(' '));
+
+  check('Y la dirección del enlace coincide con la carpeta generada',
+    pieCats.every(a => cats.includes(a.getAttribute('href').split('/')[2])),
+    'si no, el pie llevaría a un 404');
+
+  // Pinchar desde el catálogo filtra en vez de recargar: es más rápido y no
+  // pierde el carrito. El enlace sigue ahí para Google y para "abrir en nueva".
+  pieCats[0].click();
+  check('Pinchar una categoría desde el catálogo filtra, no navega',
+    ev('state.cat') === pieCats[0].dataset.cat, ev('state.cat'));
+  ev('clearFilters()');
+
+  const mapa = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
+  check('Las categorías están en el sitemap y pesan más que una ficha',
+    cats.every(c => mapa.includes(`/maquinaria/${c}/`)) && mapa.includes('<priority>0.9</priority>'),
+    'una ficha desaparece al venderse; la categoría se queda');
+
+  /* ══ AVISO DE COTIZACIÓN ══
+     La función corre en Cloudflare, no aquí, así que se revisa su código: lo
+     que importa es que no se pueda disparar sin el secreto y que un fallo del
+     correo no haga que Supabase reintente en bucle. */
+  const aviso = fs.readFileSync(path.join(ROOT, 'functions/api/aviso-solicitud.js'), 'utf8');
+  check('El aviso exige un secreto compartido',
+    aviso.includes('x-aviso-secreto') && aviso.includes('igualSeguro'),
+    'y compara en tiempo constante, para que no se adivine letra por letra');
+  check('Un fallo del correo no hace que la base reintente en bucle',
+    /return json\(200, \{ ok: false/.test(aviso));
+  check('El teléfono va en el asunto, para verlo sin abrir el correo',
+    /subject|asunto/.test(aviso) && aviso.includes('${s.telefono}'));
 
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));

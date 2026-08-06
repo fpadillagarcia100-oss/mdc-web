@@ -241,13 +241,13 @@ function renderAdmin(){
   const form = $('#pForm');
   if(form) form.addEventListener('submit', e=>{ e.preventDefault(); saveProductForm() });
 
-  if(adminTab==='solicitudes' && solicitudes === null) cargarSolicitudes();
   if(adminTab==='products' && metricas === null) cargarMetricas();
 
-  /* Las preguntas se piden apenas se abre el panel, aunque la pestaña activa
-     sea otra: sin el número al lado del rótulo, una pregunta sin contestar
-     sólo se descubre entrando a buscarla, y nadie entra a buscar lo que no
-     sabe que existe. */
+  /* Las cotizaciones y las preguntas se piden apenas se abre el panel, aunque
+     la pestaña activa sea otra: sin el número al lado del rótulo, lo que está
+     esperando sólo se descubre entrando a buscarlo — y nadie entra a buscar lo
+     que no sabe que existe. */
+  cargarSolicitudes();
   cargarPreguntas();
   pintarPendientes();
 
@@ -265,16 +265,29 @@ function renderAdmin(){
    ninguna". Distinguirlo evita enseñar "no tienes cotizaciones" mientras la
    consulta va en camino — un mensaje que asusta y encima es falso. */
 let solicitudes = null;
+let pidiendoSolicitudes = false;
 
 async function cargarSolicitudes(){
+  if(solicitudes !== null || pidiendoSolicitudes) return;
+  pidiendoSolicitudes = true;
   try{
     solicitudes = await remotoSolicitudes();
   }catch(err){
     solicitudes = [];
     showToast('No se pudieron cargar las cotizaciones: ' + err.message, true);
+  }finally{
+    pidiendoSolicitudes = false;
   }
-  if(isAdmin && adminTab==='solicitudes') renderAdmin();
+  if(!isAdmin) return;
+  // Igual que con las preguntas: no se redibuja el panel entero a destiempo,
+  // que se llevaría por delante un formulario a medio llenar.
+  if(adminTab==='solicitudes' && editingId === null) renderAdmin();
+  else pintarPendientes();
 }
+
+/** Cotizaciones que nadie ha atendido. Van en la pestaña para que no se pasen. */
+const solicitudesPendientes = () =>
+  solicitudes === null ? 0 : solicitudes.filter(s => s.estado === 'nueva').length;
 
 const ETIQUETA_ESTADO = {
   nueva:    {texto:'Nueva',    clase:'badge-new'},
@@ -352,6 +365,7 @@ async function cambiarEstadoSolicitud(id, estado){
     const i = solicitudes.findIndex(s => s.id === id);
     if(i >= 0) solicitudes[i] = actualizada;
     renderAdmin();
+    pintarPendientes();   // marcar una como atendida tiene que bajar el número
   }catch(err){
     showToast(err.message, true);
   }
@@ -398,12 +412,22 @@ async function cargarPreguntas(){
 const preguntasPendientes = () =>
   preguntas === null ? 0 : preguntas.filter(q => !q.respuesta).length;
 
+/**
+ * Los números rojos de las pestañas.
+ *
+ * Existen porque una bandeja que hay que abrir para saber si tiene algo, no se
+ * abre. El número se ve desde cualquier pestaña del panel y es lo que convierte
+ * "entrar a revisar por si acaso" en "entrar porque hay tres esperando".
+ */
 function pintarPendientes(){
-  const chip = $('#tabPreguntasN');
-  if(!chip) return;
-  const n = preguntasPendientes();
-  chip.textContent = n;
-  chip.hidden = n === 0;
+  const poner = (id, n) => {
+    const chip = $(id);
+    if(!chip) return;
+    chip.textContent = n;
+    chip.hidden = n === 0;
+  };
+  poner('#tabPreguntasN', preguntasPendientes());
+  poner('#tabSolicitudesN', solicitudesPendientes());
 }
 
 function preguntasAdminHTML(){

@@ -70,6 +70,9 @@ function cargarAtributos() {
   return {
     fichaTecnica: vm.runInContext('fichaTecnica', ctx),
     videoId: vm.runInContext('videoId', ctx),
+    // La misma que usa el pie de la portada para enlazar. Si cada uno tuviera
+    // la suya, los enlaces del pie llevarían a páginas que no existen.
+    slugCategoria: vm.runInContext('slugCategoria', ctx),
   };
 }
 
@@ -437,9 +440,12 @@ ${JSON.stringify(datosFAQ, null, 2)}
 
 <main class="ficha">
   <p class="print-marca">${esc(marca)} · ${esc(a.marca_completa)}</p>
+  <!-- La miga apunta a la página de la categoría, no a la portada. Es lo que
+       le da a esa página enlaces desde las 18 fichas, y a quien llega desde
+       Google buscando una máquina, un sitio donde ver las parecidas. -->
   <nav class="miga" aria-label="Ruta">
     <a href="/">Inicio</a> ›
-    <a href="/#catalogo">${esc(eq.cat)}</a> ›
+    <a href="${SITIO}/maquinaria/${slugCategoria(eq.cat)}/">${esc(eq.cat)}</a> ›
     <span>${esc(eq.name)}</span>
   </nav>
 
@@ -545,11 +551,209 @@ function generarFichas(catalogo, iconos) {
   return n;
 }
 
-/* ── 3. Sitemap ── */
-function generarSitemap(catalogo) {
+/* ── 3. Una página por categoría ────────────────────────────────────────────
+   El hueco que tapa: hoy Google tiene la portada y una ficha por máquina.
+   Quien busca «excavadora usada en chiapas» —que es como busca casi todo el
+   mundo, por trabajo y no por modelo— no encuentra nada nuestro. Sólo aparece
+   quien ya sabe que quiere una CAT 320 GC, que es un cliente que casi no
+   existe.
+
+   Estas páginas son la respuesta a esa búsqueda: una dirección propia por
+   categoría, con sus máquinas, indexable sin ejecutar JavaScript.
+
+   El catálogo con filtros sigue viviendo en la portada. Esto no lo sustituye:
+   es la puerta de entrada desde el buscador, y cada tarjeta lleva a la ficha
+   de siempre. */
+
+function categoriaHTML(cat, equipos, catalogo, iconos) {
+  const a = catalogo.ajustes;
+  const marca = a.marca_principal + a.marca_acento;
+  const slug = slugCategoria(cat);
+  const url = `${SITIO}/maquinaria/${slug}/`;
+
+  const enVenta = equipos.filter(e => e.cond !== 'Renta').length;
+  const enRenta = equipos.length - enVenta;
+  const precios = equipos.map(e => e.price);
+  const desde = Math.min(...precios);
+
+  const titulo = `Maquinaria de ${cat.toLowerCase()} en Chiapas — venta y renta | ${marca}`;
+  const resumen = `${equipos.length} equipos de ${cat.toLowerCase()} disponibles en Chiapas: ` +
+    equipos.slice(0, 4).map(e => e.name).join(', ') + '. ' +
+    `${enVenta ? `${enVenta} en venta` : ''}${enVenta && enRenta ? ' y ' : ''}${enRenta ? `${enRenta} en renta` : ''}, ` +
+    `desde ${precioCompleto(desde)}. Garantía, financiamiento y entrega a pie de obra.`;
+
+  /* ItemList le dice a Google que esto es un listado y cuál es el orden, no un
+     texto con enlaces sueltos. Es lo que permite que enseñe el grupo entero en
+     vez de una máquina al azar. */
+  const datos = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `Maquinaria de ${cat.toLowerCase()} en Chiapas`,
+    numberOfItems: equipos.length,
+    itemListElement: equipos.map((e, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${SITIO}/equipos/${e.slug}/`,
+      name: e.name,
+    })),
+  };
+
+  const migas = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: cat, item: url },
+    ],
+  };
+
+  const wa = `https://wa.me/${String(a.whatsapp).replace(/\D/g, '')}?text=` +
+    encodeURIComponent(`Hola ${marca}, me interesa su maquinaria de ${cat.toLowerCase()}. ¿Qué tienen disponible?`);
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(titulo)}</title>
+<meta name="description" content="${esc(resumen.slice(0, 300))}">
+<meta name="theme-color" content="#1A1A1A">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="${url}">
+<meta property="og:title" content="${esc(titulo)}">
+<meta property="og:description" content="${esc(resumen.slice(0, 300))}">
+<meta property="og:image" content="${esc(equipos.map(e => e.img).find(Boolean) || `${SITIO}/assets/img/og.png`)}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+<script type="application/ld+json">
+${JSON.stringify(datos, null, 2)}
+</script>
+<script type="application/ld+json">
+${JSON.stringify(migas, null, 2)}
+</script>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="/">
+      <span>
+        <span class="logo-text">${esc(a.marca_principal)}<span>${esc(a.marca_acento)}</span></span>
+        <span class="logo-sub">${esc(a.marca_completa)}</span>
+      </span>
+    </a>
+    <div class="header-actions">
+      <a class="hbtn" href="/#catalogo">← Ver todo el catálogo</a>
+      <a class="hbtn primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar por WhatsApp</a>
+    </div>
+  </div>
+</header>
+
+<main class="cat-pagina">
+  <nav class="miga" aria-label="Ruta">
+    <a href="/">Inicio</a> › <span>${esc(cat)}</span>
+  </nav>
+
+  <h1>Maquinaria de ${esc(cat.toLowerCase())} en Chiapas</h1>
+  <p class="cat-intro">
+    ${equipos.length} equipo${equipos.length === 1 ? '' : 's'} disponible${equipos.length === 1 ? '' : 's'}${
+      enVenta && enRenta ? `, ${enVenta} en venta y ${enRenta} en renta` :
+      enRenta ? ', todos en renta' : ''}, desde ${precioCompleto(desde)}.
+    Todos revisados, con garantía por escrito y entrega a pie de obra en Chiapas.
+  </p>
+
+  <div class="similares-grid cat-grid">
+    ${equipos.map(e => `
+      <a class="similar" href="${SITIO}/equipos/${e.slug}/">
+        <div class="similar-img">${
+          e.img ? `<img src="${esc(e.img)}" alt="${esc(e.name)}" loading="lazy" decoding="async">`
+                : (iconos[e.svgKey] || iconos.excavadora)
+        }</div>
+        <div class="similar-body">
+          <p class="similar-cat">${esc(e.cat)} · ${esc(e.brand)} · ${e.year}</p>
+          <h2>${esc(e.name)}</h2>
+          <p class="similar-precio">${precioCorto(e.price)}${e.cond === 'Renta' ? ' <small>/mes</small>' : ''}</p>
+          <p class="cat-meta">📍 ${esc(e.location)}${e.specs.length ? ' · ' + esc(e.specs[0]) : ''}</p>
+        </div>
+      </a>`).join('')}
+  </div>
+
+  <section class="cat-cierre">
+    <h2>¿No encuentras lo que buscas?</h2>
+    <p>Movemos maquinaria constantemente y no todo alcanza a publicarse. Dinos qué
+      necesitas y qué presupuesto manejas, y te decimos qué tenemos o qué nos entra.</p>
+    <p>
+      <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>
+      <a class="btn-ghost" href="/#catalogo">Ver el catálogo completo</a>
+    </p>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-col">
+      <h4>${esc(marca)} · ${esc(a.marca_completa)}</h4>
+      <p style="max-width:300px;line-height:1.6">${esc(a.pie_descripcion)}</p>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <ul>
+        <li><a href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">${esc(a.telefono)}</a></li>
+        <li>${esc(a.direccion)}</li>
+        <li>${esc(a.horario)}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-legal">Precio de referencia en MXN, no constituye una oferta comercial.</div>
+</footer>
+
+</body>
+</html>
+`;
+}
+
+/** Categorías con al menos un equipo publicado, en orden alfabético. */
+function categoriasCon(catalogo) {
+  const mapa = new Map();
+  for (const eq of catalogo.equipos) {
+    if (!mapa.has(eq.cat)) mapa.set(eq.cat, []);
+    mapa.get(eq.cat).push(eq);
+  }
+  return [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+}
+
+function generarCategorias(catalogo, iconos) {
+  const base = path.join(ROOT, 'maquinaria');
+  // Se rehace entera: una categoría que se queda sin equipos no puede dejar su
+  // página publicada e indexada enseñando una rejilla vacía.
+  fs.rmSync(base, { recursive: true, force: true });
+
+  const lista = categoriasCon(catalogo);
+  for (const [cat, equipos] of lista) {
+    const dir = path.join(base, slugCategoria(cat));
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'),
+      categoriaHTML(cat, equipos, catalogo, iconos), 'utf8');
+  }
+  return lista;
+}
+
+/* ── 4. Sitemap ── */
+function generarSitemap(catalogo, categorias) {
   const hoy = new Date().toISOString().slice(0, 10);
   const urls = [
     `  <url>\n    <loc>${SITIO}/</loc>\n    <lastmod>${hoy}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>`,
+    /* Las categorías van con prioridad ALTA y revisión semanal, por encima de
+       las fichas. No es un capricho de números: una ficha desaparece cuando se
+       vende la máquina, y la categoría se queda. Es la página que conviene que
+       Google trate como estable y que acumule posicionamiento. */
+    ...categorias.map(([cat]) =>
+      `  <url>\n    <loc>${SITIO}/maquinaria/${slugCategoria(cat)}/</loc>\n    <lastmod>${hoy}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>`),
     ...catalogo.equipos.map(eq =>
       `  <url>\n    <loc>${SITIO}/equipos/${eq.slug}/</loc>\n    <lastmod>${hoy}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>`),
   ];
@@ -567,7 +771,7 @@ ${urls.join('\n')}
 const catalogo = leerCatalogo();
 const iconos = cargarIconos();
 const calculadoraHTML = cargarCalculadora();
-const { fichaTecnica } = cargarAtributos();
+const { fichaTecnica, slugCategoria } = cargarAtributos();
 
 const faltantes = catalogo.equipos.filter(e => !e.slug);
 if (faltantes.length) {
@@ -577,9 +781,11 @@ if (faltantes.length) {
 
 generarDatos(catalogo);
 const fichas = generarFichas(catalogo, iconos);
-const urls = generarSitemap(catalogo);
+const categorias = generarCategorias(catalogo, iconos);
+const urls = generarSitemap(catalogo, categorias);
 
 console.log('Sitio generado:');
 console.log(`  assets/js/catalogo-datos.js   ${catalogo.equipos.length} equipos, ${catalogo.sucursales.length} sucursales`);
 console.log(`  equipos/<slug>/index.html     ${fichas} fichas`);
+console.log(`  maquinaria/<cat>/index.html   ${categorias.length} categorías (${categorias.map(([c, e]) => `${c}: ${e.length}`).join(', ')})`);
 console.log(`  sitemap.xml                   ${urls} direcciones`);

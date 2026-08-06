@@ -24,7 +24,12 @@ const predicates = {
   loc:   p => !state.locations.length || state.locations.includes(p.location),
   fin:   p => !state.finance.length || state.finance.every(f => f==='msi' ? !!p.finance : !!p.leasing),
   price: p => p.price >= (state.min ?? 0) && p.price <= (state.max ?? Infinity),
-  q:     p => !state.q || `${p.name} ${p.brand} ${p.cat} ${p.location} ${p.specs.join(' ')}`.toLowerCase().includes(state.q),
+  /* La descripción entra en la búsqueda además del nombre: ahí es donde dice
+     «ideal para drenaje» o «con martillo hidráulico», que es como busca quien
+     tiene un problema en vez de un modelo en mente. */
+  q:     p => coincideBusqueda(
+           `${p.name} ${p.brand} ${p.cat} ${p.location} ${p.specs.join(' ')} ${p.desc}`,
+           state.q),
   fav:   p => !state.onlyFavs || favorites.has(p.id),
 
   /* Horas de uso.

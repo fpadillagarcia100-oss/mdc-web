@@ -345,7 +345,14 @@ test('La ficha técnica sale en el orden del catálogo, no en el que se capturó
  * horas.
  */
 function conCatalogo(equipos, filtros) {
-  const antes = run('products');
+  /* La restauración tiene que ir por `run`, no por `ctx.products = …`.
+     `products` se declara con `let`, y un `let` del ámbito global de un script
+     NO es una propiedad del objeto global: asignarlo desde fuera crea otra
+     variable distinta y la de verdad se queda pisada.
+
+     Costó descubrirlo porque el síntoma aparece en OTRA prueba —las de
+     búsqueda daban cero resultados— y ahí no hay nada que mirar. */
+  ctx.__catalogoOriginal = run('products');
   try {
     run(`products = normalizeProducts(${JSON.stringify(equipos)})`);
     run(`Object.assign(state, {cat:'Todos',conds:[],brands:[],locations:[],finance:[],
@@ -353,7 +360,7 @@ function conCatalogo(equipos, filtros) {
     run(`Object.assign(state, ${JSON.stringify(filtros)})`);
     return JSON.parse(run('JSON.stringify(filterAll().map(p=>p.name))'));
   } finally {
-    ctx.products = antes;
+    run('products = __catalogoOriginal');
     run(`Object.assign(state, {horasMax:null, pesoMin:null, pesoMax:null})`);
   }
 }
@@ -406,6 +413,87 @@ test('Una pregunta sin respuesta no llega a la ficha', () => {
   ]}])[0].qa)`));
   assert.strictEqual(qa.length, 1);
   assert.strictEqual(qa[0].nombre, 'Ana');
+});
+
+
+/* ══════════════════ BUSCADOR ══════════════════
+   Cada consulta que devuelve "sin resultados" teniendo el equipo es un cliente
+   que ya estaba buscando lo tuyo y se va creyendo que no lo tienes. */
+
+/** Busca en el catálogo real y devuelve los nombres encontrados. */
+function buscar(texto) {
+  run(`Object.assign(state, {cat:'Todos',conds:[],brands:[],locations:[],finance:[],
+       onlyFavs:false,min:null,max:null,horasMax:null,pesoMin:null,pesoMax:null,
+       q:${JSON.stringify(texto)}})`);
+  const r = JSON.parse(run('JSON.stringify(filterAll().map(p=>p.name))'));
+  run(`state.q = ''`);
+  return r;
+}
+
+test('Buscar sin acentos encuentra igual', () => {
+  // Medio país escribe sin acentos, y "nivelacion" no traía nada.
+  assert.ok(buscar('excavacion').length > 0, 'excavacion');
+  assert.ok(buscar('nivelacion').length > 0, 'nivelacion');
+  assert.ok(buscar('compactacion').length > 0, 'compactacion');
+});
+
+test('Buscar con mayúsculas o acentos de más da lo mismo', () => {
+  assert.deepStrictEqual(buscar('EXCAVADORA'), buscar('excavadora'));
+  assert.deepStrictEqual(buscar('Excavación'), buscar('excavacion'));
+});
+
+test('Una errata de una letra no deja al cliente sin resultados', () => {
+  const bien = buscar('excavadora');
+  assert.ok(bien.length > 0, 'la prueba no vale si no hay excavadoras');
+  for (const errata of ['escavadora', 'excabadora', 'exacavadora']) {
+    assert.ok(buscar(errata).length > 0, `"${errata}" no encontró nada`);
+  }
+});
+
+test('Como le dice la gente también encuentra', () => {
+  // "rodillo" y "aplanadora" no aparecen en ninguna ficha, pero es como se
+  // pide un compactador en obra.
+  assert.ok(buscar('rodillo').length > 0, 'rodillo → compactador');
+  assert.ok(buscar('tractor').length > 0, 'tractor → bulldozer');
+  assert.ok(buscar('retro').length > 0, 'retro → retroexcavadora');
+});
+
+test('Varias palabras se cruzan, no se suman', () => {
+  /* Quien escribe "excavadora komatsu" quiere la intersección. Si fuera un O,
+     saldrían todas las excavadoras más todos los Komatsu y el buscador sería
+     inútil justo cuando alguien afina la búsqueda. */
+  const cruce = buscar('excavadora komatsu');
+  assert.ok(cruce.length > 0 && cruce.length < buscar('excavadora').length,
+    `"excavadora komatsu" devolvió ${cruce.length}, "excavadora" ${buscar('excavadora').length}`);
+  assert.ok(cruce.every(n => /komatsu/i.test(n)), cruce.join(', '));
+});
+
+test('Lo que de verdad no existe sigue sin aparecer', () => {
+  /* El riesgo de perdonar erratas es perdonar de más: si "helicóptero"
+     devolviera excavadoras, el buscador dejaría de servir para descartar. */
+  for (const nada of ['helicoptero', 'zapatos', 'xyzabc']) {
+    assert.deepStrictEqual(buscar(nada), [], `"${nada}" devolvió resultados`);
+  }
+});
+
+test('Las palabras cortas no perdonan erratas', () => {
+  // Con una letra de margen, "cat" pasaría por "gas", "can" y "car".
+  assert.strictEqual(run(`margen('cat')`), 0);
+  assert.strictEqual(run(`margen('bomag')`), 1);
+  assert.strictEqual(run(`margen('excavadora')`), 2);
+});
+
+test('La distancia se corta en cuanto se pasa del tope', () => {
+  // Corre una vez por palabra y por equipo en CADA tecla: si no frena, el
+  // buscador se siente lento justo en un celular de obra.
+  assert.strictEqual(run(`distancia('excavadora','excavadora',2)`), 0);
+  assert.strictEqual(run(`distancia('escavadora','excavadora',2)`), 1);
+  assert.ok(run(`distancia('excavadora','compactador',2)`) > 2);
+});
+
+test('Una búsqueda vacía no filtra nada', () => {
+  assert.strictEqual(buscar('').length, run('products.length'));
+  assert.strictEqual(buscar('   ').length, run('products.length'));
 });
 
 console.log(`\n${pass}/${pass + fail} pruebas unitarias pasaron`);

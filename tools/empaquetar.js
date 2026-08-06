@@ -33,6 +33,7 @@ const PUBLICAR = [
   '_headers',
   'assets',
   'equipos',
+  'maquinaria',
 ];
 
 function copiar(desde, hacia) {

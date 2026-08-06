@@ -124,7 +124,21 @@ document.addEventListener('click', e => {
   if(cmpBtn){ toggleCompare(Number(cmpBtn.dataset.cmp)); return }
 
   const navBtn = t.closest('[data-cat]');
-  if(navBtn){ state.cat = navBtn.dataset.cat; state.page = 1; render(); return }
+  if(navBtn){
+    /* Los del pie son enlaces de verdad a /maquinaria/<cat>/ — hacen falta
+       para que Google llegue a esas páginas. Pero a quien ya está en el
+       catálogo no se le manda a otra página: se le filtra aquí mismo, que es
+       instantáneo y no le pierde el carrito ni el resto de filtros.
+
+       El enlace sigue sirviendo para abrir en pestaña nueva y para el
+       buscador. Lo único que se cancela es la navegación por clic. */
+    if(navBtn.tagName === 'A') e.preventDefault();
+    state.cat = navBtn.dataset.cat;
+    state.page = 1;
+    render();
+    if(navBtn.tagName === 'A') $('#catalogo').scrollIntoView({block:'start'});
+    return;
+  }
 
   const pageBtn = t.closest('[data-page]');
   if(pageBtn){ state.page = Number(pageBtn.dataset.page); render(); $('#catalogo').scrollIntoView({block:'start'}); return }
@@ -268,7 +282,10 @@ document.addEventListener('input', e => {
 let searchTimer;
 const runSearch = (scroll=false) => {
   clearTimeout(searchTimer);
-  state.q = $('#searchInput').value.trim().toLowerCase();
+  /* Se guarda tal como se escribió, con acentos y mayúsculas: la etiqueta de
+     filtro activo enseña esto mismo, y «“excavadora cat”» se lee mejor que lo
+     que quedaría después de normalizar. De normalizar se encarga la búsqueda. */
+  state.q = $('#searchInput').value.trim();
   state.page = 1;
   render();
   if(scroll) $('#catalogo').scrollIntoView({block:'start'});

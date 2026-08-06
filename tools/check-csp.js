@@ -10,8 +10,7 @@
  * no sirve, y nadie entiende por qué. Este verificador convierte ese silencio
  * en un error claro.
  *
- * Revisa index.html y todas las fichas generadas, que desde el simulador de
- * financiamiento también cargan un script.
+ * Revisa index.html, las fichas generadas y las páginas de categoría.
  *
  * Se corre con:  npm run test:csp
  */
@@ -28,11 +27,16 @@ function paginas() {
   if (process.argv[2]) return [process.argv[2]];
 
   const lista = [path.join(ROOT, 'index.html')];
-  const dir = path.join(ROOT, 'equipos');
-  if (fs.existsSync(dir)) {
+  /* Cada carpeta de páginas generadas, no sólo las fichas. La de categorías se
+     olvidó al añadirla y estuvo un rato sin revisar: si una página generada no
+     entra aquí, puede colarse JavaScript en línea y el CSP la deja muda sin
+     que nadie se entere. */
+  for (const carpeta of ['equipos', 'maquinaria']) {
+    const dir = path.join(ROOT, carpeta);
+    if (!fs.existsSync(dir)) continue;
     for (const slug of fs.readdirSync(dir)) {
-      const ficha = path.join(dir, slug, 'index.html');
-      if (fs.existsSync(ficha)) lista.push(ficha);
+      const pagina = path.join(dir, slug, 'index.html');
+      if (fs.existsSync(pagina)) lista.push(pagina);
     }
   }
   return lista;

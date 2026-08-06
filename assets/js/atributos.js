@@ -181,3 +181,15 @@ function videoId(texto) {
    fichado por Google, y la ficha no arrastra el peso del reproductor. */
 const videoEmbed = id => `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
 const videoPagina = id => `https://www.youtube.com/watch?v=${id}`;
+
+/**
+ * «Excavación» → «excavacion». La dirección de su página.
+ *
+ * Vive aquí, y no repartida, porque la usan el pie de la portada (para enlazar)
+ * y tools/build.js (para crear la carpeta). Si dieran resultados distintos, los
+ * enlaces del pie apuntarían a páginas que no existen — y un 404 sólo se
+ * descubre pinchándolo.
+ */
+const slugCategoria = c => String(c)
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');

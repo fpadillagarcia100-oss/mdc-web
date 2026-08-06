@@ -263,3 +263,63 @@ sólo existe tras ejecutar JavaScript (y ésa es la mitad de la razón de tenerl
 en público), sería una petición por visita, y una dependencia más que puede
 caerse. El precio es que una respuesta nueva se ve al publicar — igual que un
 precio nuevo.
+
+## Aviso por correo cuando entra una cotización
+
+Función: [`functions/api/aviso-solicitud.js`](../functions/api/aviso-solicitud.js).
+
+### El agujero que tapa
+
+Una cotización se guarda en la base y acto seguido se le abre WhatsApp al
+cliente con el mensaje ya escrito. Pero **el cliente puede no darle enviar**:
+se lo piensa, se le va la señal, cambia de app y no vuelve.
+
+Esa solicitud queda con su nombre y su teléfono, y nadie se entera hasta que
+alguien entra al panel. Es el peor cliente perdido: uno que ya levantó la mano.
+
+### Por qué avisa el servidor y no el navegador
+
+Lo fácil sería mandar el aviso desde la página, justo tras registrar. Se
+descartó por dos motivos, y el segundo decide:
+
+- **No es fiable.** Es el mismo navegador que puede cerrarse, y el mismo
+  momento en que se pierde el WhatsApp. Fallarían los dos a la vez —
+  exactamente en el caso que veníamos a cubrir.
+- **Sería falsificable.** Cualquiera podría llamar a la dirección y llenar el
+  correo de avisos inventados.
+
+Lo dispara la base: un Database Webhook de Supabase sobre `INSERT` en
+`solicitudes`. Pase lo que pase en el navegador, si la fila existe, el aviso
+sale.
+
+### Configuración
+
+Todo es opcional. Sin configurar, el sitio funciona igual y la función
+responde `200 {ok:false}` — nunca un error, para que Supabase no marque el
+webhook como fallido y lo reintente en bucle.
+
+En **Cloudflare Pages → Settings → Environment variables**:
+
+| Variable | Qué es |
+|---|---|
+| `AVISO_SECRETO` | ⚠️ Secreta. Una cadena larga inventada. Es lo único que distingue a Supabase de cualquiera que descubra la dirección. |
+| `AVISO_DESTINO` | Tu correo. Acepta varios separados por coma. |
+| `RESEND_API_KEY` | ⚠️ Secreta. De [resend.com](https://resend.com), gratis hasta 3 000 correos al mes. |
+| `AVISO_REMITENTE` | Opcional. Por omisión usa el remitente de pruebas de Resend, que funciona sin verificar dominio. |
+
+En **Supabase → Database → Webhooks → Create**: tabla `solicitudes`, evento
+`INSERT`, tipo *HTTP Request*, método `POST`, URL
+`https://mdcmaquinaria.com/api/aviso-solicitud`, y una cabecera
+`x-aviso-secreto` con el mismo valor de `AVISO_SECRETO`.
+
+### Detalles que no son adorno
+
+- El secreto se compara **en tiempo constante**. Un `===` corta en la primera
+  letra distinta, y esa diferencia de microsegundos deja adivinarlo letra por
+  letra. Evitarlo cuesta ocho líneas.
+- El **teléfono va en el asunto**. En la lista del correo, sin abrir nada, ya
+  se ve a quién hay que marcar.
+- `reply_to` apunta al correo del cliente: contestar el aviso le escribe a él.
+- Si Resend falla, se devuelve `200` igualmente y se registra en el log. Un
+  problema de configuración no puede convertirse en decenas de reintentos por
+  cada cotización — la solicitud ya está guardada, el aviso es una mejora.

@@ -35,7 +35,18 @@ function applyBranding(){
     <li><a href="mailto:${esc(settings.email)}">${esc(settings.email)}</a></li>
     <li>${esc(settings.address)}</li>
     <li>${esc(settings.hours)}</li>`;
-  $('#footCats').innerHTML = baseCats().map(c=>`<li><a href="#catalogo" data-cat="${esc(c)}">${esc(c)}</a></li>`).join('');
+  /* Enlaces DE VERDAD a las páginas de categoría, no anclas a la portada.
+
+     Antes eran `#catalogo` con un `data-cat` que el JavaScript convertía en un
+     filtro. Para una persona daba igual; para Google, no: una ancla a la misma
+     página no es un enlace a ningún sitio, así que las páginas de categoría
+     quedaban sin una sola entrada desde la portada — que es la única página
+     del sitio con algo de autoridad.
+
+     Siguen filtrando al hacer clic (lo intercepta main.js), así que quien
+     navega no nota la diferencia. Quien la nota es el buscador. */
+  $('#footCats').innerHTML = baseCats().map(c =>
+    `<li><a href="/maquinaria/${esc(slugCategoria(c))}/" data-cat="${esc(c)}">${esc(c)}</a></li>`).join('');
   /* El botón ya no salta directo a WhatsApp: abre el simulador. El cliente
      llega a escribirnos con una cifra concreta en vez de un "¿cuánto sale?". */
 }
