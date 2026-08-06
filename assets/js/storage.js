@@ -67,8 +67,36 @@ function normalizeProducts(list){
   }});
 }
 
-let products = normalizeProducts(store.read(K.products, null) || DEFAULT_PRODUCTS);
-let settings = Object.assign({}, DEFAULT_SETTINGS, store.read(K.settings, {}));
+/* ══════════════════ DE DÓNDE SALEN LOS DATOS ══════════════════
+
+   El catálogo y los ajustes vienen SIEMPRE del sitio publicado, nunca del
+   localStorage de quien mira.
+
+   Esto arregla un fallo de los que asustan: dos personas abrían la misma
+   dirección y veían páginas distintas. Quien alguna vez editó con el panel
+   viejo se había quedado con SU catálogo guardado en el navegador, y ese
+   ganaba sobre el publicado. El sitio se veía con otros equipos, otras fotos
+   y otro logo, sólo para esa persona.
+
+   Y era peor de lo que parece: quien administra veía su versión local y
+   creía que ése era el sitio. Podía revisar un precio, darlo por bueno, y en
+   realidad los clientes estaban viendo otro.
+
+   La fuente es CATALOGO, que build.js escribe al desplegar desde la base de
+   datos. Una sola, igual para todos. Del localStorage sólo sobrevive lo que
+   de verdad es de cada dispositivo: el carrito, los favoritos y los datos de
+   contacto de quien cotiza. */
+let products = normalizeProducts(DEFAULT_PRODUCTS);
+let settings = Object.assign({}, DEFAULT_SETTINGS);
+
+/* Se borran los restos del panel viejo.
+
+   Sin esto seguirían ocupando espacio y, sobre todo, seguirían ahí el día que
+   alguien reviviera un `store.read` por descuido. Lo que ya no manda, se va. */
+try{
+  localStorage.removeItem(K.products);
+  localStorage.removeItem(K.settings);
+}catch{}
 let cart = store.read(K.cart, []);
 let favorites = new Set(store.read(K.favs, []));
 /* Arranca SIEMPRE en falso, y sólo lo levanta restaurarSesion() tras
@@ -84,7 +112,9 @@ let favorites = new Set(store.read(K.favs, []));
    una trampa: parece que funciona. */
 let isAdmin = false;
 
-const saveProducts = () => store.write(K.products, products);
-const saveSettings = () => store.write(K.settings, settings);
+/* saveProducts y saveSettings ya no existen: escribir el catálogo en el
+   navegador es exactamente lo que causaba que cada quien viera un sitio
+   distinto. El catálogo se guarda en la base (ver remoto.js) y llega al
+   sitio al publicar. */
 const saveCart = () => store.write(K.cart, cart);
 const saveFavs = () => store.write(K.favs, [...favorites]);

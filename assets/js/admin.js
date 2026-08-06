@@ -938,19 +938,19 @@ async function handleImageFile(file, target){
   if(!file) return;
   try{
     showToast('Procesando imagen…');
-    if(target==='logo'){
-      const prev = settings.logo;
-      settings.logo = await fileToDataURL(file, 400, .9);
-      if(!saveSettings()){ settings.logo = prev; return }
-      applyBranding();
-    } else {
-      const prev = settings.heroImage;
-      settings.heroImage = await fileToDataURL(file, 900, .82);
-      if(!saveSettings()){ settings.heroImage = prev; return }
-      applyBranding();
-    }
-    renderAdmin();
-    showToast('Imagen lista');
+    /* Subir imágenes desde aquí está desactivado a propósito.
+
+       La imagen se convertía en texto incrustado y se guardaba en el
+       navegador. Ahora el catálogo vive en la base, y una foto así no cabe
+       en una columna de texto ni debe: para eso está el almacenamiento de
+       Supabase, con su CDN y su límite por archivo.
+
+       Lo importante es que NO se quede a medias. Si aceptáramos la imagen y
+       la pintáramos sin guardarla, se vería el logo nuevo hasta recargar y
+       luego desaparecería, y nadie entendería por qué. Vale más decir que
+       todavía no se puede. */
+    showToast('Las imágenes aún no se pueden subir desde aquí. Se conectarán al almacenamiento de Supabase.', true);
+    return;
   }catch(err){
     showToast(err.message || 'No se pudo procesar la imagen', true);
   }

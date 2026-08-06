@@ -46,6 +46,19 @@ const dom = new JSDOM(html, {
   url: 'https://mdc.test/',
   beforeParse(w) {
     w.addEventListener('error', e => errors.push('ERROR EN CONSOLA: ' + (e.error?.stack || e.message)));
+
+    /* Se siembra un catálogo falso en el localStorage ANTES de que cargue el
+       sitio, imitando lo que dejaba el panel viejo.
+
+       Reproduce un fallo real: dos personas abrían la misma dirección y veían
+       páginas distintas, porque el catálogo guardado en el navegador ganaba
+       sobre el publicado. Quien administraba revisaba precios en su versión
+       local mientras los clientes veían otra. */
+    w.localStorage.setItem('mdc_v1_products', JSON.stringify([
+      { id: 999, name: 'EQUIPO FANTASMA DEL LOCALSTORAGE', brand: 'X', cat: 'X',
+        cond: 'Nuevo', price: 1, location: 'X', year: 2020, specs: [], desc: '' },
+    ]));
+    w.localStorage.setItem('mdc_v1_settings', JSON.stringify({ brandFull: 'MARCA FANTASMA' }));
     // jsdom no implementa estas APIs de imagen; las simulamos.
     w.createImageBitmap = async () => ({ width: 100, height: 100, close() {} });
     w.HTMLCanvasElement.prototype.getContext = () => ({ fillRect() {}, drawImage() {}, set fillStyle(v) {} });
@@ -75,9 +88,26 @@ async function waitFor(condition, label, timeout = 15000) {
 const submit = form =>
   $(form).dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
 
+/** Ejecuta código dentro de la página, para mirar su estado interno. */
+const ev = code => window.eval(code);
+
 (async () => {
   /* ── Arranque ── */
   await waitFor(() => $$('.pcard').length > 0, 'que el catálogo se renderice');
+
+  /* Lo primero de todo. Si el catálogo saliera del localStorage, cada prueba
+     de aquí abajo estaría midiendo un sitio que sólo existe en este navegador,
+     y sus resultados no dirían nada sobre lo que ven los clientes. */
+  check('El catálogo NO sale del localStorage',
+    ev('products.length') === 18 && !ev("JSON.stringify(products)").includes('FANTASMA'),
+    ev('products.length') + ' equipos, los del sitio publicado');
+
+  check('Los ajustes tampoco salen del localStorage',
+    ev('settings.brandFull') !== 'MARCA FANTASMA', ev('settings.brandFull'));
+
+  check('Los restos del panel viejo se borran del navegador',
+    ev("window.localStorage.getItem('mdc_v1_products')") === null &&
+    ev("window.localStorage.getItem('mdc_v1_settings')") === null);
 
   check('Catálogo renderiza 9 tarjetas', $$('.pcard').length === 9, `hay ${$$('.pcard').length}`);
   check('Nav de categorías se construye', $$('.nav-cat').length === 7);
@@ -148,7 +178,6 @@ const submit = form =>
      equipo y recorremos la galería como lo haría un cliente. */
   // products se declara con "let", así que no cuelga de window: hay que entrar
   // al ámbito global de la página para tocarlo.
-  const ev = code => window.eval(code);
   const fotos = ['data:image/webp;base64,AAA', 'data:image/webp;base64,BBB', 'data:image/webp;base64,CCC'];
   ev(`products[0].imgs = ${JSON.stringify(fotos)}; products[0].img = products[0].imgs[0]; render()`);
   const equipo = { id: ev('products[0].id'), imgs: fotos };

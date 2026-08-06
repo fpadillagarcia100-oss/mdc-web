@@ -38,11 +38,8 @@ const DEFAULT_SETTINGS = {
   hours:_A.horario,
   address:_A.direccion,
   footerAbout:_A.pie_descripcion,
-  branches:CATALOGO.sucursales,
-  // El PIN se guarda hasheado, nunca en claro. Ver ensurePinHash().
-  pinHash:null
+  branches:CATALOGO.sucursales
 };
-const FIRST_PIN = '2580';
 
 const DEFAULT_PRODUCTS = CATALOGO.equipos;
 
