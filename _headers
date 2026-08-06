@@ -1,0 +1,40 @@
+# Cabeceras de seguridad para Cloudflare Pages.
+#
+# Son las mismas que netlify.toml. Se duplican a propósito mientras conviven
+# los dos hospedajes: cada plataforma lee su propio archivo y ninguna entiende
+# el de la otra. Cuando Netlify se apague, este queda como único.
+#
+# Estas cabeceras son MÁS FUERTES que el <meta> del index.html: el navegador
+# las aplica antes de leer una línea del HTML, así que protegen incluso si la
+# página llegara alterada. El <meta> se queda de respaldo para cuando el
+# archivo se abre con doble clic (file://).
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
+
+# El HTML se revalida siempre: si no, un cambio tuyo tardaría horas en verse.
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Las fichas se regeneran en cada despliegue: mismo trato.
+/equipos/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# El código también. Los archivos no llevan versión en el nombre (es
+# styles.css, no styles.a1b2c3.css), así que cachearlo una hora significa que
+# durante una hora la gente sigue viendo el sitio viejo — y tú también, aunque
+# el despliegue ya haya terminado.
+/assets/js/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/css/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Las imágenes sí se cachean: pesan, y cuando cambian lo hacen con otro nombre.
+/assets/img/*
+  Cache-Control: public, max-age=86400

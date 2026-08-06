@@ -212,7 +212,31 @@ async function remotoGuardarEquipo(p) {
        precio que sigue igual. */
     throw new Error('No se guardó: la base no reconoció ese equipo o no tienes permiso.');
   }
-  return equipoDesdeFila(filas[0]);
+
+  /* Se comprueba que lo devuelto sea lo enviado.
+
+     Que la base responda "200 OK" con una fila sólo dice que la petición
+     llegó. Si por lo que sea guardó otra cosa —un trigger, una columna que
+     no se mandó, un renglón distinto—, el panel diría "Equipo actualizado"
+     y el precio seguiría siendo el viejo.
+
+     Ése es el peor modo de fallo posible: silencioso y con cara de éxito.
+     Quien administra se va tranquilo y el error aparece días después, en el
+     sitio, delante de un cliente. Vale mucho más una alerta molesta. */
+  const guardado = filas[0];
+  const discrepan = ['precio_cents', 'nombre', 'anio', 'condicion', 'ubicacion']
+    .filter(campo => String(guardado[campo]) !== String(fila[campo]));
+
+  if (discrepan.length) {
+    console.warn('[MDC] La base guardó algo distinto a lo enviado:',
+      discrepan.map(c => `${c}: enviado ${fila[c]} → guardado ${guardado[c]}`));
+    throw new Error(
+      'La base guardó algo distinto a lo que enviaste (' + discrepan.join(', ') + '). ' +
+      'Vuelve a abrir el equipo y revisa antes de intentarlo de nuevo.'
+    );
+  }
+
+  return equipoDesdeFila(guardado);
 }
 
 async function remotoBorrarEquipo(id) {
@@ -273,13 +297,32 @@ async function remotoPublicar() {
   const token = await tokenValido();
   if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
 
-  const r = await fetch('/.netlify/functions/publicar', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(20000),
-  });
+  /* Dos direcciones porque hay dos hospedajes durante la mudanza: Cloudflare
+     sirve la función en /api/, Netlify en /.netlify/functions/. El mismo
+     código tiene que funcionar en los dos sin saber dónde está corriendo.
 
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error || `No se pudo publicar (${r.status}).`);
-  return d;
+     Se prueba Cloudflare primero y sólo se pasa a Netlify si esa ruta NO
+     EXISTE (404). Un 401 o un 403 son respuestas legítimas —"no tienes
+     permiso"— y ahí hay que detenerse: reintentar en la otra plataforma
+     convertiría un "no" claro en un mensaje confuso.
+
+     Cuando Netlify se apague, se borra la segunda línea y ya. */
+  const rutas = ['/api/publicar', '/.netlify/functions/publicar'];
+  let ultima;
+
+  for (const ruta of rutas) {
+    const r = await fetch(ruta, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (r.status === 404) { ultima = r; continue; }   // esa ruta no vive aquí
+
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `No se pudo publicar (${r.status}).`);
+    return d;
+  }
+
+  throw new Error(`No se encontró el servicio de publicación (${ultima?.status || 404}).`);
 }

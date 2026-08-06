@@ -147,12 +147,21 @@ function renderLogin(){
 async function sincronizarDesdeLaBase(){
   const datos = await remotoCargarTodo();
 
-  products = normalizeProducts(datos.equipos).map((p, i) => ({
-    ...p,
-    // El id y el estado de publicación vienen de la base, no del normalizador.
-    id: datos.equipos[i].id,
-    publicado: datos.equipos[i].publicado,
-  }));
+  /* Se normaliza uno por uno, no la lista entera.
+
+     normalizeProducts() FILTRA lo que no reconoce, así que si un equipo se
+     cayera del arreglo, la lista resultante quedaría más corta y desalineada
+     respecto a la original. Recuperar el id por posición —datos.equipos[i]—
+     le pondría a cada equipo el id del siguiente.
+
+     Y eso no se ve: la pantalla enseñaría nombres correctos, pero editar uno
+     escribiría encima de otro. Un fallo así no se nota hasta que un precio
+     aparece en la máquina equivocada. */
+  products = datos.equipos.map(eq => {
+    const [normalizado] = normalizeProducts([eq]);
+    if(!normalizado) return null;
+    return { ...normalizado, id: eq.id, slug: eq.slug, publicado: eq.publicado };
+  }).filter(Boolean);
 
   if(datos.ajustes) Object.assign(settings, datos.ajustes);
   if(datos.sucursales) settings.branches = datos.sucursales;
