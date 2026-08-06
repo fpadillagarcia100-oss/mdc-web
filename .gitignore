@@ -2,6 +2,8 @@
 # Nunca subas llaves de API, contraseñas ni cadenas de conexión.
 .env
 .env.*
+# La plantilla sí se sube: no tiene valores, sólo dice qué variables hacen falta.
+!.env.ejemplo
 *.key
 *.pem
 secrets.json

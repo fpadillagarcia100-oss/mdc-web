@@ -8,7 +8,7 @@
 
 /* Huella de data/catalogo.json al momento de generar. La verifica
    "npm run test:generado" para que nadie publique fichas desactualizadas. */
-const CATALOGO_HUELLA = '77884a63ad2f1cad';
+const CATALOGO_HUELLA = 'b5b46ba2baf1d0e2';
 
 const CATALOGO = {
   "ajustes": {
@@ -97,7 +97,8 @@ const CATALOGO = {
       ],
       "desc": "Máxima potencia para proyectos de gran envergadura. Motor ACERT con tecnología de reducción de emisiones.",
       "svgKey": "excavadora",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "excavadora-komatsu-pc290",
@@ -120,7 +121,8 @@ const CATALOGO = {
       ],
       "desc": "Excavadora seminueva en excelentes condiciones. Con certificado de inspección y garantía de 6 meses.",
       "svgKey": "excavadora",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "retroexcavadora-jcb-3cx-pro",
@@ -167,7 +169,8 @@ const CATALOGO = {
       ],
       "desc": "Versión extendida con mayor alcance y potencia. Ideal para obras en zonas rurales y caminos.",
       "svgKey": "retro",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "retroexcavadora-cat-416f2",
@@ -190,7 +193,8 @@ const CATALOGO = {
       ],
       "desc": "Unidad verificada y lista para trabajar. Mantenimiento al día con bitácora completa.",
       "svgKey": "retro",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "bulldozer-komatsu-d65px",
@@ -213,7 +217,8 @@ const CATALOGO = {
       ],
       "desc": "Dozer de alta productividad para nivelación de grandes volúmenes. Sistema de tracción hidrostática.",
       "svgKey": "bulldozer",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "bulldozer-cat-d6t",
@@ -236,7 +241,8 @@ const CATALOGO = {
       ],
       "desc": "El estándar de la industria. Con sensor de pendiente integrado y sistema CAT LINK para telemetría.",
       "svgKey": "bulldozer",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "bulldozer-komatsu-d51i",
@@ -259,7 +265,8 @@ const CATALOGO = {
       ],
       "desc": "Disponible en renta mensual. Incluye operador, seguro y mantenimiento preventivo.",
       "svgKey": "bulldozer",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "compactador-dynapac-ca250",
@@ -282,7 +289,8 @@ const CATALOGO = {
       ],
       "desc": "Rodillo tándem vibratorio para asfalto. Sistema SEISMIC para control automático de compactación.",
       "svgKey": "compactador",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "compactador-bomag-bw-216",
@@ -305,7 +313,8 @@ const CATALOGO = {
       ],
       "desc": "Rodillo de suelos en buen estado. Inspección técnica reciente, todos los sistemas en óptimas condiciones.",
       "svgKey": "compactador",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "compactador-cat-cs533",
@@ -328,7 +337,8 @@ const CATALOGO = {
       ],
       "desc": "Renta mensual con todas las facilidades. Entrega en sitio sin costo en la zona metropolitana de Tuxtla.",
       "svgKey": "compactador",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "minicargador-bobcat-s650",
@@ -375,7 +385,8 @@ const CATALOGO = {
       ],
       "desc": "Mayor capacidad de carga con visibilidad total. Sistema CAT SMART ATTACH para cambio rápido.",
       "svgKey": "minicargador",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "minicargador-bobcat-t450",
@@ -398,7 +409,8 @@ const CATALOGO = {
       ],
       "desc": "Versión de cadenas para terreno blando. Renta semanal o mensual disponible.",
       "svgKey": "minicargador",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "grua-torre-liebherr-160ec",
@@ -421,7 +433,8 @@ const CATALOGO = {
       ],
       "desc": "Ideal para edificios de hasta 20 niveles. Montaje, operación e instalación eléctrica incluidos.",
       "svgKey": "grua",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "grua-torre-potain-mdt-178",
@@ -444,7 +457,8 @@ const CATALOGO = {
       ],
       "desc": "Renta mensual con operador certificado, mantenimiento y seguro de responsabilidad civil.",
       "svgKey": "grua",
-      "img": null
+      "img": null,
+      "hot": false
     },
     {
       "slug": "retroexcavadora-komatsu-wb97",
@@ -467,7 +481,8 @@ const CATALOGO = {
       ],
       "desc": "Potencia Komatsu con bajo consumo de combustible. Cabina ergonómica con A/C de serie.",
       "svgKey": "retro",
-      "img": null
+      "img": null,
+      "hot": false
     }
   ]
 };

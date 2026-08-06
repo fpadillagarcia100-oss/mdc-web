@@ -1,0 +1,65 @@
+# Configuración del proyecto Supabase.
+#
+# Sirve para dos cosas:
+#   1. `npx supabase start` levanta una base de datos COMPLETA en tu máquina
+#      (Postgres + auth + almacenamiento, en Docker). No cuesta nada, no
+#      necesita internet y se puede borrar y volver a crear cuando quieras.
+#   2. `npx supabase link --project-ref <ref>` la conecta con el proyecto en
+#      la nube, y `npx supabase db push` aplica allá las mismas migraciones.
+#
+# La idea de fondo: el esquema vive en supabase/migrations/, no en el panel
+# web. Así la base de datos es reproducible — se puede recrear idéntica desde
+# cero — y los cambios quedan en el historial de git como cualquier otro
+# código.
+
+project_id = "mdc-web"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+# Tope de filas por consulta. Evita que una petición sin filtro descargue
+# la tabla entera.
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+# Datos de arranque. Se cargan solos al hacer `npx supabase db reset`, así que
+# la base local siempre nace con el catálogo real dentro — no vacía.
+# seed.sql se genera desde data/catalogo.json con `npm run db:seed`.
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+# Buzón de correo local: los correos de confirmación de registro se quedan
+# aquí, no salen a internet.
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "3MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:8000"
+additional_redirect_urls = ["http://localhost:8000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+# Sin registro abierto: las cuentas del personal las crea un administrador.
+# En local conviene dejarlo en true para poder crear la primera cuenta.
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false

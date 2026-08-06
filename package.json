@@ -11,7 +11,13 @@
     "test:unit": "node tests/unit.test.js",
     "test:smoke": "node tests/smoke.test.js",
     "test:csp": "node tools/check-csp.js",
-    "og": "node tools/make-og.js"
+    "test:seguridad": "node tests/seguridad.test.js",
+    "og": "node tools/make-og.js",
+    "db:seed": "node tools/generar-seed.js",
+    "db:export": "node tools/exportar-catalogo.js",
+    "db:local": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push"
   },
   "devDependencies": {
     "jsdom": "^30.0.1"

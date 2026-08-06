@@ -129,3 +129,64 @@ Antes de dar por bueno el backend, comprobar con la llave pública (anon):
 
 Estas comprobaciones van como pruebas automatizadas en el CI. Una política de
 seguridad que nadie verifica es una suposición, no una protección.
+
+**Ya están escritas** en [tests/seguridad.test.js](../tests/seguridad.test.js).
+Corren contra la API real con la llave pública —intentando el ataque, no
+leyendo el SQL— porque que una política exista no significa que haga lo que
+crees:
+
+```bash
+SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_ANON_KEY=<anon> npm run test:seguridad
+```
+
+Sin credenciales se saltan con un aviso, para que `npm test` siga corriendo en
+una máquina sin base de datos.
+
+## ⚠️ El formulario debe enviar con `return=minimal`
+
+Descubierto al probar contra la base real, y no es evidente:
+
+```js
+// Correcto
+{ headers: { Prefer: 'return=minimal' } }
+
+// Rompe el formulario
+{ headers: { Prefer: 'return=representation' } }
+```
+
+Con `return=representation`, PostgREST hace `INSERT ... RETURNING`, y devolver
+la fila exige permiso de **SELECT**. El público no lo tiene sobre
+`solicitudes` — para eso está la política que protege la cartera de clientes.
+Resultado: la inserción entera se rechaza.
+
+Lo traicionero es el diagnóstico. El error dice *"new row violates row-level
+security policy"*, que suena a política de INSERT mal puesta. No lo es: la de
+INSERT está bien, falla la lectura de vuelta. Se pierden horas ahí.
+
+Y que falle es lo correcto: si devolviera la fila, bastaría con insertar para
+empezar a leer la tabla de prospectos.
+
+## Lo que se corrigió después del diseño inicial
+
+La migración
+[`…_endurecer_seguridad.sql`](../supabase/migrations/20260806000002_endurecer_seguridad.sql)
+cierra cuatro rendijas del esquema de origen. La primera era explotable:
+
+1. **El freno de spam era saltable.** `creado_en` tiene `default now()`, pero
+   un valor por omisión sólo aplica si el cliente no manda el campo — y podía
+   mandarlo. Insertando con `creado_en = '2020-01-01'`, el conteo de "últimos
+   10 minutos" daba cero y el límite de 3 por teléfono no frenaba nada. Ahora
+   el trigger pisa la fecha. **Un dato que decide un permiso nunca puede venir
+   del cliente, aunque tenga default.**
+2. **`carrito` no tenía tope de tamaño.** `mensaje` estaba topado en 4 000
+   caracteres; `carrito` era un `jsonb` libre, y Postgres acepta hasta 1 GB.
+   Con la llave pública se podía agotar la cuota del plan. Todo campo que
+   escriba un desconocido va topado.
+3. **La política de edición de perfiles no tenía `with check`.** `using` dice
+   qué filas puedes tocar; `with check`, cómo pueden quedar. Sin la segunda,
+   la política está incompleta aunque otras restricciones tapen el hueco.
+4. **El rol `staff` no concedía nada.** Todas las políticas exigen
+   `es_admin()`, así que un `staff` equivalía a un visitante — pero el
+   comentario decía "el personal ve todo". Esa creencia falsa es de donde
+   salen los permisos abiertos de más. No se amplió nada: la decisión está
+   planteada en la migración para que la tomes tú.
