@@ -263,10 +263,17 @@ body.is-admin .pcard-edit{display:flex}
    llamada: el comprador mira la maquina antes que la ficha tecnica. Con las
    columnas iguales, la foto competia con el texto en vez de mandar. */
 .modal-grid{display:grid;grid-template-columns:1.35fr 1fr;min-height:440px}
-/* align-self:start impide que la columna de la foto se estire a lo alto de la
-   información —que con el simulador es larguísima— y deforme la imagen.
-   Sticky la deja a la vista mientras el cliente lee las especificaciones. */
-.modal-img{background:#F5F5F5;display:flex;align-items:center;justify-content:center;padding:32px;border-right:1px solid var(--border);border-radius:10px 0 0 10px;overflow:hidden;align-self:start;position:sticky;top:0}
+/* La columna de la foto SÍ se estira a lo alto de la fila.
+
+   Antes no: llevaba `align-self:start` para que la imagen no se deformara. La
+   imagen no se deforma igual —la proporción la fija `.gal`, no esta caja—, y
+   lo que se conseguía era un hueco BLANCO del alto de la diferencia entre las
+   dos columnas. Con la ficha técnica y las preguntas en la derecha, ese hueco
+   llegó a los 700 px y parecía un error de carga.
+
+   Estirando, lo que sobra queda del color del panel de fotos y se lee como
+   parte de él. Y sobra poco: lo largo ya no vive en la columna de al lado. */
+.modal-img{background:#F5F5F5;display:flex;align-items:center;justify-content:center;padding:32px;border-right:1px solid var(--border);border-radius:10px 0 0 10px;overflow:hidden}
 .modal-img svg{width:100%;max-width:280px;height:auto}
 .modal-img img{width:100%;height:100%;object-fit:contain;border-radius:10px 0 0 10px}
 /* Con foto se quita el relleno y la galeria manda: es ella la que fija la
@@ -309,6 +316,24 @@ body.is-admin .pcard-edit{display:flex}
 .pcard-fotos{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;
   font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;z-index:2}
 .modal-info{padding:28px;min-width:0}
+/* Lo largo, a todo el ancho y bajo las dos columnas: descripción, ficha
+   técnica, simulador y preguntas. Una tabla de doce renglones en una columna
+   de 400 px sale con los valores partidos en dos líneas; aquí se lee de un
+   vistazo. El borde superior separa "lo que decide la compra" de "lo que se
+   consulta después". */
+.modal-extra{padding:4px 28px 28px;border-top:1px solid var(--border)}
+.modal-extra:empty{display:none}
+.modal-extra .modal-desc{margin-top:20px}
+/* En pantalla ancha la ficha técnica no necesita 1000 px de largo por
+   renglón: a dos columnas se recorre con la vista en vez de con el cuello. */
+@media (min-width:900px){
+  .modal-extra .ft-tabla{column-count:2;column-gap:36px}
+  .modal-extra .ft-tabla tbody{display:block}
+  .modal-extra .ft-tabla tr{display:flex;justify-content:space-between;gap:16px;
+    break-inside:avoid;border-bottom:1px solid var(--border);padding:8px 2px}
+  .modal-extra .ft-tabla th,.modal-extra .ft-tabla td{padding:0;border:none}
+  .modal-extra .ft-tabla tr:nth-child(odd){background:none}
+}
 .modal-cat{font-size:11px;color:var(--light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .modal-name{font-size:22px;font-weight:700;line-height:1.25;margin-bottom:8px}
 .modal-seller-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
@@ -681,6 +706,10 @@ body.con-cmp{padding-bottom:78px}
     transform:none!important;border-radius:0!important}
   .modal-grid{display:block!important;min-height:0!important}
   .modal-info{padding:6mm 0 0!important}
+  .modal-extra{padding:0!important;border:none!important}
+  /* En papel la ficha técnica va a una columna: partida en dos, el lector
+     tiene que subir a buscar dónde sigue. */
+  .modal-extra .ft-tabla{column-count:1!important}
   .modal-img{border:1px solid #ccc!important;border-radius:0!important;
     max-height:70mm;padding:0!important;page-break-inside:avoid}
 

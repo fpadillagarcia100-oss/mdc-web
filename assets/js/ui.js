@@ -344,24 +344,34 @@ function openModal(id){
       <div class="modal-spec"><div class="modal-spec-label">Año</div><div class="modal-spec-val">${p.year}</div></div>
       <div class="modal-spec"><div class="modal-spec-label">Garantía</div><div class="modal-spec-val">${p.cond==='Nuevo'?'12 meses fábrica':p.cond==='Renta'?'Incluida en renta':'6 meses certificada'}</div></div>
     </div>
-    <p class="modal-desc">${esc(p.desc)}</p>
-    ${fichaTecnicaHTML(p)}
     <div class="modal-actions">
       <button class="modal-add" type="button" data-add="${p.id}" data-close-after>+ Agregar a cotización</button>
       <button class="modal-quote" type="button" data-fav="${p.id}">${favorites.has(p.id)?'♥ Guardado':'♡ Guardar'}</button>
       <button class="modal-quote" type="button" data-imprimir>🖨 Imprimir ficha</button>
       ${p.slug?`<a class="modal-quote" href="/equipos/${esc(p.slug)}/" style="text-decoration:none">Ficha completa ↗</a>`:''}
       ${isAdmin?`<button class="modal-quote" type="button" data-edit="${p.id}">✎ Editar</button>`:''}
-    </div>
+    </div>`;
+
+  /* Lo largo va abajo, a todo el ancho. No es sólo para tapar el hueco: una
+     tabla técnica de doce renglones metida en una columna de 400 px sale
+     apretada y con los valores partidos en dos líneas. A todo el ancho se lee
+     de un vistazo, que es para lo que existe. */
+  $('#modalExtra').innerHTML = `
+    ${p.desc ? `<p class="modal-desc">${esc(p.desc)}</p>` : ''}
+    ${fichaTecnicaHTML(p)}
     ${p.cond!=='Renta' ? calculadoraHTML(p.price, {msi:p.finance}) : ''}
     ${preguntasHTML(p)}
     <p class="solo-impresion">${esc(fichaPie(p))}</p>`;
 
   // La calculadora nace después de DOMContentLoaded, así que su primer pintado
   // no lo hace ficha.js: hay que pedirlo aquí.
-  refrescarCalculadora($('#modalInfo [data-calc]'));
+  refrescarCalculadora($('#modal [data-calc]'));
 
   $('#modalOverlay').classList.add('open');
+  /* La ficha se abre por arriba, siempre. El modal tiene scroll propio y lo
+     conserva entre aperturas: sin esto, abrir la segunda máquina la enseña
+     empezada por la mitad, en las preguntas. */
+  $('#modal').scrollTop = 0;
   lockScroll(true);
   openPanel = $('#modal');
   $('#modalClose').focus();

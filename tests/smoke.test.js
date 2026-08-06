@@ -214,7 +214,7 @@ const ev = code => window.eval(code);
 
   /* ── Simulador de financiamiento ── */
   ev('openModal(products.find(p => p.cond !== "Renta").id)');
-  const calc = $('#modalInfo [data-calc]');
+  const calc = $('#modal [data-calc]');
   check('La ficha trae el simulador', calc !== null);
   check('El simulador ya muestra una mensualidad al abrir',
     /\$[\d,]+/.test($('[data-calc-out="mensual"]').textContent),
@@ -244,7 +244,7 @@ const ev = code => window.eval(code);
   check('La hoja impresa lleva la marca arriba',
     $('#printMarca').textContent.includes('MDC'), $('#printMarca').textContent);
   check('La hoja impresa lleva los datos de contacto',
-    $('#modalInfo .solo-impresion').textContent.includes(ev('settings.phone')));
+    $('#modal .solo-impresion').textContent.includes(ev('settings.phone')));
 
   // En papel no se ven los controles: la cifra tiene que decir de dónde salió.
   check('El simulador declara sus supuestos',
@@ -543,7 +543,7 @@ const ev = code => window.eval(code);
   /* ══ FICHA TÉCNICA ══ */
   ev(`products[0].atributos = {horas: 2400, peso: 20, potencia: 148};
       openModal(${equipo.id})`);
-  const ft = $('#modalInfo .ft-tabla');
+  const ft = $('#modal .ft-tabla');
   check('La ficha muestra la tabla de datos técnicos', ft !== null);
   check('Los datos salen con su unidad',
     ft !== null && ft.textContent.includes('2,400 h') && ft.textContent.includes('148 HP'),
@@ -552,7 +552,7 @@ const ev = code => window.eval(code);
 
   ev(`products[1].atributos = {}; openModal(products[1].id)`);
   check('Un equipo sin datos técnicos no enseña una tabla vacía',
-    $('#modalInfo .ft-tabla') === null);
+    $('#modal .ft-tabla') === null);
   ev('closeAll()');
 
   /* Los filtros nuevos tienen que existir en la pantalla, no sólo en el
@@ -596,8 +596,8 @@ const ev = code => window.eval(code);
       openModal(${equipo.id})`);
 
   check('La ficha muestra las preguntas contestadas',
-    $$('#modalInfo .qa-item').length === 1 &&
-    $('#modalInfo .qa-item').textContent.includes('factura de origen'));
+    $$('#modal .qa-item').length === 1 &&
+    $('#modal .qa-item').textContent.includes('factura de origen'));
 
   check('La ficha invita a preguntar', $('#qaForm') !== null);
 
@@ -628,7 +628,7 @@ const ev = code => window.eval(code);
   /* No se pinta la pregunta como si ya estuviera publicada: quien la escribió
      se iría creyendo que su duda ya está en la ficha para todos. */
   check('Se acusa recibo sin fingir que ya está publicada',
-    $('.qa-ok') !== null && $$('#modalInfo .qa-item').length === 1);
+    $('.qa-ok') !== null && $$('#modal .qa-item').length === 1);
 
   // La trampa oculta: un bot rellena todo, incluso lo que no se ve.
   /* El vaciado va DESPUÉS de abrir la ficha: abrirla suma una vista, que
@@ -642,6 +642,39 @@ const ev = code => window.eval(code);
   await waitFor(() => true, 'un ciclo del bucle de eventos');
   check('La trampa oculta detiene al bot sin decírselo',
     !JSON.parse(ev('JSON.stringify(globalThis.__pedidos)')).some(u => u.includes('preguntar')));
+  ev('closeAll()');
+
+  /* ══ EL HUECO BLANCO ══
+     Fallo real, visto en el sitio publicado: la ficha abría con un rectángulo
+     blanco de unos 700 px bajo la foto. La causa no era de estilo sino de
+     estructura — todo lo largo (descripción, ficha técnica, simulador,
+     preguntas) colgaba de la columna derecha, y la izquierda se quedaba con un
+     hueco del alto de la diferencia. Cuanto más completa la máquina, peor.
+
+     jsdom no calcula diseño, así que no puede verse el hueco. Lo que sí se
+     comprueba es su causa: que lo largo NO vuelva a la columna. */
+  ev(`products[0].atributos = {horas:2400, peso:20, potencia:148};
+      products[0].qa = [{nombre:'Ana', pregunta:'¿Tiene factura?', respuesta:'Sí.'}];
+      openModal(${equipo.id})`);
+
+  const enColumna = $('#modalInfo').innerHTML;
+  check('La columna de al lado de la foto se queda sólo con lo que decide la compra',
+    !enColumna.includes('data-calc') && !enColumna.includes('ft-tabla') && !enColumna.includes('qa-item'),
+    'precio, datos clave y botones; nada de largo');
+
+  const abajo = $('#modalExtra').innerHTML;
+  check('Lo largo va a todo el ancho, bajo las dos columnas',
+    abajo.includes('data-calc') && abajo.includes('ft-tabla') && abajo.includes('qa-item'));
+
+  check('La descripción también bajó, no quedó duplicada',
+    ($('#modal').innerHTML.match(/class="modal-desc"/g) || []).length === 1);
+
+  /* Abrir la segunda ficha empezada por la mitad —en las preguntas— es lo que
+     pasa cuando el modal conserva el scroll de la anterior. */
+  $('#modal').scrollTop = 400;
+  ev('closeAll(); openModal(products[1].id)');
+  check('Cada ficha abre por arriba, no donde se quedó la anterior',
+    $('#modal').scrollTop === 0, `scrollTop = ${$('#modal').scrollTop}`);
   ev('closeAll()');
 
   /* ══ PANEL ══

@@ -263,10 +263,19 @@
     <!-- Encabezado que sólo sale en papel: una ficha impresa sin la marca
          arriba no parece un documento de la empresa. -->
     <p class="print-marca" id="printMarca"></p>
+    <!-- Arriba, a dos columnas: la foto y la caja de compra. Las dos miden
+         parecido, así que no queda hueco entre ellas.
+
+         Abajo, a todo el ancho: la descripción, la ficha técnica, el
+         simulador y las preguntas. Todo eso es largo y variable —una máquina
+         trae doce datos y otra ninguna—, y mientras vivió en la columna
+         derecha, la izquierda se quedaba con un hueco blanco del alto de la
+         diferencia. -->
     <div class="modal-grid">
       <div class="modal-img" id="modalImg" aria-hidden="true"></div>
       <div class="modal-info" id="modalInfo"></div>
     </div>
+    <div class="modal-extra" id="modalExtra"></div>
   </div>
 </div>
 
