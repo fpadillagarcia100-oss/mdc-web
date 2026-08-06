@@ -179,6 +179,8 @@ const limpiar = (o, campos) => {
       desc: e.desc,
       svgKey: e.svgKey,
       img: e.img,
+      imgs: Array.isArray(e.imgs) ? e.imgs : (e.img ? [e.img] : []),
+      disponibilidad: e.disponibilidad || 'disponible',
       hot: e.hot,
     }, [])),
   };

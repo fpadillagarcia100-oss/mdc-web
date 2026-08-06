@@ -92,7 +92,9 @@ function equipoDesdeFila(f) {
     desc: f.descripcion || '',
     svgKey: f.icono,
     img: f.imagen_url,
-    imgs: f.imagen_url ? [f.imagen_url] : [],
+    imgs: Array.isArray(f.imagenes) && f.imagenes.length
+      ? f.imagenes
+      : (f.imagen_url ? [f.imagen_url] : []),
     hot: f.destacado,
     publicado: f.publicado,
     disponibilidad: f.disponibilidad || 'disponible',
@@ -119,10 +121,16 @@ function filaDesdeEquipo(p) {
     anio: Number(p.year),
     especificaciones: (p.specs || []).slice(0, 12),
     descripcion: (p.desc || '').slice(0, 4000),
-    // Sólo direcciones https. Las fotos incrustadas (data:) que quedaron del
-    // localStorage no caben en una columna de texto ni deben: para eso está
-    // el almacenamiento de Supabase.
-    imagen_url: (typeof p.img === 'string' && p.img.startsWith('https://')) ? p.img : null,
+    /* Sólo direcciones https. Las fotos incrustadas (data:) que quedaron del
+       localStorage viejo no caben en una columna de texto ni deben: para eso
+       está el almacenamiento de Supabase.
+
+       `imagen_url` no se manda: lo pone la base a partir de imagenes[1]. Que
+       lo calcule el servidor es lo que impide que portada y galería acaben
+       diciendo cosas distintas. */
+    imagenes: (Array.isArray(p.imgs) ? p.imgs : [])
+      .filter(u => typeof u === 'string' && u.startsWith('https://'))
+      .slice(0, 8),
     icono: p.svgKey || 'excavadora',
     destacado: !!p.hot,
     publicado: p.publicado !== false,

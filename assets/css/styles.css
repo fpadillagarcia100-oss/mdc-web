@@ -266,7 +266,19 @@ body.is-admin .pcard-edit{display:flex}
 .modal-img{background:#F5F5F5;display:flex;align-items:center;justify-content:center;padding:32px;border-right:1px solid var(--border);border-radius:10px 0 0 10px;overflow:hidden;align-self:start;position:sticky;top:0}
 .modal-img svg{width:100%;max-width:280px;height:auto}
 .modal-img img{width:100%;height:100%;object-fit:contain;border-radius:10px 0 0 10px}
-.modal-img.has-photo{padding:0;display:block}
+/* Con foto se quita el relleno y la galeria manda: es ella la que fija la
+   proporcion 4/3. Antes quedaba pegada arriba con un hueco blanco debajo,
+   porque la columna crece con el texto de la derecha y la foto no.
+
+   `align-self:start` en .modal-img ya evita que la columna se estire; esto
+   ademas hace que la galeria ocupe todo el ancho disponible. */
+.modal-img.has-photo{padding:0;display:block;background:#111}
+.modal-img.has-photo .gal{aspect-ratio:4/3;background:#111}
+/* Fondo oscuro bajo la foto: una maquina amarilla sobre gris claro pierde
+   contraste, y el borde blanco de las fotos de taller se confunde con la
+   pagina. En oscuro el equipo resalta y el recorte deja de notarse. */
+.modal-img.has-photo .gal-main{border-radius:10px 0 0 0}
+.modal-img.has-photo .gal-thumbs{background:#1A1A1A;border-top-color:#333}
 
 /* ── Galería de la ficha: foto grande + miniaturas ── */
 /* Proporción fija en vez de "el alto que sobre": así la foto siempre se ve

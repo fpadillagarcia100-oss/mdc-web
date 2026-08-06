@@ -438,6 +438,18 @@ const ev = code => window.eval(code);
     $('.pcard .pcard-badge').textContent.includes('Más'),
     $('.pcard .pcard-badge').textContent.trim());
 
+  /* Una foto no basta para vender maquinaria: el comprador quiere la cabina,
+     las orugas y las horas del tablero. La base guardaba solo la primera y las
+     demas se perdian sin avisar. */
+  check('La galeria completa viaja a la base, no solo la portada',
+    ev("typeof filaDesdeEquipo === 'function' && Array.isArray(filaDesdeEquipo({imgs:['https://a/1.webp','https://a/2.webp']}).imagenes) && filaDesdeEquipo({imgs:['https://a/1.webp','https://a/2.webp']}).imagenes.length === 2"));
+
+  check('Se descartan las direcciones que no son del almacenamiento',
+    ev("filaDesdeEquipo({imgs:['https://a/1.webp','javascript:alert(1)','data:image/png;base64,xx']}).imagenes.length === 1"));
+
+  check('La galeria se corta en el tope de 8 que acepta la base',
+    ev("filaDesdeEquipo({imgs: Array.from({length:20},(_,i)=>'https://a/'+i+'.webp')}).imagenes.length === 8"));
+
   check('Las fotos ya no se guardan como texto incrustado',
     ev('typeof fileToBlob') === 'function' && ev('typeof remotoSubirFoto') === 'function');
 
