@@ -20,7 +20,7 @@ insert into public.ajustes (
   '🚧 Cobertura en todo Chiapas y el Sureste · Financiamiento disponible',
   '🏗️ Temporada de obra 2026', 'Equipos de construcción', 'hasta 18 meses sin intereses',
   'Las mejores marcas: CAT, Komatsu, JCB, Bobcat y Liebherr. Equipos nuevos y certificados con garantía, entregados en tu obra.', null,
-  'MDC Maquinaria de Chiapas', '961 123 4567', '5219611234567',
+  'MDC Maquinaria de Chiapas', '312 174 3817', '523121743817',
   'ventas@mdcmaquinaria.com', 'Tuxtla Gutiérrez, Chiapas', 'Lun–Vie 8:00–18:00 · Sáb 9:00–14:00',
   'Venta y renta de maquinaria pesada en Chiapas. Equipos verificados, garantía real y financiamiento a la medida de tu obra.'
 )

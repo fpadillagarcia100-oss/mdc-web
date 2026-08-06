@@ -8,7 +8,7 @@
 
 /* Huella de data/catalogo.json al momento de generar. La verifica
    "npm run test:generado" para que nadie publique fichas desactualizadas. */
-const CATALOGO_HUELLA = 'b5b46ba2baf1d0e2';
+const CATALOGO_HUELLA = 'ba9c6d210f83ae2a';
 
 const CATALOGO = {
   "ajustes": {
@@ -24,8 +24,8 @@ const CATALOGO = {
     "hero_texto": "Las mejores marcas: CAT, Komatsu, JCB, Bobcat y Liebherr. Equipos nuevos y certificados con garantía, entregados en tu obra.",
     "hero_imagen": null,
     "vendedor": "MDC Maquinaria de Chiapas",
-    "telefono": "961 123 4567",
-    "whatsapp": "5219611234567",
+    "telefono": "312 174 3817",
+    "whatsapp": "523121743817",
     "correo": "ventas@mdcmaquinaria.com",
     "horario": "Lun–Vie 8:00–18:00 · Sáb 9:00–14:00",
     "direccion": "Tuxtla Gutiérrez, Chiapas",
