@@ -106,6 +106,39 @@ async function consultar(recurso, intentos = 3) {
   throw new Error(`${recurso} falló tras ${intentos} intentos — ${ultimoError.message}`);
 }
 
+/**
+ * Consulta algo que MEJORA el sitio pero no lo sostiene.
+ *
+ * ── El fallo que motiva esta función ──
+ *
+ * Se añadieron las preguntas al exportador y el despliegue empezó a fallar:
+ * la tabla aún no existía en la base, la consulta daba 404, y eso tumbaba la
+ * compilación entera. Cuatro despliegues seguidos sin publicar — con el
+ * catálogo intacto, las fotos intactas y los precios intactos, todos parados
+ * por una tabla que ni siquiera hace falta para vender.
+ *
+ * La regla que faltaba: **lo que no sostiene el sitio no puede tirar el
+ * despliegue.** El catálogo sí (sin equipos no hay página, y por eso más abajo
+ * se aborta si vienen cero). Las preguntas no: sin ellas el sitio es el mismo
+ * de antes, que funcionaba.
+ *
+ * Es la misma regla que gobierna backend.js — registrar una cotización es una
+ * mejora, WhatsApp es el requisito. Aquí no estaba aplicada, y se notó.
+ *
+ * El aviso va a la salida de error para que se vea en el registro del
+ * despliegue. Degradar en silencio sería lo otro peligroso: publicar sin las
+ * preguntas durante semanas sin que nadie se entere.
+ */
+async function consultarOpcional(recurso, siFalla, queEs) {
+  try {
+    return await consultar(recurso);
+  } catch (err) {
+    console.error(`  ⚠ ${queEs} no se pudieron traer: ${err.message.slice(0, 160)}`);
+    console.error(`     El sitio se publica sin eso. Si acabas de añadir la función, corre la migración.`);
+    return siFalla;
+  }
+}
+
 /** Quita los null que el JSON actual no trae, para no ensuciar el diff. */
 const limpiar = (o, campos) => {
   for (const c of campos) if (o[c] === null) delete o[c];
@@ -126,8 +159,10 @@ const limpiar = (o, campos) => {
        El filtro se repite aquí aunque la política ya lo aplica. Cuesta nada, y
        el día que alguien afloje la política esto sigue sin publicar preguntas
        a medio contestar. */
-    consultar('preguntas?select=slug,nombre,pregunta,respuesta,respondida_en' +
-              '&publicada=eq.true&respuesta=not.is.null&order=respondida_en.asc'),
+    consultarOpcional(
+      'preguntas?select=slug,nombre,pregunta,respuesta,respondida_en' +
+      '&publicada=eq.true&respuesta=not.is.null&order=respondida_en.asc',
+      [], 'Las preguntas contestadas'),
   ]);
 
   /* Agrupadas por equipo antes de armar la salida: recorrer la lista entera
