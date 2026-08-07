@@ -27,7 +27,18 @@
  */
 'use strict';
 
-const VERSION = 'mdc-v1';
+/* La versión del caché. `empaquetar.js` la reemplaza en cada compilación por
+   el hash del código publicado, así que cada despliegue estrena cachés nuevos
+   y el `activate` borra los del anterior.
+
+   Estaba fija en 'mdc-v1' y eso era un error con consecuencias reales: al no
+   cambiar nunca, un archivo guardado hace semanas podía seguir sirviéndose
+   —basta que la red tarde más de cinco segundos una vez— y el visitante veía
+   una mezcla de código nuevo con estilos viejos. Eso no se depura: se ve
+   "roto" sin ningún error en la consola.
+
+   El literal de abajo es el de desarrollo; en producción nunca sobrevive. */
+const VERSION = 'mdc-dev';
 const CODIGO = `${VERSION}-codigo`;
 const FOTOS  = `${VERSION}-fotos`;
 

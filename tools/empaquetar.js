@@ -90,6 +90,22 @@ if (fs.existsSync(bundle)) {
   const html = htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), version);
   fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8');
   console.log(`  index.html publicado con un solo script (v=${version})`);
+
+  /* El trabajador de servicio estrena cachés en cada despliegue.
+
+     Con la versión fija que traía antes, un archivo guardado hace semanas
+     podía seguir sirviéndose —basta con que la red tarde una vez— y el
+     visitante acababa viendo código nuevo con estilos viejos. Eso no da ningún
+     error en consola: simplemente se ve roto, y no hay por dónde empezar a
+     mirar. Atando el nombre del caché al contenido publicado, `activate` borra
+     los anteriores y el problema deja de existir. */
+  const sw = path.join(DIST, 'sw.js');
+  if (fs.existsSync(sw)) {
+    const cuerpo = fs.readFileSync(sw, 'utf8')
+      .replace(/const VERSION = '[^']*';/, `const VERSION = 'mdc-${version}';`);
+    fs.writeFileSync(sw, cuerpo, 'utf8');
+    console.log(`  sw.js con cachés propios de este despliegue (mdc-${version})`);
+  }
 }
 
 /* Último cerrojo antes de subir.

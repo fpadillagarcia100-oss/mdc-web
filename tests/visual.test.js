@@ -238,6 +238,32 @@ const desbordaX = pagina => pagina.evaluate(() =>
     await capturar(pagina.locator('.cart-drawer'), 'cotizacion');
     await pagina.locator('[data-close-cart]').click();
 
+    /* ── Vistos recientemente ──
+       Esta sección sólo aparece tras abrir dos fichas, y la captura de la
+       portada se tomaba ANTES de abrir ninguna: quedaba fuera de foto y podía
+       romperse sin que nada avisara. Pasó exactamente eso. */
+    await pagina.evaluate(() => {
+      openModal(products[0].id); closeAll();
+      openModal(products[1].id); closeAll();
+    });
+    await pagina.waitForSelector('.visto');
+    const vistos = await pagina.locator('.visto').first().boundingBox();
+    check('El historial se dibuja en fila, no apilado',
+      vistos && vistos.width > 120 && vistos.width < 220 && vistos.height < 260,
+      vistos ? `${Math.round(vistos.width)}×${Math.round(vistos.height)}` : 'no se ve');
+
+    const enFila = await pagina.evaluate(() => {
+      const t = [...document.querySelectorAll('.visto')];
+      // En fila, dos tarjetas comparten la misma coordenada vertical.
+      return t.length >= 2 && Math.abs(t[0].getBoundingClientRect().top - t[1].getBoundingClientRect().top) < 4;
+    });
+    check('Las tarjetas del historial van una junto a otra', enFila);
+
+    await pagina.locator('#vistos').scrollIntoViewIfNeeded();
+    await pagina.waitForTimeout(400);
+    await capturar(pagina.locator('#vistos'), 'vistos');
+    await pagina.evaluate(() => { vistos = []; saveVistos(); renderVistos(); scrollTo(0, 0) });
+
     /* ── Sucursales y su mapa ── */
     // Hay dos: el de la barra superior y el del pie. Vale cualquiera.
     await pagina.locator('[data-goto="sucursales"]').first().click();
