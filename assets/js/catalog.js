@@ -199,6 +199,44 @@ function cardHTML(p){
   </article>`;
 }
 
+/**
+ * Anota que se abrió una ficha, al frente del historial y sin repetirla.
+ *
+ * Se llama desde openModal, no al pintar la tarjeta: pasar por delante de un
+ * equipo mientras se hace scroll no es haberlo mirado. Sólo abrir la ficha lo
+ * es, y esa es justo la señal que sirve para traerlo de vuelta después.
+ */
+function anotarVisto(id){
+  vistos = [id, ...vistos.filter(x => x !== id)].slice(0, MAX_VISTOS);
+  saveVistos();
+  renderVistos();
+}
+
+/**
+ * La fila de "vistos recientemente".
+ *
+ * Se esconde con menos de dos: una sola tarjeta no es un historial, es la
+ * ficha que acabas de cerrar repetida debajo del catálogo.
+ *
+ * Los ids que ya no existen en el catálogo —equipo vendido y retirado— se
+ * caen solos aquí, sin necesidad de limpiar el almacenamiento.
+ */
+function renderVistos(){
+  const caja = $('#vistos');
+  if(!caja) return;                             // las páginas generadas no la tienen
+
+  const lista = vistos.map(id => products.find(p => p.id === id)).filter(Boolean);
+  caja.hidden = lista.length < 2;
+  if(caja.hidden){ $('#vistosRow').innerHTML = ''; return }
+
+  $('#vistosRow').innerHTML = lista.map(p => `
+    <button class="visto" type="button" data-open="${p.id}">
+      <span class="visto-img">${productMedia(p, false)}</span>
+      <span class="visto-name">${esc(p.name)}</span>
+      <span class="visto-price">${fmtCompact(p.price)}${p.cond==='Renta'?' <small>/mes</small>':''}</span>
+    </button>`).join('');
+}
+
 function render(){
   const results = sortList(filterAll());
   const totalPages = Math.max(1, Math.ceil(results.length / PER_PAGE));
@@ -229,6 +267,7 @@ function render(){
   renderFilters();
   renderNav();
   renderCompareBar();
+  renderVistos();
   if(isAdmin) $('#adminBarInfo').textContent = `${products.length} equipos · ${fmtKB(store.usedBytes())} usados`;
 }
 

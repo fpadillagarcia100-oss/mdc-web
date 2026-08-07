@@ -144,6 +144,10 @@ try{
 }catch{}
 let cart = store.read(K.cart, []);
 let favorites = new Set(store.read(K.favs, []));
+/* Historial de fichas abiertas, de la más reciente a la más vieja. Sólo ids:
+   si el equipo se vende y desaparece del catálogo, el historial se limpia solo
+   al no encontrarlo, en vez de guardar una copia que envejece. */
+let vistos = (store.read(K.vistos, []) || []).filter(n => Number.isInteger(n)).slice(0, MAX_VISTOS);
 /* Arranca SIEMPRE en falso, y sólo lo levanta restaurarSesion() tras
    comprobar contra el servidor que hay una sesión de administrador.
 
@@ -163,3 +167,4 @@ let isAdmin = false;
    sitio al publicar. */
 const saveCart = () => store.write(K.cart, cart);
 const saveFavs = () => store.write(K.favs, [...favorites]);
+const saveVistos = () => store.write(K.vistos, vistos);

@@ -17,11 +17,38 @@ function addToCart(id){
 function changeQty(id,delta){
   const item = cart.find(x=>x.id===id);
   if(!item) return;
+  // Bajar de uno es quitarlo: se pasa por removeFromCart para que también ahí
+  // haya vuelta atrás, en vez de dos caminos distintos para el mismo final.
+  if(item.qty + delta <= 0){ removeFromCart(id); return }
   item.qty += delta;
-  if(item.qty<=0) cart = cart.filter(x=>x.id!==id);
   saveCart(); renderCart();
 }
-function removeFromCart(id){ cart = cart.filter(x=>x.id!==id); saveCart(); renderCart() }
+
+/**
+ * Quita un equipo de la cotización, con deshacer.
+ *
+ * Sin la vuelta atrás, un clic de más obliga a volver al catálogo, buscar el
+ * equipo otra vez y agregarlo — mucho castigo para el error más fácil de
+ * cometer. Se guarda la línea entera, no sólo el id, para devolver también la
+ * cantidad que llevaba.
+ */
+function removeFromCart(id){
+  const quitado = cart.find(x=>x.id===id);
+  cart = cart.filter(x=>x.id!==id);
+  saveCart(); renderCart();
+  if(!quitado) return;
+
+  const p = products.find(x=>x.id===id);
+  showToast(`${p ? p.name : 'Equipo'} fuera de la cotización`, false, {
+    texto:'Deshacer',
+    fn(){
+      // Puede haberse vuelto a agregar mientras el aviso estaba en pantalla.
+      if(cart.some(x=>x.id===id)) return;
+      cart.push({id:quitado.id, qty:quitado.qty});
+      saveCart(); renderCart();
+    }
+  });
+}
 const cartLines = () => cart.map(i=>{const p=products.find(x=>x.id===i.id); return p?{...p,qty:i.qty}:null}).filter(Boolean);
 
 function renderCart(){

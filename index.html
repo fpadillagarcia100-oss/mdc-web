@@ -215,6 +215,16 @@
     <div class="active-filters" id="activeFilters"></div>
     <div class="product-grid" id="productGrid"></div>
     <nav class="pagination" id="pagination" aria-label="Paginación"></nav>
+
+    <!-- Lo que ya miraste. Nadie compra una excavadora en una sola sesión:
+         vuelve, y encontrarla otra vez no debería costarle otra búsqueda. -->
+    <section class="vistos" id="vistos" aria-labelledby="vistosT" hidden>
+      <div class="vistos-head">
+        <h2 id="vistosT">Vistos recientemente</h2>
+        <button type="button" id="vistosClear">Borrar historial</button>
+      </div>
+      <div class="vistos-row" id="vistosRow"></div>
+    </section>
   </div>
 </main>
 
@@ -335,6 +345,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite">
   <span class="toast-icon" aria-hidden="true">✓</span>
   <span id="toastMsg"></span>
+  <!-- Deshacer. Quitar algo del carrito sin vuelta atrás obliga a buscarlo de
+       nuevo en el catálogo, que es un castigo desproporcionado para un clic. -->
+  <button class="toast-action" type="button" id="toastAction" hidden></button>
 </div>
 
 </body>

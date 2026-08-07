@@ -1204,6 +1204,45 @@ body.vt-modal .modal-overlay,body.vt-modal .modal{transition:none!important}
 .pcard-img.cargando img{opacity:0}
 @keyframes mBrillo{from{background-position:120% 0}to{background-position:-120% 0}}
 
+/* ── DESHACER EN EL AVISO ── */
+.toast-action{background:none;border:1px solid rgba(255,255,255,.35);color:var(--y);
+  font-size:12px;font-weight:700;padding:4px 11px;border-radius:6px;cursor:pointer;
+  margin-left:4px;white-space:nowrap;transition:background .18s,border-color .18s}
+.toast-action:hover{background:rgba(245,196,0,.14);border-color:var(--y)}
+.toast-action[hidden]{display:none}
+
+/* ── VISTOS RECIENTEMENTE ──
+   Una fila que se recorre en horizontal. En vertical robaría la altura del
+   catálogo, que es lo que la gente vino a ver. */
+.vistos{margin-top:34px;padding-top:22px;border-top:1px solid var(--border)}
+.vistos[hidden]{display:none}
+.vistos-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+.vistos-head h2{font-size:15px;font-weight:600;color:var(--dark)}
+.vistos-head button{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;text-decoration:underline;padding:2px}
+.vistos-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.visto{flex:0 0 152px;scroll-snap-align:start;background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:5px;
+  font-family:inherit;color:var(--text);transition:border-color .2s,box-shadow .2s,translate .18s}
+.visto:hover{border-color:var(--border2);box-shadow:0 8px 20px -8px rgba(0,0,0,.2);translate:0 -2px}
+.visto-img{height:78px;display:flex;align-items:center;justify-content:center;background:#F8F8F8;border-radius:5px;overflow:hidden}
+.visto-img img{width:100%;height:100%;object-fit:contain;padding:4px}
+.visto-img svg{height:60px;width:auto}
+.visto-name{font-size:12px;line-height:1.35;font-weight:500;color:var(--dark);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.visto-price{font-size:13px;font-weight:700;color:var(--dark);margin-top:auto}
+.visto-price small{font-size:11px;font-weight:500;color:var(--muted)}
+
+/* ── RENTAR O COMPRAR ──
+   El bloque va en amarillo apagado, no en la caja gris del resto de la ficha:
+   es una respuesta, no un dato más de la tabla. */
+.rvc{margin-top:22px;background:linear-gradient(180deg,#FFFBEC,#FFF7DC);
+  border:1px solid #F2E2A8;border-radius:10px;padding:18px 20px}
+.rvc h3{font-size:14px;font-weight:700;color:#6B5400;margin-bottom:10px}
+.rvc-cifra{font-size:16px;color:var(--dark);line-height:1.45}
+.rvc-cifra strong{font-size:20px;font-weight:700}
+.rvc-sub{font-size:13px;color:#6B5400;line-height:1.65;margin-top:7px}
+.rvc-nota{font-size:11.5px;color:#8A7328;line-height:1.55;margin-top:12px;padding-top:10px;border-top:1px solid #F0DFA2}
+
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se
    apaga a medias: se apaga todo, incluido el scroll suave. */

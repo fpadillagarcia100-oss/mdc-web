@@ -795,6 +795,84 @@ const ev = code => window.eval(code);
   check('El teléfono va en el asunto, para verlo sin abrir el correo',
     /subject|asunto/.test(aviso) && aviso.includes('${s.telefono}'));
 
+  /* ══ DESHACER, HISTORIAL Y RENTA VS COMPRA ══
+     Tres añadidos que tocan el carrito, el almacenamiento y la ficha. Se
+     prueban por el DOM, como los usaría un cliente, no llamando a las
+     funciones por dentro. */
+  ev('cart = []; saveCart(); renderCart()');
+  ev('addToCart(1); addToCart(2)');
+  check('Dos equipos en la cotización', ev('cart.length') === 2);
+
+  ev('removeFromCart(1)');
+  check('Quitar uno lo saca de la cotización', ev('cart.length') === 1);
+  check('El aviso ofrece deshacer',
+    !$('#toastAction').hidden && $('#toastAction').textContent === 'Deshacer');
+
+  $('#toastAction').click();
+  check('Deshacer lo devuelve', ev('cart.length') === 2 && ev('cart.some(c=>c.id===1)'));
+
+  ev('cart=[{id:1,qty:3}]; saveCart(); renderCart()');
+  ev('removeFromCart(1)');
+  $('#toastAction').click();
+  check('Deshacer devuelve también la cantidad, no sólo el equipo',
+    ev('cart[0] && cart[0].qty') === 3, `qty ${ev('cart[0] && cart[0].qty')}`);
+
+  // Bajar de uno es quitar: tiene que pasar por el mismo camino, con deshacer.
+  ev('cart=[{id:2,qty:1}]; saveCart(); renderCart(); changeQty(2,-1)');
+  check('Bajar la cantidad a cero también ofrece deshacer',
+    ev('cart.length') === 0 && !$('#toastAction').hidden);
+
+  // El aviso corriente NO debe arrastrar el botón del aviso anterior.
+  ev('showToast("un aviso cualquiera")');
+  check('Un aviso sin acción esconde el botón de deshacer', $('#toastAction').hidden);
+
+  /* ── Historial ── */
+  ev('vistos = []; saveVistos(); renderVistos()');
+  check('Con menos de dos fichas el historial no se muestra', $('#vistos').hidden);
+
+  ev('openModal(1)'); ev('closeAll()');
+  ev('openModal(2)'); ev('closeAll()');
+  check('Abrir dos fichas construye el historial',
+    !$('#vistos').hidden && $$('#vistosRow .visto').length === 2);
+  check('La última vista va primero',
+    $('#vistosRow .visto').dataset.open === '2');
+
+  ev('openModal(1)'); ev('closeAll()');
+  check('Volver a una ficha la sube al frente sin duplicarla',
+    $$('#vistosRow .visto').length === 2 && $('#vistosRow .visto').dataset.open === '1');
+
+  ev('for(let i=1;i<=12;i++){ if(products.some(p=>p.id===i)) openModal(i) } closeAll()');
+  check('El historial se corta en ' + ev('MAX_VISTOS'),
+    $$('#vistosRow .visto').length <= ev('MAX_VISTOS'),
+    `${$$('#vistosRow .visto').length} tarjetas`);
+
+  check('El historial sobrevive a un equipo que ya no existe',
+    ev('(function(){ vistos=[99999, ...vistos]; renderVistos(); return document.querySelectorAll("#vistosRow .visto").length })()')
+      === Math.min(ev('MAX_VISTOS'), ev('vistos.filter(id=>products.some(p=>p.id===id)).length')));
+
+  $('#vistosClear').click();
+  check('Borrar el historial lo vacía y lo esconde',
+    ev('vistos.length') === 0 && $('#vistos').hidden);
+
+  /* ── Rentar o comprar ── */
+  const idVenta = ev("products.find(p=>p.cond!=='Renta' && products.some(r=>r.cond==='Renta'&&r.cat===p.cat)).id");
+  ev(`openModal(${idVenta})`);
+  const rvc = $('#modalExtra .rvc');
+  check('La ficha de venta compara contra la renta de su categoría',
+    rvc !== null && /\d+ meses/.test(rvc.textContent));
+  check('Y dice de cuántos equipos salió la estimación',
+    rvc !== null && /Estimación a partir de \d+ equipo/.test(rvc.textContent));
+  ev('closeAll()');
+
+  const sinPar = ev("(products.find(p=>p.cond!=='Renta' && !products.some(r=>r.cond==='Renta'&&r.cat===p.cat))||{}).id");
+  if (sinPar) {
+    ev(`openModal(${sinPar})`);
+    check('Sin equipos con qué comparar, el bloque no aparece',
+      $('#modalExtra .rvc') === null, 'mejor nada que un "no hay datos"');
+    ev('closeAll()');
+  }
+  ev('vistos = []; saveVistos(); renderVistos()');
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;

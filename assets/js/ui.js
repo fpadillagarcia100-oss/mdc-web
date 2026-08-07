@@ -305,6 +305,59 @@ async function enviarPregunta(form){
 }
 
 /* ══════════════════ MODAL PRODUCTO ══════════════════ */
+/**
+ * Rentar o comprar: en cuántos meses se empatan.
+ *
+ * La pregunta que llega por WhatsApp una y otra vez. La respuesta corta es una
+ * división, pero nadie la hace de cabeza con cifras de siete dígitos.
+ *
+ * De dónde sale el número: el catálogo no guarda un precio de renta y otro de
+ * venta para el mismo equipo —una unidad se publica en venta o en renta, no en
+ * las dos—, así que se compara contra el PROMEDIO mensual de las unidades en
+ * renta de su misma categoría. Es una estimación, y por eso se dice de dónde
+ * viene y cuántas unidades la sostienen: un promedio de una sola unidad no es
+ * un promedio, y quien lea el dato merece saberlo.
+ *
+ * Devuelve cadena vacía cuando no hay con qué comparar. Un bloque que dice
+ * "no hay datos" ocupa el mismo espacio que uno útil y no ayuda a nadie.
+ */
+function rentaVsCompraHTML(p){
+  const enRenta  = products.filter(x => x.cond === 'Renta' && x.cat === p.cat && x.price > 0);
+  const enVenta  = products.filter(x => x.cond !== 'Renta' && x.cat === p.cat && x.price > 0);
+  const promedio = lista => Math.round(lista.reduce((s,x)=>s+x.price,0) / lista.length);
+
+  let cuerpo;
+  if(p.cond !== 'Renta'){
+    if(!enRenta.length) return '';
+    const mes = promedio(enRenta);
+    const meses = Math.round(p.price / mes);
+    const anios = (meses/12).toFixed(1).replace('.0','');
+    cuerpo = `
+      <p class="rvc-cifra"><strong>${meses} meses</strong> de renta cuestan lo que esta máquina</p>
+      <p class="rvc-sub">Son unos ${anios} años. Rentando una ${esc(p.cat.toLowerCase())} parecida a
+         ${fmtFull(mes)} al mes, a partir de ahí lo rentado sale más caro que lo comprado
+         — y el equipo comprado sigue siendo tuyo.</p>`;
+  }else{
+    if(!enVenta.length) return '';
+    const compra = promedio(enVenta);
+    const meses = Math.round(compra / p.price);
+    cuerpo = `
+      <p class="rvc-cifra">Rentar <strong>menos de ${meses} meses</strong> sale mejor que comprar</p>
+      <p class="rvc-sub">Una ${esc(p.cat.toLowerCase())} parecida en venta ronda los ${fmtFull(compra)}.
+         Para una obra corta, o para un pico de trabajo, la renta no inmoviliza ese dinero.</p>`;
+  }
+
+  const base = p.cond !== 'Renta' ? enRenta.length : enVenta.length;
+  return `
+    <section class="rvc">
+      <h3>⚖️ ¿Rentar o comprar?</h3>
+      ${cuerpo}
+      <p class="rvc-nota">Estimación a partir de ${base} equipo${base===1?'':'s'} de la misma
+         categoría en este catálogo. No incluye mantenimiento, operador, traslados ni el
+         costo del dinero: pídenos el número fino para tu obra.</p>
+    </section>`;
+}
+
 function openModal(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
@@ -312,6 +365,7 @@ function openModal(id){
   // Se cuenta al abrir, no al cargar el catálogo: ver una tarjeta de paso no
   // es lo mismo que abrir la ficha. Sólo lo segundo dice que hubo interés.
   if(typeof contar === 'function' && !isAdmin) contar(p.slug, 'vista');
+  if(typeof anotarVisto === 'function') anotarVisto(p.id);
   closeAll();
   lastFocused = document.activeElement;
 
@@ -360,6 +414,7 @@ function openModal(id){
     ${p.desc ? `<p class="modal-desc">${esc(p.desc)}</p>` : ''}
     ${fichaTecnicaHTML(p)}
     ${p.cond!=='Renta' ? calculadoraHTML(p.price, {msi:p.finance}) : ''}
+    ${rentaVsCompraHTML(p)}
     ${preguntasHTML(p)}
     <p class="solo-impresion">${esc(fichaPie(p))}</p>`;
 
@@ -379,13 +434,27 @@ function openModal(id){
 
 /* ══════════════════ TOAST ══════════════════ */
 let toastTimer;
-function showToast(msg, isError=false){
+/**
+ * Aviso de una línea, con una acción opcional.
+ *
+ * `accion` es {texto, fn}. Cuando la trae, el aviso dura más: leerlo, decidir
+ * y alcanzar el botón no cabe en los 2.8 segundos de un aviso que sólo informa.
+ */
+function showToast(msg, isError=false, accion=null){
   const t = $('#toast');
   $('#toastMsg').textContent = msg;
   t.classList.toggle('error', isError);
+
+  const btn = $('#toastAction');
+  btn.hidden = !accion;
+  /* onclick y no addEventListener a propósito: el mismo botón se reutiliza en
+     cada aviso y así la acción vieja se reemplaza en vez de acumularse. */
+  btn.onclick = accion ? ()=>{ t.classList.remove('show'); accion.fn() } : null;
+  if(accion) btn.textContent = accion.texto;
+
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), isError?5000:2800);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), isError ? 5000 : accion ? 6000 : 2800);
 }
 
 /* ══════════════════ ACCIONES CATÁLOGO ══════════════════ */

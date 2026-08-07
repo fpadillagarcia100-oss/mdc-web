@@ -56,4 +56,10 @@ const MAX_FOTOS = 8;
    con más, la tabla obliga a hacer scroll horizontal y deja de comparar nada. */
 const MAX_COMPARA = 3;
 const K = {products:'mdc_v1_products', settings:'mdc_v1_settings', cart:'mdc_v1_cart',
-           favs:'mdc_v1_favs', account:'mdc_v1_account', requests:'mdc_v1_requests'};
+           favs:'mdc_v1_favs', account:'mdc_v1_account', requests:'mdc_v1_requests',
+           vistos:'mdc_v1_vistos'};
+
+/* Cuántas fichas recuerda el historial. Ocho llenan una fila y se recorren de
+   un vistazo; con más, deja de ser "lo que estabas viendo" y se vuelve otro
+   catálogo que hay que revisar. */
+const MAX_VISTOS = 8;

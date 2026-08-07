@@ -160,6 +160,8 @@ document.addEventListener('click', e => {
     return;
   }
 
+  if(t.closest('#vistosClear')){ vistos = []; saveVistos(); renderVistos(); return }
+
   const favBtn = t.closest('[data-fav]');
   if(favBtn){ toggleFav(Number(favBtn.dataset.fav)); return }
 
