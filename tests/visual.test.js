@@ -238,6 +238,27 @@ const desbordaX = pagina => pagina.evaluate(() =>
     await capturar(pagina.locator('.cart-drawer'), 'cotizacion');
     await pagina.locator('[data-close-cart]').click();
 
+    /* ── Sucursales y su mapa ── */
+    // Hay dos: el de la barra superior y el del pie. Vale cualquiera.
+    await pagina.locator('[data-goto="sucursales"]').first().click();
+    await pagina.waitForSelector('.mapa-fachada');
+    /* El aviso del paso anterior tiene temporizador propio y se colaba en la
+       foto. Igual que con el cajón de la cotización: si una captura incluye
+       algo que la prueba no evalúa, tarde o temprano falla por eso. */
+    await pagina.waitForSelector('.toast:not(.show)', { timeout: 6000 }).catch(()=>{});
+    check('Cada sucursal enseña su mapa sin cargarlo',
+      await pagina.locator('.mapa-fachada').count() === 3 &&
+      await pagina.locator('.mapa-marco').count() === 0,
+      '3 fachadas dibujadas aquí, 0 peticiones a Google');
+    await capturar(pagina, 'sucursales');
+
+    await pagina.locator('[data-mapa]').first().click();
+    // El iframe tiene que ocupar sitio de verdad, no aparecer con altura cero.
+    const caja = await pagina.locator('.mapa-marco').first().boundingBox();
+    check('Al pulsarlo, el mapa ocupa su hueco', caja && caja.height > 150 && caja.width > 200,
+      caja ? `${Math.round(caja.width)}×${Math.round(caja.height)}` : 'no se ve');
+    await pagina.locator('#pageClose').click();
+
     /* ── La página de categoría, que es la que ve Google ── */
     await pagina.goto(base + '/maquinaria/excavacion/', { waitUntil: 'networkidle' });
     check('La categoría no desborda', !(await desbordaX(pagina)));

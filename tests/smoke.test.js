@@ -136,6 +136,28 @@ const ev = code => window.eval(code);
   $('[data-goto="sucursales"]').click();
   check('Sucursales lista 3 ubicaciones', $('#pageBody').querySelectorAll('.branch').length === 3);
   check('Sucursales enlaza a Google Maps', $('#pageBody').innerHTML.includes('google.com/maps'));
+
+  /* El mapa entra por fachada, como el video. Lo que se comprueba es que al
+     ABRIR la página no se ha cargado nada de Google: si un día alguien cambia
+     la fachada por el iframe directo, tres sucursales son tres peticiones a
+     Google y cookies para todo el que entre, mire el mapa o no. */
+  check('Los mapas no cargan solos', $('#pageBody').querySelectorAll('iframe').length === 0,
+    `${$('#pageBody').querySelectorAll('.mapa-fachada').length} fachadas, 0 iframes`);
+
+  $('#pageBody').querySelector('[data-mapa]').click();
+  const marcoMapa = $('#pageBody').querySelector('.mapa-marco');
+  check('Pulsar la fachada carga ese mapa',
+    marcoMapa !== null && marcoMapa.src.includes('output=embed') && marcoMapa.src.includes('maps'));
+  check('Y sólo ese: los otros dos siguen sin cargar',
+    $('#pageBody').querySelectorAll('iframe').length === 1,
+    'una fachada pulsada, un mapa');
+
+  // El permiso para Google se da SÓLO en la portada, no en todo el sitio.
+  const globalCSP = fs.readFileSync(path.join(ROOT, '_headers'), 'utf8').split('/index.html')[0];
+  check('Las fichas estáticas no pueden incrustar Google',
+    !globalCSP.includes('frame-src') || !globalCSP.includes('google.com'),
+    'el permiso vive sólo en el bloque de /index.html');
+
   $('#pageClose').click();
 
   /* ── Publicar equipo: validación y envío ── */
@@ -539,9 +561,16 @@ const ev = code => window.eval(code);
      dominio del mundo podría incrustarse en la página. */
   const csp = /content="([^"]*)"/.exec(
     /<meta http-equiv="Content-Security-Policy"[^>]*>/i.exec(html)[0])[1];
-  check('La política permite el reproductor de YouTube',
-    /frame-src\s+https:\/\/www\.youtube-nocookie\.com\s*;/.test(csp),
-    (/frame-src[^;]*/.exec(csp) || ['sin frame-src'])[0]);
+  /* Dos orígenes exactos y ningún otro: el reproductor y el mapa. Se comprueba
+     la lista COMPLETA, no que aparezcan: así, añadir un tercero obliga a pasar
+     por aquí y a justificarlo, que es justo lo que se quiere de un permiso. */
+  const frameSrc = /frame-src([^;]*)/.exec(csp);
+  const marcos = (frameSrc ? frameSrc[1] : '').trim().split(/\s+/).filter(Boolean);
+  check('La política permite el reproductor de YouTube y el mapa, y nada más',
+    marcos.length === 2 &&
+    marcos.includes('https://www.youtube-nocookie.com') &&
+    marcos.includes('https://www.google.com'),
+    marcos.join(' '));
   check('Y no abre el marco a cualquier dominio',
     !/frame-src[^;]*(\*|https:\s|'unsafe)/.test(csp));
 

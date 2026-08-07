@@ -150,6 +150,10 @@ document.addEventListener('click', e => {
   if(t.closest('[data-gal-video]')){ verVideo(); return }
   if(t.closest('[data-gal-play]')){ reproducirVideo(); return }
 
+  // Mismo trato para el mapa de una sucursal: Google entra cuando se le pide.
+  const mapaBtn = t.closest('[data-mapa]');
+  if(mapaBtn){ verMapa(Number(mapaBtn.dataset.mapa)); return }
+
   const openBtn = t.closest('[data-open]');
   if(openBtn){ abrirFicha(Number(openBtn.dataset.open), openBtn.closest('.pcard')); return }
 

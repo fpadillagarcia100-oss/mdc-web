@@ -1311,6 +1311,20 @@ body.sin-red::before{content:'📡 Sin señal · lo que ya viste sigue disponibl
 .cat-guia-faq details p{padding:0 16px 15px;font-size:14px;line-height:1.75;color:var(--muted)}
 @media (max-width:560px){ .cat-guia h2{font-size:19px} .cat-guia-entrada{font-size:14.5px} }
 
+/* ── MAPA DE SUCURSAL ──
+   La fachada es un dibujo hecho aquí: no pide nada a nadie hasta que se pulsa.
+   Mismo trato que la portada del video en la ficha del equipo. */
+.mapa{margin:14px 0 4px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#E8EAE6}
+.mapa-fachada{display:block;width:100%;padding:0;border:none;background:none;cursor:pointer;position:relative;line-height:0}
+.mapa-fachada svg{width:100%;height:auto;display:block}
+.mapa-txt{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  background:rgba(26,26,26,.88);color:#fff;font-size:13px;font-weight:600;line-height:1.2;
+  padding:9px 16px;border-radius:99px;white-space:nowrap;transition:background .2s,transform .2s}
+.mapa-fachada:hover .mapa-txt{background:#1A1A1A;transform:translateX(-50%) translateY(-2px)}
+.mapa-nota{font-size:11px;color:var(--light);padding:7px 12px;background:var(--white);border-top:1px solid var(--border);line-height:1.4}
+.mapa-marco{display:block;width:100%;height:260px;border:none}
+@media (max-width:560px){ .mapa-marco{height:210px} }
+
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se
    apaga a medias: se apaga todo, incluido el scroll suave. */

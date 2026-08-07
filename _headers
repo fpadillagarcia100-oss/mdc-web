@@ -18,8 +18,14 @@
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
 
 # El HTML se revalida siempre: si no, un cambio tuyo tardaría horas en verse.
+#
+# Y sólo aquí se permite incrustar Google Maps. La página de sucursales vive en
+# la portada, así que es la única que lo necesita; las fichas de equipo y las
+# páginas de categoría se quedan con el CSP estricto de arriba. Ampliar el
+# permiso a todo el sitio para una pantalla sería regalar superficie de ataque.
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com https://www.google.com; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
 
 # Las fichas se regeneran en cada despliegue: mismo trato.
 /equipos/*
