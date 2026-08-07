@@ -848,6 +848,30 @@ const ev = code => window.eval(code);
   check('Y la variable de entorno sigue mandando sobre él',
     /env\.AVISO_DESTINO \|\| DESTINO_POR_OMISION/.test(avisoP) &&
     /env\.AVISO_DESTINO \|\| DESTINO_POR_OMISION/.test(aviso));
+  /* ══ EL DISPARADOR QUE SUSTITUYE AL WEBHOOK DEL PANEL ══
+     El panel de Supabase no pudo crear los webhooks: su integración instala un
+     esquema propio que en este proyecto nunca llegó a existir. Se hace con
+     pg_net a mano, y eso trae una responsabilidad que el panel se comía sola. */
+  const disparador = fs.readFileSync(
+    path.join(ROOT, 'supabase/migrations/20260807000001_avisos_por_disparador.sql'), 'utf8');
+
+  check('Un aviso roto no puede impedir que se guarde una cotización',
+    /exception when others then/i.test(disparador) && /return new;/i.test(disparador),
+    'sin esto, no poder mandar un correo tumbaría el INSERT del cliente');
+  check('El aviso se manda DESPUÉS de guardar, no antes',
+    /after insert on public\.solicitudes/i.test(disparador) &&
+    /after insert on public\.preguntas/i.test(disparador));
+  check('El secreto no vive en un esquema que PostgREST exponga',
+    /create schema if not exists avisos/i.test(disparador) &&
+    /revoke all on table avisos\.destinos from anon, authenticated/i.test(disparador),
+    'fuera de public: lo que no se expone no se puede filtrar');
+  check('La función fija su search_path',
+    /set search_path = avisos, net, pg_catalog/i.test(disparador),
+    'una security definer sin eso se puede engañar con una tabla homónima');
+  check('El secreto NO está en la migración',
+    !/secreto\s*\)?\s*values\s*\(\s*'[^']{8,}'/i.test(disparador),
+    'sólo el ejemplo comentado, con TU_SECRETO de relleno');
+
   check('Ningún secreto quedó escrito en el código',
     !/AVISO_SECRETO\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
     !/RESEND_API_KEY\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
