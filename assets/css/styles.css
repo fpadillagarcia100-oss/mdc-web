@@ -1179,6 +1179,31 @@ body.js-reveal .pcard.visto{opacity:1;transform:none}
    ven los navegadores con View Transitions; el resto cambia seco. */
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.32s}
 
+/* ── LA FOTO QUE CRECE HASTA LA FICHA ──
+   La foto de la tarjeta y la de la ficha comparten `view-transition-name`, así
+   que el navegador las trata como el mismo objeto en dos sitios y lo mueve en
+   vez de fundir una con otra. Ver abrirFicha() en main.js.
+
+   Mientras dura, el modal no puede animarse por su cuenta: el navegador
+   fotografía el resultado enseguida y lo pillaría todavía transparente. */
+::view-transition-group(fichafoto){animation-duration:.45s;animation-timing-function:var(--e-out)}
+::view-transition-old(fichafoto),::view-transition-new(fichafoto){
+  /* La foto de la tarjeta y la de la ficha no tienen la misma proporción; sin
+     esto el navegador estira la vieja y se ve un chicle a mitad del camino. */
+  height:100%;object-fit:contain;animation-duration:.45s}
+body.vt-modal .modal-overlay,body.vt-modal .modal{transition:none!important}
+
+/* ── LA FOTO QUE VIENE EN CAMINO ──
+   Sólo brilla cuando motion.js confirmó que hay una <img> pendiente. Si el
+   equipo trae dibujo en vez de foto, o si este JavaScript no corre, la clase
+   nunca se pone y aquí no pasa nada: la foto se ve, como siempre. */
+.pcard-img.cargando::before{content:'';position:absolute;inset:0;z-index:0;
+  background:linear-gradient(100deg,#F4F4F4 20%,#E7E7E7 42%,#F4F4F4 64%);background-size:280% 100%;
+  animation:mBrillo 1.5s linear infinite}
+.pcard-img img{position:relative;z-index:1;transition:opacity .45s var(--e-out)}
+.pcard-img.cargando img{opacity:0}
+@keyframes mBrillo{from{background-position:120% 0}to{background-position:-120% 0}}
+
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se
    apaga a medias: se apaga todo, incluido el scroll suave. */

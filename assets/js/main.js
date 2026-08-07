@@ -7,21 +7,46 @@
 'use strict';
 
 /**
- * Redibuja cruzando un fundido en lugar de parpadear.
+ * Abre la ficha haciendo crecer la foto desde su lugar en la rejilla.
  *
- * `startViewTransition` deja que el navegador fotografíe la pantalla, aplique
- * el cambio y funda de una a otra. Se usa sólo donde el catálogo se reemplaza
- * entero —cambiar de vista, de página o de categoría—, que es justo donde el
- * salto seco desorienta: nueve tarjetas se cambian por otras nueve y no queda
- * claro si el sitio respondió o se recargó.
+ * Es una transición de elemento compartido: se le pone el mismo
+ * `view-transition-name` a la foto de la tarjeta ANTES del cambio y a la foto
+ * de la ficha DESPUÉS, y el navegador entiende que son la misma cosa en dos
+ * sitios, así que la interpola en lugar de fundir una con otra.
  *
- * En un navegador sin la API, o con menos animación pedida, llama a render() y
- * ya está. Nunca es un requisito: es un adorno con salida de emergencia.
+ * Dos cuidados que no son evidentes:
+ *
+ *   · El nombre se le quita a la tarjeta dentro de la misma tanda en que se le
+ *     pone a la ficha. Si las dos lo llevaran a la vez el navegador aborta la
+ *     transición entera: un nombre, un elemento.
+ *   · Mientras dura, se apaga la transición CSS del modal (`body.vt-modal`).
+ *     El navegador fotografía el resultado inmediatamente, y con la animación
+ *     de apertura encendida esa foto saldría del modal aún transparente.
+ *
+ * Sin la API, o con menos animación pedida, abre el modal de siempre.
  */
-function renderConTransicion(){
+function abrirFicha(id, tarjeta){
   const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(quieto || !document.startViewTransition){ render(); return }
-  document.startViewTransition(()=> render());
+  const origen = tarjeta && tarjeta.querySelector('.pcard-img img, .pcard-img svg');
+  if(quieto || !document.startViewTransition || !origen){ openModal(id); return }
+
+  origen.style.viewTransitionName = 'fichafoto';
+  document.body.classList.add('vt-modal');
+
+  const vt = document.startViewTransition(()=>{
+    origen.style.viewTransitionName = '';
+    openModal(id);
+    const destino = document.querySelector('#modalImg .gal-main, #modalImg img, #modalImg svg');
+    if(destino) destino.style.viewTransitionName = 'fichafoto';
+  });
+
+  const limpiar = ()=>{
+    origen.style.viewTransitionName = '';
+    const d = document.querySelector('#modalImg .gal-main, #modalImg img, #modalImg svg');
+    if(d) d.style.viewTransitionName = '';
+    document.body.classList.remove('vt-modal');
+  };
+  vt.finished.then(limpiar, limpiar);
 }
 
 /* ══════════════════ EVENTOS GLOBALES ══════════════════ */
@@ -126,7 +151,7 @@ document.addEventListener('click', e => {
   if(t.closest('[data-gal-play]')){ reproducirVideo(); return }
 
   const openBtn = t.closest('[data-open]');
-  if(openBtn){ openModal(Number(openBtn.dataset.open)); return }
+  if(openBtn){ abrirFicha(Number(openBtn.dataset.open), openBtn.closest('.pcard')); return }
 
   const addBtn = t.closest('[data-add]');
   if(addBtn){
@@ -153,13 +178,13 @@ document.addEventListener('click', e => {
     if(navBtn.tagName === 'A') e.preventDefault();
     state.cat = navBtn.dataset.cat;
     state.page = 1;
-    renderConTransicion();
+    render();
     if(navBtn.tagName === 'A') $('#catalogo').scrollIntoView({block:'start'});
     return;
   }
 
   const pageBtn = t.closest('[data-page]');
-  if(pageBtn){ state.page = Number(pageBtn.dataset.page); renderConTransicion(); $('#catalogo').scrollIntoView({block:'start'}); return }
+  if(pageBtn){ state.page = Number(pageBtn.dataset.page); render(); $('#catalogo').scrollIntoView({block:'start'}); return }
 
   const chipBtn = t.closest('[data-chip]');
   if(chipBtn){ removeChip(chipBtn.dataset.chip, chipBtn.dataset.value); return }
@@ -168,7 +193,7 @@ document.addEventListener('click', e => {
   if(viewBtn){
     state.view = viewBtn.dataset.view;
     $$('[data-view]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===state.view)));
-    renderConTransicion(); return;
+    render(); return;
   }
 
   if(t.closest('[data-close-cart]') || t.id==='overlay'){ closeAll(); return }
@@ -181,7 +206,7 @@ document.addEventListener('click', e => {
   const card = t.closest('.pcard');
   if(card && !t.closest('button')){
     const name = card.querySelector('[data-open]');
-    if(name) openModal(Number(name.dataset.open));
+    if(name) abrirFicha(Number(name.dataset.open), card);
   }
 });
 

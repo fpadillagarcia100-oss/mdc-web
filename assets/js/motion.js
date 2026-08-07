@@ -137,7 +137,140 @@
     new MutationObserver(saltar).observe(contador, {childList:true, characterData:true, subtree:true});
   }
 
-  /* ═══════════ 4. EL CORAZÓN QUE LATE ═══════════
+  /* ═══════════ 4. LA REJILLA QUE SE REACOMODA (FLIP) ═══════════
+     Al filtrar u ordenar, la rejilla se reemplaza entera con innerHTML: las
+     nueve tarjetas de antes desaparecen y salen otras nueve. Aunque seis sean
+     las mismas, se lee como si todo hubiera cambiado, y no se entiende qué
+     quitó el filtro.
+
+     FLIP lo arregla midiendo dónde estaba cada tarjeta ANTES (First), dónde
+     queda DESPUÉS (Last), y arrancando la nueva desde la posición vieja para
+     dejarla caer en la suya (Invert + Play). El navegador sólo interpola un
+     transform: no hay reflow por cuadro.
+
+     Se envuelve render() en vez de pedirle a catalog.js que avise. Así este
+     archivo sigue siendo el único que sabe de animaciones, y borrarlo entero
+     deja el sitio funcionando.
+
+     Sólo se animan las tarjetas SUPERVIVIENTES —las que estaban antes y siguen
+     después—. Las nuevas ya tienen su propia aparición, y encimarle una
+     segunda animación haría que pelearan por la misma propiedad. */
+  const renderOriginal = window.render;
+  if(typeof renderOriginal === 'function'){
+    const idDe = tarjeta =>{
+      const b = tarjeta.querySelector('[data-open]');
+      return b ? b.dataset.open : null;
+    };
+
+    window.render = function(){
+      const rejilla = document.getElementById('productGrid');
+      if(!rejilla || !rejilla.animate) return renderOriginal.apply(this, arguments);
+
+      const antes = new Map();
+      rejilla.querySelectorAll('.pcard').forEach(c =>{
+        const id = idDe(c);
+        if(id) antes.set(id, c.getBoundingClientRect());
+      });
+
+      const salida = renderOriginal.apply(this, arguments);
+      if(!antes.size) return salida;
+
+      rejilla.querySelectorAll('.pcard').forEach(c =>{
+        const a = antes.get(idDe(c));
+        if(!a) return;                            // tarjeta nueva: no es cosa del FLIP
+        const b = c.getBoundingClientRect();
+        const dx = a.left - b.left, dy = a.top - b.top;
+        const sx = b.width ? a.width/b.width : 1, sy = b.height ? a.height/b.height : 1;
+        // Se quedó donde estaba: animarla sería gastar un cuadro en nada.
+        if(Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx-1) < .02 && Math.abs(sy-1) < .02) return;
+        c.animate(
+          [{transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`}, {transform:'none'}],
+          {duration:420, easing:'cubic-bezier(.2,.8,.25,1)', composite:'replace'}
+        );
+      });
+      return salida;
+    };
+  }
+
+  /* ═══════════ 5. FOTOS QUE NO PARPADEAN ═══════════
+     Las fotos viven en Supabase y van con loading="lazy": en una obra con mala
+     señal la tarjeta se queda con un hueco gris y luego la imagen entra de
+     golpe. Con esto el hueco tiene un brillo que indica "viene en camino" y la
+     foto aparece fundiéndose.
+
+     La clase la pone JavaScript sólo cuando hay una <img> que de verdad está
+     pendiente. Si la tarjeta trae un dibujo SVG en lugar de foto, no hay nada
+     que esperar y el brillo no se enciende nunca. */
+  const marcarCargada = img =>{
+    img.classList.add('cargada');
+    const caja = img.closest('.pcard-img');
+    if(caja) caja.classList.remove('cargando');
+  };
+
+  const revisarFotos = ()=>{
+    document.querySelectorAll('.pcard-img img:not(.cargada)').forEach(img =>{
+      // `complete` cubre las que salieron del caché antes de que mirásemos.
+      if(img.complete && img.naturalWidth) marcarCargada(img);
+      else img.closest('.pcard-img').classList.add('cargando');
+    });
+  };
+
+  revisarFotos();
+  const rejillaFotos = document.getElementById('productGrid');
+  if(rejillaFotos && 'MutationObserver' in window){
+    new MutationObserver(revisarFotos).observe(rejillaFotos, {childList:true});
+  }
+
+  // `load` no burbujea; se escucha en captura para no ponerle uno a cada foto.
+  document.addEventListener('load', e =>{
+    if(e.target.tagName === 'IMG' && e.target.closest('.pcard-img')) marcarCargada(e.target);
+  }, true);
+  // Si la foto falla, el brillo se apaga igual: mejor un hueco que un brillo eterno.
+  document.addEventListener('error', e =>{
+    if(e.target.tagName === 'IMG' && e.target.closest('.pcard-img')) marcarCargada(e.target);
+  }, true);
+
+  /* ═══════════ 6. EL CONTADOR DE RESULTADOS ═══════════
+     "18 equipos" → "7 equipos" contando, no saltando. El número que baja se
+     lee como consecuencia del filtro que acabas de tocar.
+
+     El candado importa: al escribir el número se dispara el observador otra
+     vez, y sin él se llamaría a sí mismo hasta agotar la pila. */
+  const marcador = document.getElementById('resultsCount');
+  if(marcador && 'MutationObserver' in window){
+    let previo = null, contando = false, cuadro = 0;
+
+    const contar = ()=>{
+      if(contando) return;
+      const fuerte = marcador.querySelector('strong');
+      if(!fuerte) return;
+      const texto = fuerte.textContent;
+      const m = texto.match(/^\s*([\d,]+)/);
+      if(!m) return;
+      const destino = Number(m[1].replace(/,/g,''));
+      const desde = previo;
+      previo = destino;
+      if(desde === null || desde === destino || Math.abs(destino-desde) < 2) return;
+
+      const resto = texto.slice(m[0].length);
+      const t0 = performance.now(), dur = 380;
+      cancelAnimationFrame(cuadro);
+      const paso = ahora =>{
+        const k = Math.min(1, (ahora-t0)/dur);
+        const suave = 1 - Math.pow(1-k, 3);
+        contando = true;
+        fuerte.textContent = Math.round(desde + (destino-desde)*suave).toLocaleString('es-MX') + resto;
+        contando = false;
+        if(k < 1) cuadro = requestAnimationFrame(paso);
+      };
+      cuadro = requestAnimationFrame(paso);
+    };
+
+    contar();                                   // primera lectura: fija el punto de partida
+    new MutationObserver(contar).observe(marcador, {childList:true, characterData:true, subtree:true});
+  }
+
+  /* ═══════════ 7. EL CORAZÓN QUE LATE ═══════════
      toggleFav() redibuja la rejilla entera, así que el botón que se pulsó ya
      no existe cuando termina. Se espera al siguiente cuadro y se busca el
      botón nuevo por su id de equipo. Este listener corre después del de
