@@ -64,9 +64,14 @@ body.is-admin .admin-bar{display:flex}
 /* ── NAV CATS ── */
 .nav-cats{background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:thin}
 .nav-cats-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;white-space:nowrap}
-.nav-cat{padding:10px 16px;font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
-.nav-cat:hover{color:var(--dark);border-bottom-color:var(--border2)}
-.nav-cat[aria-current="true"]{color:var(--dark);border-bottom-color:var(--y);font-weight:600}
+/* El subrayado es un ::after que crece desde el centro en lugar de un borde
+   que sólo cambia de color: se ve de dónde viene el foco. */
+.nav-cat{position:relative;padding:10px 16px 12px;font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;cursor:pointer;transition:color .2s}
+.nav-cat::after{content:'';position:absolute;left:12px;right:12px;bottom:0;height:2px;background:var(--y);border-radius:2px;transform:scaleX(0);transition:transform .28s cubic-bezier(.2,.8,.25,1)}
+.nav-cat:hover{color:var(--dark)}
+.nav-cat:hover::after{transform:scaleX(.55);background:var(--border2)}
+.nav-cat[aria-current="true"]{color:var(--dark);font-weight:600}
+.nav-cat[aria-current="true"]::after{transform:scaleX(1);background:var(--y)}
 
 /* ── HERO ── */
 .hero-banner{background:linear-gradient(135deg,#1A1A1A 0%,#2C2C2C 100%);padding:36px 20px;position:relative;overflow:hidden}
@@ -133,8 +138,12 @@ body.is-admin .admin-bar{display:flex}
 
 /* ── GRID ── */
 .product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.pcard{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .15s,border-color .2s;display:flex;flex-direction:column;position:relative}
-.pcard:hover{box-shadow:0 4px 20px rgba(0,0,0,.12);transform:translateY(-2px);border-color:var(--border2)}
+/* El levantón del hover va en `translate`, no en `transform`: la aparición al
+   hacer scroll (más abajo) anima `transform`, y una animación siempre gana en
+   la cascada contra una declaración normal. Separándolos, cada una manda en su
+   propia propiedad y las dos conviven. */
+.pcard{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:box-shadow .25s,translate .18s,border-color .2s;display:flex;flex-direction:column;position:relative}
+.pcard:hover{box-shadow:0 10px 30px -8px rgba(0,0,0,.22);translate:0 -3px;border-color:var(--border2)}
 .pcard:focus-within{border-color:var(--y)}
 .pcard-img{background:#F8F8F8;height:180px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--border);overflow:hidden}
 .pcard-img svg{width:auto;height:140px}
@@ -1025,3 +1034,160 @@ body.con-cmp{padding-bottom:78px}
 
 @media (max-width:900px){ .cat-grid{grid-template-columns:1fr 1fr} }
 @media (max-width:560px){ .cat-pagina h1{font-size:21px} }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOVIMIENTO
+
+   Un sistema, no una colección de efectos sueltos. Tres reglas:
+
+   1. Todo usa las mismas curvas (--e-out para lo que entra, --e-peso para lo
+      que responde a un clic). Cuando cada animación trae su propio ritmo, la
+      página se siente hecha por cinco personas distintas.
+   2. Nada se mueve más de lo que cuesta mirarlo. La referencia es maquinaria
+      pesada: masa, inercia, arranques suaves. Nada rebota como una pelota.
+   3. Nada esconde contenido de forma permanente. Si una animación no corre
+      —navegador viejo, JavaScript caído, prefers-reduced-motion— lo que queda
+      es la página completa y quieta, nunca una página en blanco.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --e-out:cubic-bezier(.2,.8,.25,1);
+  --e-peso:cubic-bezier(.34,1.15,.5,1);
+}
+
+/* ── Barra de progreso de lectura ──
+   Sin una línea de JavaScript: `animation-timeline:scroll()` ata el avance de
+   la animación al scroll de la página en lugar de al reloj. Donde no existe,
+   se queda en scaleX(0) —invisible— y no estorba. */
+.scroll-progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:400;pointer-events:none;
+  background:linear-gradient(90deg,var(--yd),var(--y) 55%,#FFE79A);transform:scaleX(0);transform-origin:0 50%}
+@supports (animation-timeline:scroll()){
+  .scroll-progress{animation:mProgreso linear;animation-timeline:scroll(root block)}
+  /* La sombra del encabezado se hace fuerte conforme te alejas del inicio:
+     dice "hay contenido arriba" sin ocupar un pixel más. */
+  header{animation:mEncabezado linear both;animation-timeline:scroll(root block);animation-range:0 140px}
+}
+@keyframes mProgreso{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes mEncabezado{to{background:#141414;box-shadow:0 10px 28px rgba(0,0,0,.55)}}
+
+/* ── Aparición al entrar en pantalla ──
+   `animation-timeline:view()` hace el trabajo de un IntersectionObserver pero
+   en el compositor, sin JavaScript y sin reflow. En los navegadores que aún no
+   lo traen, motion.js pone `body.js-reveal` y lo resuelve a mano; sólo uno de
+   los dos caminos se activa nunca. */
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:view()){
+    .pcard,.cat-card,.footer-col,.pagination,.cat-cierre{
+      animation:mAparecer .6s var(--e-out) both;
+      animation-timeline:view();
+      animation-range:entry 0% cover 22%;
+    }
+  }
+}
+body.js-reveal .pcard{opacity:0;transform:translateY(24px) scale(.98);
+  transition:opacity .55s var(--e-out),transform .55s var(--e-out);
+  transition-delay:calc(var(--i,0)*45ms)}
+body.js-reveal .pcard.visto{opacity:1;transform:none}
+@keyframes mAparecer{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ── Entrada de la portada ──
+   Escalonada de arriba abajo, en el orden en que se lee. */
+@media (prefers-reduced-motion:no-preference){
+  .hero-tag,.hero-h,.hero-p,.hero-btns,.hero-badges{animation:mSubir .7s var(--e-out) both}
+  .hero-tag{animation-delay:.06s}
+  .hero-h{animation-delay:.13s}
+  .hero-p{animation-delay:.2s}
+  .hero-btns{animation-delay:.27s}
+  .hero-badges{animation-delay:.34s}
+  .hero-art{animation:mSubir .8s .22s var(--e-out) both,mFlotar 7s 1.1s ease-in-out infinite}
+  /* Las franjas diagonales del fondo se desplazan lentas, como una banda
+     transportadora. El ::after se dibuja 57 px más ancho de lo que se ve para
+     que al correrse no destape una esquina sin franjas. */
+  .hero-banner::after{width:calc(45% + 57px);animation:mFranjas 6s linear infinite}
+}
+@keyframes mSubir{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes mFlotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes mFranjas{from{transform:translateX(-56.57px)}to{transform:translateX(0)}}
+
+/* ── Tarjetas ──
+   La foto se acerca un poco y un reflejo la cruza. El reflejo va en ::after con
+   z-index 1: por debajo de las etiquetas y los botones, que están en 2 y 3. */
+.pcard-img img,.pcard-img svg{transition:transform .55s var(--e-out)}
+.pcard:hover .pcard-img img,.pcard:hover .pcard-img svg{transform:scale(1.06)}
+.pcard-img::after{content:'';position:absolute;top:0;bottom:0;left:-75%;width:55%;z-index:1;pointer-events:none;
+  transform:skewX(-16deg);background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+  transition:left .7s var(--e-out)}
+.pcard:hover .pcard-img::after{left:135%}
+.pcard-spec{transition:background .2s,color .2s}
+.pcard:hover .pcard-spec{background:#FFF8E1;color:#6B5400}
+
+/* ── Respuesta al clic ──
+   Va en `scale`, propiedad aparte de `transform`, para no pisar ni el hover ni
+   la animación de aparición. */
+.btn-add,.btn-quote,.hbtn,.hbtn-lg,.view-btn,.filters-toggle,.btn-checkout,.pcard-fav,.pcard-cmp{
+  transition:background .2s,border-color .2s,color .2s,box-shadow .2s,translate .18s,scale .1s}
+.btn-add:active,.btn-quote:active,.hbtn:active,.hbtn-lg:active,.view-btn:active,
+.filters-toggle:active,.btn-checkout:active,.pcard-fav:active,.pcard-cmp:active{scale:.96}
+.btn-add:hover{translate:0 -1px;box-shadow:0 7px 18px -7px rgba(212,169,0,.95)}
+.hbtn-lg.yel:hover{translate:0 -1px;box-shadow:0 8px 20px -8px rgba(212,169,0,.9)}
+.badge{transition:background .25s,border-color .25s,translate .25s}
+.badge:hover{background:rgba(255,255,255,.12);border-color:rgba(245,196,0,.4);translate:0 -2px}
+.logo{transition:scale .25s var(--e-peso)}
+.logo:hover{scale:1.02}
+.search-wrap{border-radius:6px;transition:box-shadow .25s}
+.search-wrap:focus-within{box-shadow:0 0 0 3px rgba(245,196,0,.28)}
+
+/* ── Favorito ──
+   El corazón late al marcarse. La clase la pone motion.js después de que la
+   rejilla se vuelve a dibujar, porque el botón de antes ya no existe. */
+.pcard-fav.pop{animation:mLatido .55s var(--e-peso)}
+@keyframes mLatido{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.35);box-shadow:0 0 0 0 rgba(211,47,47,.45)}
+  100%{transform:scale(1);box-shadow:0 0 0 14px rgba(211,47,47,0)}
+}
+
+/* ── Contador de la cotización ──
+   Salta cuando cambia el número. Sin esto, agregar un equipo desde una tarjeta
+   que está a media página no deja rastro visible en ningún lado. */
+.cart-badge.bump{animation:mSalto .5s var(--e-peso)}
+@keyframes mSalto{0%{transform:scale(1)}35%{transform:scale(1.5)}60%{transform:scale(.92)}100%{transform:scale(1)}}
+.cart-btn.recibe{animation:mSacude .5s ease-out}
+@keyframes mSacude{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+
+/* La foto que vuela del catálogo a la cotización. La crea motion.js. */
+.vuela{position:fixed;z-index:950;pointer-events:none;object-fit:contain;
+  border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.35);background:#fff}
+
+/* ── Paneles ── */
+.modal{transform:translateY(26px) scale(.97);transition:transform .4s var(--e-out)}
+.modal-overlay.open .modal{transform:none}
+.cart-drawer,.filter-drawer{transition:transform .42s var(--e-out)}
+.toast{transition:transform .45s cubic-bezier(.2,1.2,.4,1)}
+.toast.show .toast-icon{animation:mPop .5s var(--e-peso)}
+@keyframes mPop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(6deg)}100%{transform:scale(1)}}
+.af-tag{animation:mChip .3s var(--e-out) both}
+@keyframes mChip{from{opacity:0;transform:translateY(-6px) scale(.94)}to{opacity:1;transform:none}}
+.empty-state .icon,.cart-empty-icon{display:inline-block;animation:mFlotar 4.5s ease-in-out infinite}
+.gal-thumb:hover{transform:translateY(-2px) scale(1.03)}
+
+/* El botón de WhatsApp late despacio: llama sin ser un anuncio parpadeante. */
+.wa-float::after{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  animation:mPulsoWa 3.8s ease-out infinite}
+@keyframes mPulsoWa{0%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}70%,100%{box-shadow:0 0 0 16px rgba(37,211,102,0)}}
+
+/* Cambiar de vista o de página cruza un fundido en vez de parpadear. Sólo lo
+   ven los navegadores con View Transitions; el resto cambia seco. */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.32s}
+
+/* ── EL INTERRUPTOR GENERAL ──
+   Quien pidió menos animación en su sistema ve la página entera quieta. No se
+   apaga a medias: se apaga todo, incluido el scroll suave. */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+  body.js-reveal .pcard{opacity:1;transform:none}
+}

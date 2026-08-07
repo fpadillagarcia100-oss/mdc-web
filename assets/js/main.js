@@ -6,6 +6,24 @@
  */
 'use strict';
 
+/**
+ * Redibuja cruzando un fundido en lugar de parpadear.
+ *
+ * `startViewTransition` deja que el navegador fotografíe la pantalla, aplique
+ * el cambio y funda de una a otra. Se usa sólo donde el catálogo se reemplaza
+ * entero —cambiar de vista, de página o de categoría—, que es justo donde el
+ * salto seco desorienta: nueve tarjetas se cambian por otras nueve y no queda
+ * claro si el sitio respondió o se recargó.
+ *
+ * En un navegador sin la API, o con menos animación pedida, llama a render() y
+ * ya está. Nunca es un requisito: es un adorno con salida de emergencia.
+ */
+function renderConTransicion(){
+  const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(quieto || !document.startViewTransition){ render(); return }
+  document.startViewTransition(()=> render());
+}
+
 /* ══════════════════ EVENTOS GLOBALES ══════════════════ */
 document.addEventListener('click', e => {
   const t = e.target;
@@ -135,13 +153,13 @@ document.addEventListener('click', e => {
     if(navBtn.tagName === 'A') e.preventDefault();
     state.cat = navBtn.dataset.cat;
     state.page = 1;
-    render();
+    renderConTransicion();
     if(navBtn.tagName === 'A') $('#catalogo').scrollIntoView({block:'start'});
     return;
   }
 
   const pageBtn = t.closest('[data-page]');
-  if(pageBtn){ state.page = Number(pageBtn.dataset.page); render(); $('#catalogo').scrollIntoView({block:'start'}); return }
+  if(pageBtn){ state.page = Number(pageBtn.dataset.page); renderConTransicion(); $('#catalogo').scrollIntoView({block:'start'}); return }
 
   const chipBtn = t.closest('[data-chip]');
   if(chipBtn){ removeChip(chipBtn.dataset.chip, chipBtn.dataset.value); return }
@@ -150,7 +168,7 @@ document.addEventListener('click', e => {
   if(viewBtn){
     state.view = viewBtn.dataset.view;
     $$('[data-view]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===state.view)));
-    render(); return;
+    renderConTransicion(); return;
   }
 
   if(t.closest('[data-close-cart]') || t.id==='overlay'){ closeAll(); return }

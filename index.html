@@ -98,10 +98,17 @@
 <script src="assets/js/pages.js" defer></script>
 <script src="assets/js/admin.js" defer></script>
 <script src="assets/js/main.js" defer></script>
+<!-- Va al final: adorna lo que los demás ya construyeron y no lo necesita
+     ninguno de ellos. Si falta, el catálogo funciona igual, sólo más seco. -->
+<script src="assets/js/motion.js" defer></script>
 </head>
 <body>
 
 <a class="skip-link" href="#catalogo">Saltar al catálogo</a>
+
+<!-- Cuánto llevas leído. Se pinta sola con animation-timeline:scroll(); donde
+     eso no existe se queda en cero y no se ve. Sin JavaScript de por medio. -->
+<div class="scroll-progress" aria-hidden="true"></div>
 
 <!-- BARRA ADMIN -->
 <div class="admin-bar" id="adminBar">
