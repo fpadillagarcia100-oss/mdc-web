@@ -75,6 +75,12 @@
   ]
 }
 </script>
+<!-- Instalable y con modo sin conexión. En obra la señal va y viene, y el
+     catálogo tiene que seguir abriendo. Ver sw.js. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<!-- Sólo el de iOS. El icono de la pestaña sigue siendo el SVG de abajo, que se
+     ve nítido en cualquier pantalla; un PNG aquí lo desplazaría. -->
+<link rel="apple-touch-icon" href="/assets/img/icon-180.png">
 <script src="assets/js/icons.js" defer></script>
 <!-- Generado por "npm run build" desde data/catalogo.json. Debe ir antes de config.js. -->
 <script src="assets/js/catalogo-datos.js" defer></script>
@@ -101,6 +107,7 @@
 <!-- Va al final: adorna lo que los demás ya construyeron y no lo necesita
      ninguno de ellos. Si falta, el catálogo funciona igual, sólo más seco. -->
 <script src="assets/js/motion.js" defer></script>
+<script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
 

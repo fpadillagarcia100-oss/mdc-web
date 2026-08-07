@@ -34,6 +34,11 @@ const PUBLICAR = [
   'assets',
   'equipos',
   'maquinaria',
+  /* El trabajador de servicio va en la raíz por obligación, no por gusto: sólo
+     manda sobre las direcciones que cuelgan de su propia carpeta, y desde
+     /assets/ no podría atender la portada. */
+  'sw.js',
+  'manifest.webmanifest',
 ];
 
 function copiar(desde, hacia) {

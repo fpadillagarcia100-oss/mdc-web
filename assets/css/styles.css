@@ -1243,6 +1243,23 @@ body.vt-modal .modal-overlay,body.vt-modal .modal{transition:none!important}
 .rvc-sub{font-size:13px;color:#6B5400;line-height:1.65;margin-top:7px}
 .rvc-nota{font-size:11.5px;color:#8A7328;line-height:1.55;margin-top:12px;padding-top:10px;border-top:1px solid #F0DFA2}
 
+/* ── INSTALAR LA APLICACIÓN ──
+   Lo crea pwa.js sólo cuando el navegador confirma que se puede instalar. Un
+   botón que promete algo que este teléfono no sabe hacer es peor que no
+   tenerlo. */
+.instalar{color:var(--y)!important;border:1px solid rgba(245,196,0,.45);border-radius:99px;
+  padding:2px 10px!important;font-weight:600;animation:mLlamada 4s ease-in-out 2s infinite}
+.instalar:hover{background:rgba(245,196,0,.14);text-decoration:none!important}
+@keyframes mLlamada{0%,92%,100%{box-shadow:0 0 0 0 rgba(245,196,0,0)}
+  96%{box-shadow:0 0 0 5px rgba(245,196,0,.18)}}
+
+/* ── SIN SEÑAL ──
+   La franja de arriba avisa por qué faltan fotos y por qué una cotización aún
+   no salió. Sin ella, en obra el sitio parece roto en vez de desconectado. */
+body.sin-red::before{content:'📡 Sin señal · lo que ya viste sigue disponible, y tu cotización se enviará sola al volver la red';
+  position:sticky;top:0;z-index:500;display:block;background:#7A5A00;color:#FFE79A;
+  font-size:12px;text-align:center;padding:6px 14px;line-height:1.4}
+
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se
    apaga a medias: se apaga todo, incluido el scroll suave. */

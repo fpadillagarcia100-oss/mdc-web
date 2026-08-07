@@ -23,6 +23,23 @@ git add -A && git commit -m "Actualiza catálogo" && git push
 | `equipos/<slug>/index.html` | Una página por equipo, indexable por Google |
 | `sitemap.xml` | Con todas las direcciones reales |
 
+## Aplicación instalable y modo sin señal
+
+El sitio se instala en el teléfono y **funciona sin datos**: todo lo que ya se
+visitó una vez —fichas, fotos, precios— sigue abriendo, y una cotización
+llenada sin señal espera en el teléfono y se manda sola al volver la red.
+
+| Archivo | Qué hace |
+|---|---|
+| [`sw.js`](sw.js) | Decide qué se guarda. Código a la red primero, fotos al caché primero |
+| [`manifest.webmanifest`](manifest.webmanifest) | Nombre, colores e iconos de la app instalada |
+| [`assets/js/pwa.js`](assets/js/pwa.js) | Enciende el trabajador y ofrece instalar |
+| [`tools/make-icons.js`](tools/make-icons.js) | Dibuja los PNG del icono — `npm run icons` |
+
+`sw.js` va en la raíz por obligación: un trabajador de servicio sólo manda
+sobre las direcciones que cuelgan de su carpeta. Si lo mueves a `assets/`,
+deja de atender la portada.
+
 Netlify ejecuta `npm run build` en cada despliegue, así que basta con
 `git push`. Y `npm run test:generado` impide publicar con las fichas
 desactualizadas: si editas los datos y olvidas regenerar, el CI se pone rojo.

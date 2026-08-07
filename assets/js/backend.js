@@ -90,11 +90,112 @@ async function registrarSolicitud(s) {
     if (!r.ok && window.console) {
       console.warn('[MDC] La solicitud no se registró:', r.status);
     }
+    /* Un 4xx es un dato que la base rechaza: reintentarlo daría lo mismo mil
+       veces. Un 5xx es el servidor teniendo un mal momento, y eso sí vale la
+       pena volver a intentarlo más tarde. */
+    if (!r.ok && r.status >= 500) encolarSolicitud(s);
     return r.ok;
   } catch (err) {
     if (window.console) console.warn('[MDC] No se pudo registrar la solicitud:', err.message);
+    // Se cayó la red o se agotó el plazo: la solicitud no se pierde, espera.
+    encolarSolicitud(s);
     return false;
   }
+}
+
+
+/* ── COLA DE SOLICITUDES SIN SEÑAL ───────────────────────────────────────────
+ *
+ * El caso real: el vendedor está en obra, el cliente le pide precio, llena la
+ * cotización y no hay datos. Hasta ahora esa solicitud se perdía y sólo
+ * quedaba el mensaje de WhatsApp — que tampoco sale sin señal.
+ *
+ * Ahora espera en el teléfono y se manda sola en cuanto vuelve la red.
+ *
+ * Lo que esto NO garantiza: que no se duplique. Si el servidor recibió la
+ * solicitud pero la respuesta se perdió en el camino, al reintentar entra dos
+ * veces. Se acepta a sabiendas: una solicitud repetida se ve de un vistazo en
+ * la bandeja y se descarta en dos segundos; una perdida es un cliente que se
+ * fue con otro y del que nunca te enteras.
+ */
+const COLA_SOLICITUDES = 'mdc_v1_cola_solicitudes';
+const TOPE_COLA = 20;
+
+function leerCola() {
+  try { return JSON.parse(localStorage.getItem(COLA_SOLICITUDES)) || []; }
+  catch { return []; }
+}
+
+function encolarSolicitud(s) {
+  if (!BACKEND) return;
+  try {
+    const cola = leerCola();
+    // Se guarda cuándo se llenó: al llegar tarde a la bandeja, la hora del
+    // servidor diría "hoy" cuando en realidad se pidió anteayer en la sierra.
+    cola.push({ ...s, encoladaEn: new Date().toISOString() });
+    localStorage.setItem(COLA_SOLICITUDES, JSON.stringify(cola.slice(-TOPE_COLA)));
+  } catch { /* almacenamiento lleno o bloqueado: no hay más que hacer */ }
+}
+
+/**
+ * Intenta mandar lo que quedó pendiente. Se llama al volver la red y al abrir.
+ *
+ * Cada una se saca de la cola SÓLO si el servidor la aceptó. Y se reescribe la
+ * cola completa al final, no dentro del bucle: si el cliente cierra la página
+ * a media tanda, lo peor que pasa es que se reintente algo ya enviado.
+ */
+async function vaciarColaSolicitudes() {
+  if (!BACKEND || typeof fetch !== 'function' || navigator.onLine === false) return;
+
+  const cola = leerCola();
+  if (!cola.length) return;
+
+  const pendientes = [];
+  let enviadas = 0;
+
+  for (const s of cola) {
+    try {
+      const r = await fetch(`${BACKEND.url}/rest/v1/solicitudes`, {
+        method: 'POST',
+        headers: {
+          apikey: BACKEND.llave,
+          Authorization: `Bearer ${BACKEND.llave}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          tipo: s.tipo,
+          nombre: s.nombre,
+          telefono: s.telefono,
+          correo: s.correo || null,
+          empresa: s.empresa || null,
+          mensaje: s.encoladaEn
+            ? `${s.mensaje || ''}\n\n[Se llenó sin señal el ${s.encoladaEn}]`.trim()
+            : (s.mensaje || ''),
+          carrito: Array.isArray(s.carrito) ? s.carrito : [],
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) { enviadas++; continue; }
+      if (r.status >= 500) pendientes.push(s);   // el 4xx no se reintenta jamás
+    } catch {
+      pendientes.push(s);                        // sigue sin red: que espere
+    }
+  }
+
+  try { localStorage.setItem(COLA_SOLICITUDES, JSON.stringify(pendientes)); } catch {}
+
+  if (enviadas && typeof showToast === 'function') {
+    showToast(enviadas === 1
+      ? 'Se envió la cotización que quedó pendiente sin señal.'
+      : `Se enviaron ${enviadas} cotizaciones que quedaron pendientes.`);
+  }
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('online', vaciarColaSolicitudes);
+  // También al abrir: la señal pudo volver con la página cerrada.
+  window.addEventListener('load', ()=> setTimeout(vaciarColaSolicitudes, 2500));
 }
 
 

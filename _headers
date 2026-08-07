@@ -38,3 +38,12 @@
 # Las imágenes sí se cachean: pesan, y cuando cambian lo hacen con otro nombre.
 /assets/img/*
   Cache-Control: public, max-age=86400
+
+# El trabajador de servicio, nunca. Es el archivo que decide qué se guarda y
+# qué se pide: si el navegador se queda con una copia vieja, se queda también
+# con las reglas viejas, y no hay forma de corregirlo desde el despliegue.
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate

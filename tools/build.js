@@ -401,6 +401,8 @@ function fichaHTML(eq, catalogo, iconos) {
 <meta name="theme-color" content="#1A1A1A">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="canonical" href="${url}">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/img/icon-180.png">
 <meta property="og:type" content="product">
 <meta property="og:url" content="${url}">
 <meta property="og:title" content="${esc(eq.name)} — ${marca}">
@@ -620,6 +622,8 @@ function categoriaHTML(cat, equipos, catalogo, iconos) {
 <meta name="theme-color" content="#1A1A1A">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="canonical" href="${url}">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/img/icon-180.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${url}">
 <meta property="og:title" content="${esc(titulo)}">

@@ -13,6 +13,7 @@
     "test:csp": "node tools/check-csp.js",
     "test:seguridad": "node tests/seguridad.test.js",
     "og": "node tools/make-og.js",
+    "icons": "node tools/make-icons.js",
     "db:seed": "node tools/generar-seed.js",
     "db:export": "node tools/exportar-catalogo.js",
     "db:local": "supabase start",

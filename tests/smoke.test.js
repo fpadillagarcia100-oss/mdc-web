@@ -873,6 +873,72 @@ const ev = code => window.eval(code);
   }
   ev('vistos = []; saveVistos(); renderVistos()');
 
+  /* ══ APLICACIÓN INSTALABLE Y MODO SIN SEÑAL ══
+     El trabajador de servicio corre en su propio hilo y jsdom no lo ejecuta,
+     así que se revisa su código —como con la función del aviso—. Lo que se
+     comprueba no es que "existe": son las tres decisiones que, si se invierten,
+     rompen el sitio en producción sin que nadie se entere. */
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+
+  check('El trabajador de servicio no se mete con lo que se envía',
+    /peticion\.method !== 'GET'/.test(sw),
+    'una cotización nunca se sirve desde el caché');
+  check('El código va a la red primero',
+    sw.indexOf('conPlazo(peticion, 5000)') !== -1 && /red de seguridad, no el camino normal/.test(sw),
+    'sin hash en el nombre, servir del caché congelaría el despliegue');
+  check('Las fotos van al caché primero', /destination === 'image'/.test(sw) && /cache\.match\(peticion\)/.test(sw));
+  check('Las fotos de otro dominio también se guardan',
+    /red\.type === 'opaque'/.test(sw), 'las de Supabase llegan opacas');
+  check('El caché de fotos se poda', /TOPE_FOTOS/.test(sw) && /podar/.test(sw),
+    'pasarse de cuota borra el sitio entero, no lo más viejo');
+  check('Los cachés de versiones viejas se borran al activar',
+    /caches\.delete\(n\)/.test(sw) && /!n\.startsWith\(VERSION\)/.test(sw));
+  check('La instalación no se cae por un archivo que falte',
+    /cache\.add\(u\)\.catch/.test(sw), 'con addAll, uno solo aborta el offline entero');
+
+  const manifiesto = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.webmanifest'), 'utf8'));
+  check('El manifiesto es JSON válido y declara alcance', manifiesto.scope === '/' && manifiesto.start_url === '/');
+  check('Trae un icono enmascarable',
+    manifiesto.icons.some(i => i.purpose === 'maskable'),
+    'sin él, Android recorta el logo con su propia forma');
+
+  const iconosOk = manifiesto.icons.every(i =>{
+    const f = path.join(ROOT, i.src.replace(/^\//, ''));
+    if(!fs.existsSync(f)) return false;
+    // El ancho y el alto reales viven en la cabecera IHDR del PNG, bytes 16-24.
+    const b = fs.readFileSync(f);
+    return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}` === i.sizes;
+  });
+  check('Cada icono existe y mide lo que promete', iconosOk,
+    manifiesto.icons.map(i => i.sizes).join(', '));
+
+  check('El trabajador y el manifiesto se publican de verdad',
+    fs.existsSync(path.join(ROOT, 'dist/sw.js')) && fs.existsSync(path.join(ROOT, 'dist/manifest.webmanifest')),
+    'empaquetar.js copia sólo lo que está en su lista');
+
+  const cabeceras = fs.readFileSync(path.join(ROOT, '_headers'), 'utf8');
+  check('El trabajador de servicio nunca se cachea',
+    /\/sw\.js\s*\n\s*Cache-Control: public, max-age=0/.test(cabeceras),
+    'una copia vieja se queda con las reglas viejas para siempre');
+
+  /* ── La cola de cotizaciones sin señal ──
+     Se prueban las funciones directamente, sin tocar la red: mandar una
+     solicitud de verdad desde una prueba escribiría en la base de producción. */
+  ev(`localStorage.removeItem('mdc_v1_cola_solicitudes')`);
+  ev(`encolarSolicitud({tipo:'cotizacion', nombre:'Prueba', telefono:'9611234567', carrito:[]})`);
+  const cola = JSON.parse(ev(`localStorage.getItem('mdc_v1_cola_solicitudes')`) || '[]');
+  check('Una cotización sin señal se guarda en el teléfono', cola.length === 1 && cola[0].nombre === 'Prueba');
+  check('Y se anota cuándo se llenó, no cuándo llegó',
+    typeof cola[0].encoladaEn === 'string' && cola[0].encoladaEn.includes('T'),
+    'llegando tarde, la hora del servidor diría "hoy"');
+
+  ev(`for(let i=0;i<30;i++) encolarSolicitud({tipo:'cotizacion', nombre:'N'+i, telefono:'9611234567'})`);
+  const llena = JSON.parse(ev(`localStorage.getItem('mdc_v1_cola_solicitudes')`) || '[]');
+  check('La cola tiene tope y conserva las últimas',
+    llena.length === 20 && llena[llena.length-1].nombre === 'N29',
+    `${llena.length} pendientes`);
+  ev(`localStorage.removeItem('mdc_v1_cola_solicitudes')`);
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;
