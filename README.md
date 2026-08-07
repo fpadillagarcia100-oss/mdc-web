@@ -23,6 +23,26 @@ git add -A && git commit -m "Actualiza catálogo" && git push
 | `equipos/<slug>/index.html` | Una página por equipo, indexable por Google |
 | `sitemap.xml` | Con todas las direcciones reales |
 
+## Pruebas
+
+| Comando | Qué comprueba |
+|---|---|
+| `npm test` | Lógica, integración en jsdom, CSP y que lo generado corresponda a los datos. Es lo que corre el CI |
+| `npm run test:visual` | Abre el sitio en un navegador real, mide cajas, saca capturas y las compara con las de `tests/capturas/` |
+
+La visual va aparte porque usa el Edge que ya trae Windows en vez de descargar
+un navegador de 150 MB — gratis aquí, imposible en el CI de Ubuntu. Corre antes
+de cualquier cambio visual. Cuando una captura cambia a propósito:
+
+```
+npm run test:visual -- --aceptar
+```
+
+También mide rendimiento contra un presupuesto (peticiones, peso, primer texto
+pintado) y comprueba el sitio **empaquetado** de `dist/`, no sólo el del
+repositorio: un empaquetado que se rompe en el último paso no lo ve nadie hasta
+que ya está publicado.
+
 ## Aplicación instalable y modo sin señal
 
 El sitio se instala en el teléfono y **funciona sin datos**: todo lo que ya se

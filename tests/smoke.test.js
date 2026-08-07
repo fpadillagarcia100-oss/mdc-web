@@ -939,6 +939,42 @@ const ev = code => window.eval(code);
     `${llena.length} pendientes`);
   ev(`localStorage.removeItem('mdc_v1_cola_solicitudes')`);
 
+  /* ══ GUÍAS DE COMPRA ══
+     El contenido que NO depende del inventario. Una página de categoría que
+     sólo lista lo que hay hoy queda vacía el día que se venden esos tres
+     equipos; esto sigue sirviendo con el inventario en cero. */
+  const guias = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/guias.json'), 'utf8'));
+  const categorias = Object.keys(guias).filter(k => !k.startsWith('_'));
+
+  check('Hay guía para cada categoría del catálogo',
+    ['Excavación', 'Carga', 'Compactación', 'Nivelación', 'Elevación'].every(c => guias[c]),
+    categorias.join(', '));
+
+  const guiaCompleta = categorias.every(c =>
+    guias[c].titulo && guias[c].entrada && guias[c].secciones.length >= 3 && guias[c].faq.length >= 3);
+  check('Cada guía trae entrada, tres bloques y tres preguntas', guiaCompleta);
+
+  let palabrasMin = Infinity, sinFaq = [];
+  for (const c of categorias) {
+    const carpeta = c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const pagina = path.join(ROOT, 'maquinaria', carpeta, 'index.html');
+    if (!fs.existsSync(pagina)) { sinFaq.push(carpeta); continue }
+    const html = fs.readFileSync(pagina, 'utf8');
+    palabrasMin = Math.min(palabrasMin, html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length);
+    if (!html.includes('"@type": "FAQPage"')) sinFaq.push(carpeta);
+  }
+  check('Las páginas de categoría dejaron de ser una lista de enlaces',
+    palabrasMin > 700, `la más corta tiene ${palabrasMin} palabras`);
+  check('Y declaran sus preguntas a Google como FAQPage', sinFaq.length === 0,
+    sinFaq.length ? 'faltan en ' + sinFaq.join(', ') : 'las 5');
+
+  // La guía es conocimiento general, no promesas sobre unidades concretas.
+  // Si alguien mete aquí un precio o una disponibilidad, envejece mal y miente.
+  const textoGuias = JSON.stringify(guias);
+  check('Las guías no prometen precios ni existencias',
+    !/\$\s?\d|\bMXN\b|tenemos en existencia|disponible ahora/i.test(textoGuias),
+    'contenido que no caduca con el inventario');
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;

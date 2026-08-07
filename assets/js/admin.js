@@ -92,7 +92,9 @@ function escenaExcavadora(){
     <rect width="380" height="330" fill="url(#lgCielo)"/>
     <circle cx="298" cy="76" r="62" fill="url(#lgHalo)"/>
     <circle class="lg-sun" cx="298" cy="76" r="24" fill="#FFC700" opacity=".55"/>
-    <ellipse class="lg-haze" cx="190" cy="120" rx="150" ry="34" fill="#8A6D00" opacity=".22"/>
+    <!-- La neblina va con el degradado radial, no con un color plano: en plano
+         se ve el borde de la elipse y parece un manchón pegado encima. -->
+    <ellipse class="lg-haze" cx="190" cy="120" rx="170" ry="46" fill="url(#lgHalo)" opacity=".5"/>
 
     <!-- Dos cordilleras a distinta altura: la de atrás más clara y la de
          adelante más oscura. Es lo que da sensación de profundidad. -->

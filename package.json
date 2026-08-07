@@ -12,6 +12,7 @@
     "test:smoke": "node tests/smoke.test.js",
     "test:csp": "node tools/check-csp.js",
     "test:seguridad": "node tests/seguridad.test.js",
+    "test:visual": "node tests/visual.test.js",
     "og": "node tools/make-og.js",
     "icons": "node tools/make-icons.js",
     "db:seed": "node tools/generar-seed.js",
@@ -21,6 +22,7 @@
     "db:push": "supabase db push"
   },
   "devDependencies": {
-    "jsdom": "^30.0.1"
+    "jsdom": "^30.0.1",
+    "playwright-core": "^1.62.1"
   }
 }

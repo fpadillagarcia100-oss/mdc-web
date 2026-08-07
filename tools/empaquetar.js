@@ -77,6 +77,21 @@ if (faltan.length) {
   process.exit(1);
 }
 
+/* El index.html que se publica carga UN script en vez de veintiuno. El del
+   repositorio no se toca: ahí cada error del navegador sigue apuntando a su
+   archivo y a su línea, que es lo que hace posible depurar.
+   La dirección lleva el hash del contenido, así que un despliegue nuevo es
+   una dirección nueva y ningún caché puede servir el JavaScript de ayer. */
+const { htmlConBundle } = require('./empacar-js');
+const bundle = path.join(ROOT, 'assets', 'js', 'sitio.js');
+if (fs.existsSync(bundle)) {
+  const version = require('crypto')
+    .createHash('sha256').update(fs.readFileSync(bundle)).digest('hex').slice(0, 10);
+  const html = htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), version);
+  fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8');
+  console.log(`  index.html publicado con un solo script (v=${version})`);
+}
+
 /* Último cerrojo antes de subir.
 
    Si un archivo con credenciales llegara a dist/, se publicaría en internet

@@ -37,6 +37,15 @@ function leerCatalogo() {
   return JSON.parse(crudo);
 }
 
+/* Las guías de compra por categoría. Es contenido editorial —cómo elegir, qué
+   revisar, qué cuesta operar— y no inventario, así que vive aparte y se edita
+   sin tocar el catálogo. Si el archivo no está, las páginas salen como antes:
+   nunca puede tumbar la compilación por un texto. */
+const GUIAS = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'guias.json'), 'utf8')); }
+  catch { return {}; }
+})();
+
 /* ── Utilidades ── */
 const esc = s => String(s ?? '').replace(/[&<>"']/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -609,6 +618,48 @@ function categoriaHTML(cat, equipos, catalogo, iconos) {
     ],
   };
 
+  /* La guía de compra de esta categoría, si la hay.
+
+     Es lo único de estas páginas que no sale del inventario, y es a propósito:
+     una página que sólo lista lo que hay hoy queda vacía el día que se venden
+     los tres equipos, y para Google nunca fue más que una lista de enlaces.
+     Lo que se responde aquí —qué tamaño necesito, qué reviso en una usada,
+     cuánto cuesta operarla— sigue siendo cierto y útil con el inventario
+     vacío, y es lo que de verdad busca quien todavía no sabe qué comprar.
+
+     Vive en data/guias.json para que se corrija sin tocar código. */
+  const guia = GUIAS[cat] || null;
+
+  const guiaFAQ = guia && guia.faq && guia.faq.length ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: guia.faq.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.r },
+    })),
+  } : null;
+
+  const guiaHTML = !guia ? '' : `
+  <section class="cat-guia">
+    <h2>${esc(guia.titulo)}</h2>
+    <p class="cat-guia-entrada">${esc(guia.entrada)}</p>
+    ${guia.secciones.map(s => `
+    <div class="cat-guia-bloque">
+      <h3>${esc(s.h)}</h3>
+      <p>${esc(s.p)}</p>
+    </div>`).join('')}
+    ${!guia.faq || !guia.faq.length ? '' : `
+    <div class="cat-guia-faq">
+      <h3>Preguntas frecuentes</h3>
+      ${guia.faq.map(f => `
+      <details>
+        <summary>${esc(f.q)}</summary>
+        <p>${esc(f.r)}</p>
+      </details>`).join('')}
+    </div>`}
+  </section>`;
+
   const wa = `https://wa.me/${String(a.whatsapp).replace(/\D/g, '')}?text=` +
     encodeURIComponent(`Hola ${marca}, me interesa su maquinaria de ${cat.toLowerCase()}. ¿Qué tienen disponible?`);
 
@@ -640,6 +691,9 @@ ${JSON.stringify(datos, null, 2)}
 <script type="application/ld+json">
 ${JSON.stringify(migas, null, 2)}
 </script>
+${guiaFAQ ? `<script type="application/ld+json">
+${JSON.stringify(guiaFAQ, null, 2)}
+</script>` : ''}
 </head>
 <body>
 
@@ -686,6 +740,8 @@ ${JSON.stringify(migas, null, 2)}
         </div>
       </a>`).join('')}
   </div>
+
+${guiaHTML}
 
   <section class="cat-cierre">
     <h2>¿No encuentras lo que buscas?</h2>
@@ -788,8 +844,14 @@ const fichas = generarFichas(catalogo, iconos);
 const categorias = generarCategorias(catalogo, iconos);
 const urls = generarSitemap(catalogo, categorias);
 
+/* Los 21 scripts, unidos en uno. Sólo para publicar: el index.html del
+   repositorio sigue cargándolos por separado, que es lo que hace depurable el
+   sitio. Ver tools/empacar-js.js. */
+const paquete = require('./empacar-js').empacarJS();
+
 console.log('Sitio generado:');
 console.log(`  assets/js/catalogo-datos.js   ${catalogo.equipos.length} equipos, ${catalogo.sucursales.length} sucursales`);
+console.log(`  assets/js/sitio.js            ${paquete.archivos} scripts unidos, ${(paquete.despues/1024).toFixed(0)} kB`);
 console.log(`  equipos/<slug>/index.html     ${fichas} fichas`);
 console.log(`  maquinaria/<cat>/index.html   ${categorias.length} categorías (${categorias.map(([c, e]) => `${c}: ${e.length}`).join(', ')})`);
 console.log(`  sitemap.xml                   ${urls} direcciones`);

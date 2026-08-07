@@ -475,10 +475,6 @@ body.is-admin .pcard-edit{display:flex}
 .login-box p{font-size:12.5px;color:var(--muted);line-height:1.6}
 
 .login-shell{max-width:790px;margin:2px auto 8px;display:grid;grid-template-columns:1.05fr .95fr;border-radius:18px;overflow:hidden;background:var(--white);border:1px solid var(--border);box-shadow:0 30px 70px -34px rgba(0,0,0,.55);animation:lgIn .55s cubic-bezier(.2,.8,.25,1) both}
-@media (max-width:760px){
-  .login-shell{grid-template-columns:1fr}
-  .login-hero{min-height:184px}
-}
 
 /* ── IZQUIERDA: LA OBRA ── */
 .login-hero{position:relative;min-height:376px;background:#0E0E0E;overflow:hidden}
@@ -536,6 +532,22 @@ body.is-admin .pcard-edit{display:flex}
 .login-form .btn-primary::after{content:'';position:absolute;top:0;left:-60%;width:38%;height:100%;transform:skewX(-18deg);background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);animation:lgShine 4.2s 1.4s ease-in-out infinite}
 .login-form .btn-primary:disabled::after{animation:none;opacity:0}
 .login-foot{margin-top:14px;font-size:11px;color:var(--light);display:flex;align-items:center;gap:6px;line-height:1.5}
+
+/* En móvil, al final del bloque a propósito.
+   Esta regla estuvo arriba y no hacía nada: `.login-hero{min-height:376px}`
+   venía después con la misma especificidad y ganaba por orden. El resultado
+   era una escena de 376 px comiéndose media pantalla de teléfono, con el texto
+   encima de las orugas. Lo encontró la captura móvil de la prueba visual. */
+@media (max-width:760px){
+  .login-shell{grid-template-columns:1fr}
+  .login-hero{min-height:196px}
+  .login-form{padding:24px 22px 26px}
+  .login-form h3{font-size:20px}
+  /* Con la escena a un tercio de alto, el velo tiene que ser más oscuro para
+     que el texto siga leyéndose sobre la máquina. */
+  .login-hero::after{background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,transparent 34%,rgba(0,0,0,.88) 100%)}
+  .login-hero-copy span{display:none}
+}
 
 @keyframes lgIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes lgUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
@@ -711,7 +723,25 @@ footer button:hover{color:var(--y);text-decoration:underline}
 }
 @media(max-width:600px){
   .product-grid{grid-template-columns:1fr}
-  .topbar-links a,.hero-badges{display:none}
+  /* Los enlaces de la barra superior son <button>, no <a>. La regla de antes
+     decía `.topbar-links a` y por tanto no escondía nada: los cinco botones
+     medían 451 px dentro de una pantalla de 390 y el último —iniciar sesión—
+     quedaba materialmente fuera de alcance. Lo encontró la prueba visual, no
+     una persona, después de meses en producción.
+
+     Se quedan sólo el de entrar y el de instalar. Los otros cuatro están en el
+     pie y en el encabezado; no se pierde ningún camino. */
+  .topbar-links button:not(#adminEntry):not(.instalar){display:none}
+  .topbar-inner{gap:10px}
+  /* Sin esto "Iniciar sesión" parte en dos líneas y estira la barra al doble. */
+  .topbar-links button{white-space:nowrap}
+  #topbarMsg{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  /* El selector de categoría se comía 350 de los 390 px y dejaba el buscador
+     en "Buscar ec". Filtrar por categoría ya se hace desde la pestaña de
+     arriba y desde el cajón de filtros; escribir, sólo aquí. */
+  .search-cat{display:none}
+  .search-input{border-radius:6px 0 0 6px}
+  .hero-badges{display:none}
   .hero-h{font-size:22px}
   .header-inner{gap:10px}
   .search-wrap{order:3;flex-basis:100%;max-width:none}
@@ -1259,6 +1289,27 @@ body.vt-modal .modal-overlay,body.vt-modal .modal{transition:none!important}
 body.sin-red::before{content:'📡 Sin señal · lo que ya viste sigue disponible, y tu cotización se enviará sola al volver la red';
   position:sticky;top:0;z-index:500;display:block;background:#7A5A00;color:#FFE79A;
   font-size:12px;text-align:center;padding:6px 14px;line-height:1.4}
+
+/* ── GUÍA DE COMPRA DE LA CATEGORÍA ──
+   Texto largo en página estática: la medida manda sobre todo lo demás. A 65
+   caracteres por renglón el ojo encuentra el siguiente sin perderse; a lo
+   ancho de la pantalla, se salta líneas y se abandona. */
+.cat-guia{margin-top:40px;padding-top:28px;border-top:1px solid var(--border)}
+.cat-guia h2{font-size:22px;letter-spacing:-.02em;margin-bottom:12px}
+.cat-guia-entrada{font-size:15.5px;line-height:1.75;color:var(--text);max-width:68ch;margin-bottom:26px;
+  padding-left:16px;border-left:3px solid var(--y)}
+.cat-guia-bloque{margin-bottom:24px;max-width:70ch}
+.cat-guia-bloque h3{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:7px}
+.cat-guia-bloque p{font-size:14.5px;line-height:1.8;color:var(--muted)}
+.cat-guia-faq{margin-top:32px;max-width:70ch}
+.cat-guia-faq h3{font-size:16px;margin-bottom:12px}
+.cat-guia-faq details{border:1px solid var(--border);border-radius:8px;background:var(--white);margin-bottom:8px}
+.cat-guia-faq summary{padding:13px 16px;font-size:14px;font-weight:600;color:var(--dark);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.cat-guia-faq summary::-webkit-details-marker{display:none}
+.cat-guia-faq summary::after{content:'+';color:var(--y);font-size:19px;line-height:1;flex-shrink:0}
+.cat-guia-faq details[open] summary::after{content:'−'}
+.cat-guia-faq details p{padding:0 16px 15px;font-size:14px;line-height:1.75;color:var(--muted)}
+@media (max-width:560px){ .cat-guia h2{font-size:19px} .cat-guia-entrada{font-size:14.5px} }
 
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se

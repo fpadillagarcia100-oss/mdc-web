@@ -1,0 +1,123 @@
+{
+  "_nota": "Guías de compra por categoría. Es conocimiento general de maquinaria pesada — cómo elegir tamaño, qué revisar en una unidad usada, qué cuesta operarla — NO afirmaciones sobre unidades concretas ni sobre la empresa. Si un dato deja de ser cierto para tu mercado, corrígelo aquí: tools/build.js lo lee de este archivo y lo publica en /maquinaria/<categoria>/.",
+
+  "Excavación": {
+    "titulo": "Cómo elegir una excavadora",
+    "entrada": "El error más caro en excavación no es pagar de más: es comprar la máquina equivocada de tamaño. Una excavadora grande de menos rinde poco y se desgasta el doble; una grande de más no entra en la obra, cuesta más de trasladar y quema más diésel por metro cúbico movido.",
+    "secciones": [
+      {
+        "h": "Primero el tonelaje, después la marca",
+        "p": "El peso operativo manda sobre todo lo demás, porque de él dependen el alcance, la fuerza de arranque y —sobre todo— cómo la vas a mover entre obras. Como referencia de uso: las de 1 a 6 toneladas son para zanja urbana, jardinería y espacios donde no cabe otra cosa; de 7 a 15 toneladas es el rango de la obra civil común, drenaje y cimentación; de 20 a 30 toneladas es el caballo de batalla del movimiento de tierras y la que más se renta; de 30 en adelante ya se justifica sólo con volumen sostenido o con roca."
+      },
+      {
+        "h": "Lo que decide si una usada es buena compra",
+        "p": "Las horas del contador dicen menos de lo que la gente cree. Una máquina de 8,000 horas con mantenimiento documentado vale más que una de 4,000 sin papeles. Lo que sí hay que revisar de cerca: el tren de rodaje (zapatas, rodillos, cadena) porque es la reparación más cara y silenciosa; fugas en cilindros, mangueras y mando final; el juego en los bujes del aguilón y el balancín, que delata trabajo forzado; y que las horas cuadren con el desgaste del asiento, los pedales y los mandos. Si el contador dice 3,000 horas y el piso de la cabina está comido, alguien movió el número."
+      },
+      {
+        "h": "Lo que cuesta después de comprarla",
+        "p": "El precio de compra suele ser la mitad de la historia. Los tres gastos que de verdad pesan son el diésel, el tren de rodaje y el sistema hidráulico. En obra de tierra continua, el tren de rodaje se lleva una parte importante del costo por hora y depende muchísimo de cómo se opera: girar sobre roca y trabajar en pendiente lo consume mucho más rápido que el mismo número de horas en terreno blando."
+      }
+    ],
+    "faq": [
+      { "q": "¿Conviene comprar o rentar una excavadora?", "r": "Depende de cuántos meses al año la vas a tener trabajando. Si la obra es corta o el trabajo es un pico puntual, la renta no inmoviliza el capital ni te deja con un activo parado. Si la máquina va a tener trabajo continuo, comprar sale mejor a partir del punto de equilibrio, que puedes ver calculado en cada ficha de equipo." },
+      { "q": "¿Cuántas horas son demasiadas en una excavadora usada?", "r": "No hay un número que sirva solo. Una unidad con mantenimiento documentado y buen tren de rodaje puede ser mejor compra con 8,000 horas que una descuidada con 4,000. Pide el historial de servicio y revisa el desgaste físico antes que el contador." },
+      { "q": "¿Qué tamaño necesito para drenaje y zanja urbana?", "r": "El rango de 7 a 15 toneladas cubre la mayoría de la obra civil urbana. Por debajo de 6 toneladas ganas acceso y pierdes alcance y profundidad; por encima de 20 empiezas a tener problemas de maniobra y de traslado dentro de ciudad." }
+    ]
+  },
+
+  "Carga": {
+    "titulo": "Cargadores y retroexcavadoras: cuál te sirve",
+    "entrada": "Aquí conviven tres máquinas que se confunden seguido y no hacen lo mismo. Elegir mal significa pagar por capacidad que no vas a usar, o quedarte corto justo en la tarea que más repites.",
+    "secciones": [
+      {
+        "h": "Retroexcavadora, minicargador o cargador frontal",
+        "p": "La retroexcavadora es la navaja suiza: carga por delante y excava por detrás, y por eso es la que más se ve en obra pequeña y mediana donde no se justifican dos máquinas. El minicargador gana donde el espacio manda y donde los aditamentos importan —barredora, martillo, ahoyadora—, y su ventaja real es cambiar de herramienta en minutos. El cargador frontal es para volumen: alimentar trituradora, cargar volteos, mover material a granel todo el día. Si tu trabajo es mover metros cúbicos, ninguna retro le gana."
+      },
+      {
+        "h": "Ruedas o cadenas en un minicargador",
+        "p": "Las ruedas son más baratas de comprar y de mantener, giran más rápido y no maltratan el pavimento. Las cadenas flotan sobre terreno blando, lodo y arena, donde una máquina de ruedas se entierra y pierde el día. La regla práctica: si trabajas mayormente sobre piso firme, ruedas; si el terreno es blando o irregular más de la mitad del tiempo, cadenas y asume el costo mayor del tren de rodaje."
+      },
+      {
+        "h": "Qué revisar antes de cerrar",
+        "p": "En estas máquinas el desgaste se concentra en los pasadores y bujes de los brazos: con la máquina apagada, mueve el aditamento y busca juego. Revisa también el enganche rápido, que sufre mucho y es caro; el estado del cucharón y sus filos, que es lo primero que se cambia; y la transmisión, escuchando patinaje al arrancar en carga. En retroexcavadora, prueba los estabilizadores: si se caen solos con la máquina apagada, hay fuga interna."
+      }
+    ],
+    "faq": [
+      { "q": "¿Una retroexcavadora sustituye a una excavadora?", "r": "Para zanja corta, instalación de tubería y obra pequeña, muchas veces sí, y con la ventaja de que además carga y se traslada sola por camino. Para excavación sostenida, profundidad o volumen, no: la excavadora tiene más fuerza, más alcance y mueve mucho más material por hora." },
+      { "q": "¿Qué aditamentos valen la pena en un minicargador?", "r": "Los que uses más de una vez al mes. Comprar un juego completo por si acaso es dinero parado; el martillo hidráulico, la barredora y la ahoyadora se rentan cuando hacen falta y sólo se compran cuando el trabajo es recurrente." },
+      { "q": "¿Cuánto material mueve un cargador frontal por hora?", "r": "Depende del tamaño del cucharón, del ciclo y de la distancia de acarreo, así que cualquier número suelto engaña. Lo que sí puedes hacer es medirlo en tu obra: cronometra diez ciclos completos y multiplica por la capacidad real del cucharón, no por la nominal." }
+    ]
+  },
+
+  "Compactación": {
+    "titulo": "Compactación: la máquina se elige por el material",
+    "entrada": "En compactación casi todos los errores vienen de la misma confusión: creer que se elige por tamaño de obra cuando se elige por tipo de suelo. Un rodillo liso sobre arcilla no compacta, sólo la alisa por arriba y deja el problema abajo, donde nadie lo ve hasta que el pavimento se agrieta.",
+    "secciones": [
+      {
+        "h": "Liso, pata de cabra o neumático",
+        "p": "El rodillo liso vibratorio es para materiales granulares: arena, grava, base y sub-base, y para carpeta asfáltica. El pata de cabra es para suelos cohesivos —arcilla y limo—, porque los tacones amasan y compactan en profundidad en lugar de sellar la superficie. El rodillo neumático cierra y sella la carpeta asfáltica, y da un acabado que el liso no consigue. Muchas obras necesitan dos, no uno."
+      },
+      {
+        "h": "Peso, frecuencia y amplitud",
+        "p": "El peso estático no cuenta toda la historia: en un rodillo vibratorio, lo que compacta es la fuerza centrífuga que genera la vibración. Una máquina con alta amplitud y baja frecuencia entra en profundidad y sirve para capas gruesas; alta frecuencia y baja amplitud da acabado superficial y es lo que quieres al final de la carpeta. Si la máquina no permite cambiar entre las dos, estás eligiendo una sola de esas dos tareas."
+      },
+      {
+        "h": "Lo que revisas en una usada",
+        "p": "El corazón del rodillo es el excitador: pide que la vibración se encienda con la máquina caliente y escucha ruidos metálicos o vibración despareja. Revisa los amortiguadores de goma entre el tambor y el chasis, porque cuando se cristalizan la vibración se va al bastidor y lo rompe. Y mira el tambor por dentro y por fuera: abolladuras profundas, soldaduras de reparación y fugas de aceite del reductor son señales de trabajo duro mal atendido."
+      }
+    ],
+    "faq": [
+      { "q": "¿Puedo compactar arcilla con un rodillo liso?", "r": "No de forma confiable. El liso sella la superficie y deja la capa inferior suelta, y el resultado se ve meses después como asentamientos y grietas. Para arcilla y limo, pata de cabra." },
+      { "q": "¿Cuántas pasadas necesito?", "r": "No hay un número universal: depende del material, la humedad, el espesor de la capa y la máquina. Lo correcto es hacer un tramo de prueba al inicio de la obra, medir con densímetro y fijar ahí el número de pasadas para el resto." },
+      { "q": "¿Sirve un compactador de placa para una obra grande?", "r": "Para rellenos de zanja, alrededor de registros y donde no entra el rodillo, es insustituible. Para plataformas y caminos es demasiado lento: ahí el rodillo autopropulsado paga su renta el primer día." }
+    ]
+  },
+
+  "Nivelación": {
+    "titulo": "Nivelación: motoconformadora o bulldozer",
+    "entrada": "Las dos mueven tierra y ahí se acaba el parecido. El bulldozer empuja volumen y abre; la motoconformadora afina y da la rasante. Usar una en el trabajo de la otra sale caro en tiempo y en diésel.",
+    "secciones": [
+      {
+        "h": "Qué hace mejor cada una",
+        "p": "El bulldozer es para desmonte, despalme, empujar material a distancia corta y abrir brecha en terreno difícil. Su medida útil es cuánto material empuja por pasada y qué pendiente aguanta. La motoconformadora es para dar forma: rasante de camino, bombeo, cunetas y afine antes de compactar. Un buen operador de motoconformadora ahorra más material y más pasadas de rodillo que cualquier ajuste de máquina."
+      },
+      {
+        "h": "El tren de rodaje decide el precio real",
+        "p": "En un bulldozer usado, el tren de rodaje puede valer una fracción muy grande del precio de la máquina. Antes de negociar, mide el desgaste de zapatas, eslabones, rodillos y ruedas guía, o pide una medición hecha con instrumento. Una máquina barata con el tren al final de su vida no es barata: es una factura aplazada."
+      },
+      {
+        "h": "Control de nivel: lo que cambia el rendimiento",
+        "p": "Los sistemas de control de nivelación —láser o satelital— reducen pasadas y desperdicio de material de forma notable, sobre todo en caminos y plataformas grandes. Si compras una máquina preparada para instalarlos, verifica que los sensores y el cableado estén completos: adaptar una que no venía preparada cuesta bastante más que la diferencia al comprarla."
+      }
+    ],
+    "faq": [
+      { "q": "¿Necesito bulldozer y motoconformadora para un camino?", "r": "En un camino nuevo con desmonte, normalmente sí: el bulldozer abre y el motoconformadora da rasante. En mantenimiento y reconformación de camino existente, muchas veces basta con la motoconformadora." },
+      { "q": "¿Qué reviso primero en un bulldozer usado?", "r": "El tren de rodaje, con medición, porque es el gasto grande y el más fácil de disimular a la vista. Después la transmisión y el mando final, escuchando y sintiendo el cambio bajo carga." },
+      { "q": "¿Vale la pena el control de nivel satelital?", "r": "En obra grande y repetitiva se paga solo por las pasadas y el material que ahorra. En obra pequeña y variada, el ahorro no alcanza a cubrir el costo del equipo y la capacitación." }
+    ]
+  },
+
+  "Elevación": {
+    "titulo": "Grúas y elevación: la capacidad no es un número solo",
+    "entrada": "La confusión más común y más peligrosa en elevación es leer la capacidad máxima como si fuera la capacidad de trabajo. Una grúa de 8 toneladas no levanta 8 toneladas a cualquier distancia: levanta eso pegada al mástil, y mucho menos en la punta.",
+    "secciones": [
+      {
+        "h": "Lee la tabla de cargas, no el titular",
+        "p": "Toda grúa trae una tabla que cruza radio con capacidad, y ése es el documento que decide si la máquina te sirve. Antes de elegir, define las tres cosas que mandan: el peso real de lo más pesado que vas a subir, a qué distancia horizontal del mástil, y a qué altura. Con esos tres datos la tabla te dice qué equipo necesitas; sin ellos, cualquier recomendación es una adivinanza."
+      },
+      {
+        "h": "Torre, telescópica o manipulador",
+        "p": "La grúa torre es para edificación en altura con trabajo sostenido en el mismo punto: cuesta montarla y desmontarla, y se paga con meses de obra. La telescópica sobre camión llega, trabaja y se va, que es lo que quieres en montajes puntuales. El manipulador telescópico se queda en medio: menos capacidad, mucha más movilidad en terreno, y es el que más se usa en obra horizontal para subir material a niveles bajos."
+      },
+      {
+        "h": "Documentación: aquí no es un trámite",
+        "p": "En equipo de elevación, los papeles son parte de la máquina. Certificado de inspección vigente, historial de mantenimiento del sistema hidráulico y de los cables, y estado de los elementos de izaje —cables, ganchos, seguros, eslingas— revisado por alguien competente. Una grúa sin ese expediente no es una grúa barata: es un riesgo trasladado a tu obra y a tu responsabilidad."
+      }
+    ],
+    "faq": [
+      { "q": "¿Qué capacidad de grúa necesito?", "r": "Necesitas tres datos antes de responder: el peso de la pieza más pesada, el radio máximo al que la vas a colocar y la altura de izaje. Con eso se consulta la tabla de cargas del equipo. La capacidad máxima que aparece en el nombre corresponde al radio mínimo y casi nunca a tu caso real." },
+      { "q": "¿Conviene rentar grúa con operador?", "r": "En la mayoría de los casos sí, y por dos motivos: el operador certificado es parte de la seguridad del izaje, y contratarlo con el equipo deja clara la responsabilidad. Sólo se justifica el equipo solo cuando ya tienes operadores certificados en plantilla." },
+      { "q": "¿Cada cuándo se inspecciona un equipo de elevación?", "r": "Sigue lo que indique el fabricante y la normativa aplicable, y súmale la inspección visual diaria antes de la primera maniobra: cables, ganchos, seguros, fugas y niveles. Esa revisión de cinco minutos es la que evita la mayoría de los incidentes." }
+    ]
+  }
+}
