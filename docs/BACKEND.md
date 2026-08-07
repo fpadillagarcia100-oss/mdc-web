@@ -323,3 +323,43 @@ En **Supabase → Database → Webhooks → Create**: tabla `solicitudes`, event
 - Si Resend falla, se devuelve `200` igualmente y se registra en el log. Un
   problema de configuración no puede convertirse en decenas de reintentos por
   cada cotización — la solicitud ya está guardada, el aviso es una mejora.
+
+## Aviso por correo cuando alguien pregunta por un equipo
+
+Función: [`functions/api/aviso-pregunta.js`](../functions/api/aviso-pregunta.js).
+
+### Por qué hace falta uno aparte
+
+Una pregunta es **peor de perder** que una cotización, por tres motivos:
+
+- Quien pregunta *"¿sigue disponible?"* o *"¿cuántas horas tiene?"* **ya eligió
+  la máquina**. Está más cerca de comprar que quien sólo mira.
+- **Es invisible.** La pregunta nace sin publicar —hasta que alguien la
+  contesta y decide enseñarla—, así que ni siquiera aparece en la ficha para
+  recordar que está ahí.
+- **No deja teléfono.** En una cotización queda el número; aquí sólo el nombre
+  y el texto. Si no se contesta en la ficha, no hay segunda oportunidad de
+  alcanzar a esa persona.
+
+### Configuración
+
+**No necesita variables nuevas**: reutiliza las de la cotización. Sólo falta el
+webhook.
+
+En **Supabase → Database → Webhooks → Create**: tabla `preguntas`, evento
+`INSERT`, tipo *HTTP Request*, método `POST`, URL
+`https://mdcmaquinaria.com/api/aviso-pregunta`, y la cabecera
+`x-aviso-secreto` con el mismo valor de `AVISO_SECRETO`.
+
+### Detalles
+
+- **Sólo avisa de `INSERT`.** Si algún día el webhook se configura también para
+  `UPDATE`, contestar una pregunta dispararía otro aviso de algo ya atendido.
+  La función lo corta ella misma.
+- El **equipo va en el asunto**: con varias preguntas en la bandeja se ve de
+  qué máquina habla cada una sin abrir ninguna.
+- El botón del correo lleva a `/?panel=preguntas`, que **abre el panel en esa
+  pestaña**. No es una puerta trasera: el panel sigue pidiendo sesión, y la
+  dirección sólo dice a dónde ibas. Sólo se aceptan pestañas de una lista
+  cerrada, y el parámetro se borra de la barra de direcciones para que
+  recargar no vuelva a abrir el panel.

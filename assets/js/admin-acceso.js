@@ -238,7 +238,11 @@ function renderLogin(){
 
       isAdmin = true;
       document.body.classList.add('is-admin');
-      adminTab = 'products';
+      /* Se respeta la pestaña que se venía a ver. Quien llega desde el correo
+         de "tienes una pregunta" pidió `?panel=preguntas`, y mandarlo al
+         listado de equipos tras entrar sería hacerle buscar otra vez lo que ya
+         había pedido. Sin pestaña pedida, el listado de siempre. */
+      adminTab = adminTab || 'products';
 
       // Traer lo que hay en la base ANTES de pintar el panel: editar sobre una
       // copia vieja es como dos personas se pisan los cambios sin enterarse.

@@ -41,7 +41,7 @@ const navegador = {
   CustomEvent: 'readonly', Event: 'readonly', Image: 'readonly', TextEncoder: 'readonly',
   createImageBitmap: 'readonly', OffscreenCanvas: 'readonly', DOMParser: 'readonly', CSS: 'readonly',
   atob: 'readonly', btoa: 'readonly', structuredClone: 'readonly',
-  innerWidth: 'readonly', innerHeight: 'readonly', scrollTo: 'readonly',
+  innerWidth: 'readonly', innerHeight: 'readonly', scrollTo: 'readonly', history: 'readonly',
   alert: 'readonly', confirm: 'readonly', prompt: 'readonly', caches: 'readonly', self: 'readonly',
 };
 

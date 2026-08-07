@@ -387,6 +387,33 @@ document.addEventListener('keydown', e => {
 /* ══════════════════ INIT ══════════════════ */
 restaurarSesion();   // asíncrono: el panel se abre al confirmar, no antes
 
+/**
+ * Enlace directo a una pestaña del panel:  /?panel=preguntas
+ *
+ * Lo usan los correos de aviso. Sin esto, el botón "Contestar en el panel"
+ * dejaba a la persona en la portada, teniendo que acordarse del atajo y de a
+ * qué pestaña iba — que es justo la fricción que hace que una pregunta se
+ * quede sin contestar tres días.
+ *
+ * No es una puerta trasera: abre el panel, y el panel pide sesión como
+ * siempre. Lo único que hace la dirección es decir a dónde ibas.
+ */
+/* Entre llaves para que `panelPedido` NO acabe siendo una variable global.
+   Se usa una vez, al arrancar, y no le interesa a nadie más; el contrato que
+   comparten los 24 archivos ya tiene 270 nombres y cada uno que se añade es
+   uno más que hay que evitar pisar. Lo cazó tests/arquitectura.test.js. */
+{
+  const panelPedido = new URLSearchParams(location.search).get('panel');
+  if(panelPedido && ['products','solicitudes','preguntas','brand','site','backup'].includes(panelPedido)){
+    adminTab = panelPedido;
+    openAdmin(panelPedido);
+    /* Se limpia de la barra de direcciones: si se queda, recargar o compartir
+       el enlace vuelve a abrir el panel, y a un cliente eso le aparece de la
+       nada. */
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+}
+
 /* ── Botón flotante de WhatsApp ──
    El mensaje cambia según dónde esté el cliente: si tiene equipos en la
    cotización los nombra, y si está viendo una ficha, la menciona. No es

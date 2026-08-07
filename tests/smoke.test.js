@@ -824,6 +824,35 @@ const ev = code => window.eval(code);
   check('El teléfono va en el asunto, para verlo sin abrir el correo',
     /subject|asunto/.test(aviso) && aviso.includes('${s.telefono}'));
 
+  /* ══ AVISO DE PREGUNTA ══
+     Una pregunta es peor de perder que una cotización: no deja teléfono y no
+     se ve en la ficha hasta que alguien la publica. Si nadie avisa, se queda
+     invisible hasta que alguien entre al panel por su cuenta. */
+  const avisoP = fs.readFileSync(path.join(ROOT, 'functions/api/aviso-pregunta.js'), 'utf8');
+
+  check('Preguntar por una máquina también avisa',
+    avisoP.includes('onRequestPost') && avisoP.includes('api.resend.com'));
+  check('El aviso de pregunta exige el mismo secreto',
+    avisoP.includes('x-aviso-secreto') && avisoP.includes('igualSeguro'),
+    'comparado en tiempo constante');
+  check('Sin configurar no revienta ni hace reintentar a Supabase',
+    /return json\(200, \{ ok: false, motivo: 'avisos no configurados'/.test(avisoP));
+  check('Sólo avisa de preguntas NUEVAS',
+    /cuerpo\.type !== 'INSERT'/.test(avisoP),
+    'contestar una no puede disparar otro aviso');
+  check('El equipo va en el asunto', /const asunto = `Pregunta sobre \$\{legible\(p\.slug\)\}/.test(avisoP));
+  check('El correo lleva a la pestaña correcta del panel',
+    avisoP.includes('?panel=preguntas'), 'sin buscarla a mano');
+
+  /* El enlace del correo no puede ser una rendija: sólo abre el panel, que
+     sigue pidiendo sesión, y sólo acepta pestañas de una lista cerrada. */
+  const principal = fs.readFileSync(path.join(ROOT, 'assets/js/main.js'), 'utf8');
+  check('El enlace directo sólo acepta pestañas conocidas',
+    /\['products','solicitudes','preguntas','brand','site','backup'\]\.includes\(panelPedido\)/.test(principal));
+  check('Y se borra de la barra de direcciones',
+    principal.includes('history.replaceState'),
+    'recargar no vuelve a abrir el panel');
+
   /* ══ DESHACER, HISTORIAL Y RENTA VS COMPRA ══
      Tres añadidos que tocan el carrito, el almacenamiento y la ficha. Se
      prueban por el DOM, como los usaría un cliente, no llamando a las
