@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "python -m http.server 8000",
     "build": "node tools/build.js && node tools/empaquetar.js",
-    "test": "npm run test:unit && npm run test:smoke && npm run test:csp && npm run test:generado",
+    "test": "npm run lint && npm run test:unit && npm run test:arq && npm run test:smoke && npm run test:csp && npm run test:generado",
     "test:generado": "node tools/check-generado.js",
     "test:unit": "node tests/unit.test.js",
     "test:smoke": "node tests/smoke.test.js",
@@ -19,10 +19,15 @@
     "db:export": "node tools/exportar-catalogo.js",
     "db:local": "supabase start",
     "db:reset": "supabase db reset",
-    "db:push": "supabase db push"
+    "db:push": "supabase db push",
+    "test:arq": "node tests/arquitectura.test.js",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "eslint": "^10.8.0",
+    "espree": "^11.2.0",
     "jsdom": "^30.0.1",
-    "playwright-core": "^1.62.1"
+    "playwright-core": "^1.62.1",
+    "typescript": "^7.0.2"
   }
 }

@@ -237,7 +237,25 @@ function renderVistos(){
     </button>`).join('');
 }
 
+/**
+ * Avisa de que la rejilla va a cambiar, y de que ya cambió.
+ *
+ * Es un punto de extensión declarado, no un truco. Antes motion.js envolvía
+ * `window.render` por fuera para poder medir las tarjetas antes y después: eso
+ * funcionaba, pero era acción a distancia — quien viniera a depurar por qué
+ * render tarda no iba a buscar un decorador instalado desde un archivo de
+ * animaciones.
+ *
+ * Con esto, catalog.js dice en voz alta cuándo pasa algo y quien quiera
+ * engancharse se engancha. Si nadie escucha, no cuesta nada; si mañana hace
+ * falta otro oyente, no hay que envolver nada.
+ */
+function avisar(nombre){
+  document.dispatchEvent(new CustomEvent('mdc:' + nombre));
+}
+
 function render(){
+  avisar('rejilla-antes');
   const results = sortList(filterAll());
   const totalPages = Math.max(1, Math.ceil(results.length / PER_PAGE));
   if(state.page > totalPages) state.page = totalPages;
@@ -269,6 +287,7 @@ function render(){
   renderCompareBar();
   renderVistos();
   if(isAdmin) $('#adminBarInfo').textContent = `${products.length} equipos · ${fmtKB(store.usedBytes())} usados`;
+  avisar('rejilla-despues');
 }
 
 /* ══════════════════ COMPARADOR ══════════════════ */

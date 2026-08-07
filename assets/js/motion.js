@@ -148,49 +148,52 @@
      dejarla caer en la suya (Invert + Play). El navegador sólo interpola un
      transform: no hay reflow por cuadro.
 
-     Se envuelve render() en vez de pedirle a catalog.js que avise. Así este
-     archivo sigue siendo el único que sabe de animaciones, y borrarlo entero
-     deja el sitio funcionando.
+     Se escuchan los avisos que emite catalog.js —`mdc:rejilla-antes` y
+     `mdc:rejilla-despues`— en lugar de envolver render() por fuera. La primera
+     versión hacía justo eso: reemplazaba `window.render` con un decorador. Se
+     cambió porque era acción a distancia: quien viniera a depurar por qué
+     render tarda no iba a sospechar de un archivo de animaciones. Ahora la
+     dependencia está declarada en los dos extremos y sigue sin acoplar nada:
+     si este archivo desaparece, nadie escucha y no pasa nada.
 
      Sólo se animan las tarjetas SUPERVIVIENTES —las que estaban antes y siguen
      después—. Las nuevas ya tienen su propia aparición, y encimarle una
      segunda animación haría que pelearan por la misma propiedad. */
-  const renderOriginal = window.render;
-  if(typeof renderOriginal === 'function'){
-    const idDe = tarjeta =>{
-      const b = tarjeta.querySelector('[data-open]');
-      return b ? b.dataset.open : null;
-    };
+  const idDe = tarjeta =>{
+    const b = tarjeta.querySelector('[data-open]');
+    return b ? b.dataset.open : null;
+  };
+  let antes = null;
 
-    window.render = function(){
-      const rejilla = document.getElementById('productGrid');
-      if(!rejilla || !rejilla.animate) return renderOriginal.apply(this, arguments);
+  document.addEventListener('mdc:rejilla-antes', ()=>{
+    const rejilla = document.getElementById('productGrid');
+    if(!rejilla || !rejilla.animate){ antes = null; return }
+    antes = new Map();
+    rejilla.querySelectorAll('.pcard').forEach(c =>{
+      const id = idDe(c);
+      if(id) antes.set(id, c.getBoundingClientRect());
+    });
+  });
 
-      const antes = new Map();
-      rejilla.querySelectorAll('.pcard').forEach(c =>{
-        const id = idDe(c);
-        if(id) antes.set(id, c.getBoundingClientRect());
-      });
+  document.addEventListener('mdc:rejilla-despues', ()=>{
+    const rejilla = document.getElementById('productGrid');
+    if(!rejilla || !antes || !antes.size) return;
 
-      const salida = renderOriginal.apply(this, arguments);
-      if(!antes.size) return salida;
-
-      rejilla.querySelectorAll('.pcard').forEach(c =>{
-        const a = antes.get(idDe(c));
-        if(!a) return;                            // tarjeta nueva: no es cosa del FLIP
-        const b = c.getBoundingClientRect();
-        const dx = a.left - b.left, dy = a.top - b.top;
-        const sx = b.width ? a.width/b.width : 1, sy = b.height ? a.height/b.height : 1;
-        // Se quedó donde estaba: animarla sería gastar un cuadro en nada.
-        if(Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx-1) < .02 && Math.abs(sy-1) < .02) return;
-        c.animate(
-          [{transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`}, {transform:'none'}],
-          {duration:420, easing:'cubic-bezier(.2,.8,.25,1)', composite:'replace'}
-        );
-      });
-      return salida;
-    };
-  }
+    rejilla.querySelectorAll('.pcard').forEach(c =>{
+      const a = antes.get(idDe(c));
+      if(!a) return;                              // tarjeta nueva: no es cosa del FLIP
+      const b = c.getBoundingClientRect();
+      const dx = a.left - b.left, dy = a.top - b.top;
+      const sx = b.width ? a.width/b.width : 1, sy = b.height ? a.height/b.height : 1;
+      // Se quedó donde estaba: animarla sería gastar un cuadro en nada.
+      if(Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx-1) < .02 && Math.abs(sy-1) < .02) return;
+      c.animate(
+        [{transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`}, {transform:'none'}],
+        {duration:420, easing:'cubic-bezier(.2,.8,.25,1)', composite:'replace'}
+      );
+    });
+    antes = null;
+  });
 
   /* ═══════════ 5. FOTOS QUE NO PARPADEAN ═══════════
      Las fotos viven en Supabase y van con loading="lazy": en una obra con mala

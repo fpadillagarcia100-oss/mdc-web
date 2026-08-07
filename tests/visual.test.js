@@ -94,10 +94,12 @@ function servir(puerto, raiz = ROOT) {
  * No se marca como fallo — nadie puede tener una referencia antes de la
  * primera ejecución, y hacerlo fallar sólo enseña a ignorar el rojo.
  */
-async function capturar(pagina, nombre, opciones = {}) {
+async function capturar(objetivo, nombre, opciones = {}) {
+  // `objetivo` puede ser la página entera o un elemento concreto. Acotar la
+  // captura a lo que se está probando es lo que la mantiene estable.
   fs.mkdirSync(CAPTURAS, { recursive: true });
   const referencia = path.join(CAPTURAS, `${nombre}.png`);
-  const nueva = await pagina.screenshot({ animations: 'disabled', ...opciones });
+  const nueva = await objetivo.screenshot({ animations: 'disabled', ...opciones });
 
   if (!fs.existsSync(referencia) || ACEPTAR) {
     fs.writeFileSync(referencia, nueva);
@@ -131,14 +133,6 @@ const desbordaX = pagina => pagina.evaluate(() =>
     /* ══ ESCRITORIO ══ */
     const ctx = await navegador.newContext({ viewport: { width: 1280, height: 900 } });
     const pagina = await ctx.newPage();
-
-    // Se cuenta lo que baja por la red antes de pedir nada.
-    let peticiones = 0, transferido = 0;
-    pagina.on('response', async r => {
-      peticiones++;
-      const largo = Number(r.headers()['content-length'] || 0);
-      transferido += largo;
-    });
 
     await pagina.goto(base + '/', { waitUntil: 'networkidle' });
     await pagina.waitForSelector('.pcard');
@@ -226,7 +220,22 @@ const desbordaX = pagina => pagina.evaluate(() =>
     await pagina.locator('#cartToggle').click();
     await pagina.waitForSelector('.cart-drawer.open');
     check('La cotización lista lo agregado', await pagina.locator('.cart-item').count() >= 1);
-    await capturar(pagina, 'cotizacion');
+    /* Esperar a que el cajón TERMINE de deslizarse. Sin esto se fotografiaba a
+       mitad del recorrido: como está desplazado con transform, la captura del
+       elemento salía recortada y con media pantalla en blanco, distinta en
+       cada ejecución. `animations: 'disabled'` congela las animaciones CSS,
+       pero esto es una transición, que es otra cosa. */
+    await pagina.waitForFunction(() => {
+      const d = document.querySelector('.cart-drawer');
+      return d && Math.abs(d.getBoundingClientRect().right - innerWidth) < 1;
+    });
+    /* Se fotografía SÓLO el cajón, no la pantalla entera.
+       La captura de pantalla completa incluía el catálogo de fondo y el aviso
+       de "agregado a la cotización", que tiene temporizador propio: dos cosas
+       que esta prueba no está evaluando y que la hacían fallar por dónde
+       estaba el scroll o por unos milisegundos de más. Una prueba que falla
+       por motivos que no le importan se acaba ignorando. */
+    await capturar(pagina.locator('.cart-drawer'), 'cotizacion');
     await pagina.locator('[data-close-cart]').click();
 
     /* ── La página de categoría, que es la que ve Google ── */
@@ -328,8 +337,7 @@ const desbordaX = pagina => pagina.evaluate(() =>
       check('Y dibuja el catálogo igual', await pd.locator('.pcard').count() === 9);
 
       const dm = await pd.evaluate(() => {
-        const nav = performance.getEntriesByType('navigation')[0] || {};
-        const fcp = performance.getEntriesByName('first-contentful-paint')[0];
+          const fcp = performance.getEntriesByName('first-contentful-paint')[0];
         return {
           recursos: performance.getEntriesByType('resource').length,
           js: performance.getEntriesByType('resource').filter(r => r.name.endsWith('.js') || r.name.includes('.js?')).length,
