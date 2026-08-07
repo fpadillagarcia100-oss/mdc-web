@@ -837,6 +837,22 @@ const ev = code => window.eval(code);
     'comparado en tiempo constante');
   check('Sin configurar no revienta ni hace reintentar a Supabase',
     /return json\(200, \{ ok: false, motivo: 'avisos no configurados'/.test(avisoP));
+
+  /* El destino tiene un valor por omisión para no depender de un ajuste del
+     panel de Cloudflare que se puede olvidar. Los otros dos NO pueden tenerlo:
+     son secretos, y un secreto en el repositorio no es un secreto. */
+  const DESTINO_ESPERADO = 'pacopadillajr@outlook.com';
+  check('Los avisos tienen destino aunque nadie configure nada',
+    avisoP.includes(DESTINO_ESPERADO) && aviso.includes(DESTINO_ESPERADO),
+    'el mismo en los dos avisos');
+  check('Y la variable de entorno sigue mandando sobre él',
+    /env\.AVISO_DESTINO \|\| DESTINO_POR_OMISION/.test(avisoP) &&
+    /env\.AVISO_DESTINO \|\| DESTINO_POR_OMISION/.test(aviso));
+  check('Ningún secreto quedó escrito en el código',
+    !/AVISO_SECRETO\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
+    !/RESEND_API_KEY\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
+    !/re_[A-Za-z0-9]{10}/.test(avisoP + aviso),
+    'la llave de Resend y el secreto sólo viven en Cloudflare');
   check('Sólo avisa de preguntas NUEVAS',
     /cuerpo\.type !== 'INSERT'/.test(avisoP),
     'contestar una no puede disparar otro aviso');

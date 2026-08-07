@@ -44,6 +44,11 @@
  *   cabecera  x-aviso-secreto: <el mismo valor de AVISO_SECRETO>
  */
 
+/* A dónde van los avisos si nadie configuró `AVISO_DESTINO` en Cloudflare.
+   La variable de entorno, si existe, manda sobre esto. Ver la nota sobre
+   privacidad en aviso-pregunta.js: esta dirección viaja en el repositorio. */
+const DESTINO_POR_OMISION = 'pacopadillajr@outlook.com';
+
 const json = (codigo, cuerpo) => new Response(JSON.stringify(cuerpo), {
   status: codigo,
   headers: { 'Content-Type': 'application/json' },
@@ -128,7 +133,7 @@ function cuerpoCorreo(s) {
 
 export async function onRequestPost({ request, env }) {
   const SECRETO = env.AVISO_SECRETO || '';
-  const DESTINO = env.AVISO_DESTINO || '';
+  const DESTINO = env.AVISO_DESTINO || DESTINO_POR_OMISION;
   const LLAVE = env.RESEND_API_KEY || '';
   const REMITENTE = env.AVISO_REMITENTE || 'MDC Maquinaria <onboarding@resend.dev>';
 

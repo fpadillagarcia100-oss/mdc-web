@@ -38,6 +38,16 @@
 
 const SITIO = 'https://mdcmaquinaria.com';
 
+/* A dónde van los avisos si nadie configuró `AVISO_DESTINO` en Cloudflare.
+   Está aquí para no depender de un ajuste del panel de Cloudflare que se puede
+   olvidar; la variable de entorno, si existe, manda sobre esto.
+
+   Ojo con una cosa: esto viaja en el repositorio. Si el repositorio es
+   público, esta dirección queda a la vista de cualquiera y de los robots que
+   rastrean correos para mandar publicidad. Para que no se vea, se borra de
+   aquí y se pone `AVISO_DESTINO` en Cloudflare, que es privado. */
+const DESTINO_POR_OMISION = 'pacopadillajr@outlook.com';
+
 const json = (codigo, cuerpo) => new Response(JSON.stringify(cuerpo), {
   status: codigo,
   headers: { 'Content-Type': 'application/json' },
@@ -113,7 +123,7 @@ function cuerpoCorreo(p) {
 
 export async function onRequestPost({ request, env }) {
   const SECRETO = env.AVISO_SECRETO || '';
-  const DESTINO = env.AVISO_DESTINO || '';
+  const DESTINO = env.AVISO_DESTINO || DESTINO_POR_OMISION;
   const LLAVE = env.RESEND_API_KEY || '';
   const REMITENTE = env.AVISO_REMITENTE || 'MDC Maquinaria <onboarding@resend.dev>';
 
