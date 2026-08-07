@@ -54,6 +54,71 @@ function openAdmin(tab){
 }
 
 /**
+ * La retroexcavadora que trabaja arriba del formulario.
+ *
+ * Es SVG dibujado a mano y animado con CSS: la pluma, el brazo y el cucharón
+ * son grupos anidados que giran cada uno sobre su propio perno, igual que en
+ * la máquina real, así que el movimiento se ve encadenado y no como tres
+ * piezas sueltas. El polvo aparece justo cuando el cucharón toca el suelo.
+ *
+ * Las coordenadas van en el viewBox de 330×158; el suelo está en y=124.
+ */
+function escenaExcavadora(){
+  return `
+  <svg viewBox="0 0 330 158" preserveAspectRatio="xMidYMax slice" role="presentation" focusable="false">
+    <defs>
+      <linearGradient id="lgCielo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3A3A3A"/><stop offset="1" stop-color="#1A1A1A"/>
+      </linearGradient>
+      <linearGradient id="lgAmarillo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#FFD84D"/><stop offset="1" stop-color="#E5A800"/>
+      </linearGradient>
+    </defs>
+
+    <rect width="330" height="158" fill="url(#lgCielo)"/>
+    <circle class="sun" cx="268" cy="38" r="17" fill="#FFC700" opacity=".55"/>
+
+    <!-- terreno: la loma de tierra que la máquina va moviendo -->
+    <path d="M0 124 H330 V158 H0 Z" fill="#0F0F0F"/>
+    <path d="M0 124 H198 q14 -11 30 -1 t26 1 H330" fill="#242018" stroke="#3A3225" stroke-width="1.5"/>
+
+    <g class="lg-machine">
+      <!-- orugas -->
+      <rect x="34" y="100" width="118" height="22" rx="11" fill="#2E2E2E" stroke="#4A4A4A" stroke-width="2"/>
+      <circle cx="48" cy="111" r="6" fill="#4A4A4A"/><circle cx="138" cy="111" r="6" fill="#4A4A4A"/>
+      <circle cx="78" cy="113" r="4" fill="#3D3D3D"/><circle cx="108" cy="113" r="4" fill="#3D3D3D"/>
+
+      <!-- contrapeso y cabina -->
+      <path d="M44 100 V80 q0 -6 7 -6 h20 l6 -12 h30 q6 0 6 6 v32 Z" fill="url(#lgAmarillo)"/>
+      <path d="M78 74 h24 q4 0 4 4 v14 H74 Z" fill="#1E2A33" opacity=".9"/>
+      <rect x="46" y="86" width="26" height="9" rx="2" fill="#B98700" opacity=".6"/>
+      <circle class="lg-beacon" cx="86" cy="60" r="3.4" fill="#FF7A1A"/>
+      <rect x="85" y="62" width="2" height="4" fill="#8A6D00"/>
+
+      <!-- pluma → brazo → cucharón, cada uno sobre su perno -->
+      <g class="lg-boom">
+        <path d="M118 74 L172 44" stroke="url(#lgAmarillo)" stroke-width="12" stroke-linecap="round" fill="none"/>
+        <circle cx="118" cy="74" r="4" fill="#2E2E2E"/>
+        <g class="lg-stick">
+          <path d="M172 44 L206 82" stroke="url(#lgAmarillo)" stroke-width="9" stroke-linecap="round" fill="none"/>
+          <circle cx="172" cy="44" r="3.5" fill="#2E2E2E"/>
+          <g class="lg-bucket">
+            <path d="M199 78 h16 l-2 13 q-1 8 -9 9 q-9 1 -9 -9 Z" fill="#C99500" stroke="#8A6D00" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M197 99 h20" stroke="#5E4A00" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="206" cy="82" r="3" fill="#2E2E2E"/>
+          </g>
+        </g>
+      </g>
+    </g>
+
+    <g fill="#6B5F45">
+      <circle class="lg-dust" cx="212" cy="118" r="5"/>
+      <circle class="lg-dust lg-dust-2" cx="222" cy="120" r="3.5"/>
+    </g>
+  </svg>`;
+}
+
+/**
  * Acceso con cuenta de Supabase.
  *
  * Sustituye al PIN, que se comparaba aquí en el navegador y por tanto no era
@@ -81,16 +146,20 @@ function renderLogin(){
 
   $('#adminBody').innerHTML = `
     <div class="login-box">
-      <div class="dz-icon">🔒</div>
-      <h3>Acceso de administrador</h3>
+      <div class="login-scene" aria-hidden="true">${escenaExcavadora()}</div>
+      <h3>Inicia sesión</h3>
       <p>Entra con tu cuenta para editar el catálogo. Los cambios se guardan
          en la base y los ve todo el equipo, desde cualquier dispositivo.</p>
-      <label class="sr-only" for="mailInput">Correo</label>
-      <input id="mailInput" type="email" autocomplete="username" placeholder="tucorreo@ejemplo.com">
-      <label class="sr-only" for="passInput">Contraseña</label>
-      <input id="passInput" type="password" autocomplete="current-password" placeholder="Contraseña" style="margin-top:8px">
+      <div class="login-field">
+        <input id="mailInput" type="email" autocomplete="username" placeholder=" ">
+        <label for="mailInput">Correo</label>
+      </div>
+      <div class="login-field">
+        <input id="passInput" type="password" autocomplete="current-password" placeholder=" ">
+        <label for="passInput">Contraseña</label>
+      </div>
       <div class="err" id="pinErr"></div>
-      <button class="btn-primary" type="button" id="pinBtn" style="width:100%;margin-top:10px;padding:12px">Entrar</button>
+      <button class="btn-primary" type="button" id="pinBtn" style="width:100%;margin-top:12px;padding:12px">Entrar</button>
     </div>`;
 
   const mail = $('#mailInput'), pass = $('#passInput'), btn = $('#pinBtn'), err = $('#pinErr');

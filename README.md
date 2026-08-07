@@ -213,7 +213,7 @@ Resumen; el detalle completo está en **[SECURITY.md](SECURITY.md)**.
 
 ## Panel de administración
 
-Botón **🔒 Admin** en la barra superior, o `Ctrl + Shift + A`.
+Botón **🔒 Iniciar sesión** en la barra superior, o `Ctrl + Shift + A`.
 PIN inicial: `2580` (cambiable en la pestaña *Respaldo*).
 
 | Pestaña | Qué controla |
