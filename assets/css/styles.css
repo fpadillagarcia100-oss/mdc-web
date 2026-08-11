@@ -1320,7 +1320,7 @@ body.sin-red::before{content:'📡 Sin señal · lo que ya viste sigue disponibl
    Mismo trato que la portada del video en la ficha del equipo. */
 .mapa{margin:14px 0 4px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#E8EAE6}
 .mapa-fachada{display:block;width:100%;padding:0;border:none;background:none;cursor:pointer;position:relative;line-height:0}
-.mapa-fachada svg{width:100%;height:auto;display:block}
+.mapa-fachada img{width:100%;height:auto;display:block;aspect-ratio:2/1;object-fit:cover}
 .mapa-txt{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
   background:rgba(26,26,26,.88);color:#fff;font-size:13px;font-weight:600;line-height:1.2;
   padding:9px 16px;border-radius:99px;white-space:nowrap;transition:background .2s,transform .2s}

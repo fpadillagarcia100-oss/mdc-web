@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -m 20 -A \"MDC-Maquinaria/1.0 \\(mdcmaquinaria.com\\)\" \"https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Blvd.%20Belisario%20Dominguez%201250,%20Tuxtla%20Gutierrez,%20Chiapas\")",
+      "Bash(curl -s -m 20 -A \"MDC-Maquinaria/1.0\" -o /tmp/t.png -w \"%{http_code} %{size_download} bytes\\\\n\" \"https://tile.openstreetmap.org/13/1955/3907.png\")",
+      "Read(//tmp/**)",
+      "Bash(node -e ' *)",
+      "Bash(rm -f data/coordenadas.json assets/img/mapa-*.png && npm run mapas 2>&1 | tail -10)",
+      "Bash(rm -f assets/img/mapa-*.png)",
+      "Bash(rm -f assets/img/mapa-*.png data/coordenadas.json)",
+      "Bash(grep -n \"const BACKEND_CONFIG = \\\\${configBackend\\(\\)};\" -B 4 tools/build.js)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\pc202502\\Documents\\mdc-web\\assets\\img"
+    ]
+  }
+}

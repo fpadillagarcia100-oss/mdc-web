@@ -500,3 +500,26 @@ const BACKEND_CONFIG = {
   "url": "https://qqvwrwsxdgmhhacvgowy.supabase.co",
   "llave": "sb_publishable_cL0Nxnx-ViiZWq9HAswzOA_GjiT5R_k"
 };
+
+/* Los mapas de las sucursales, dibujados en la compilación por
+   tools/make-mapas.js con cuadros reales de OpenStreetMap.
+
+   Se indexan por dirección y no por posición: si mañana se reordenan las
+   sucursales, cada una sigue con su mapa. Cuando "exacta" es false, la
+   dirección no aparece en ningún callejero —una carretera con kilómetro no es
+   un domicilio— y lo que se ve es la ciudad; la página lo dice, porque enseñar
+   el centro de un pueblo como si fuera el patio sería mentir. */
+const MAPAS = {
+  "Blvd. Belisario Domínguez 1250, Tuxtla Gutiérrez, Chiapas": {
+    "archivo": "/assets/img/mapa-0.png",
+    "exacta": true
+  },
+  "Carretera Costera km 4, Tapachula, Chiapas": {
+    "archivo": "/assets/img/mapa-1.png",
+    "exacta": false
+  },
+  "Carretera Panamericana 890, San Cristóbal de las Casas, Chiapas": {
+    "archivo": "/assets/img/mapa-2.png",
+    "exacta": false
+  }
+};

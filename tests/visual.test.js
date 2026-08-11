@@ -36,7 +36,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { chromium } = require('playwright-core');
-const { comparar } = require('./lib/png');
+const { comparar } = require('../tools/png');
 
 const ROOT = path.join(__dirname, '..');
 const CAPTURAS = path.join(__dirname, 'capturas');

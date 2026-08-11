@@ -102,6 +102,24 @@ function cargarCalculadora() {
   return vm.runInContext('calculadoraHTML', ctx);
 }
 
+/**
+ * Los mapas ya dibujados, indexados por dirección.
+ *
+ * Si el archivo no está —nadie ha corrido `npm run mapas` todavía— devuelve un
+ * objeto vacío y la página enseña la ficha de la sucursal sin mapa. Un mapa que
+ * falta no puede tumbar la compilación: es un adorno, no el domicilio.
+ */
+function mapasDeSucursales() {
+  try {
+    const c = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'coordenadas.json'), 'utf8'));
+    const salida = {};
+    for (const [direccion, d] of Object.entries(c)) {
+      if (d.archivo) salida[direccion] = { archivo: d.archivo, exacta: d.exacta !== false };
+    }
+    return salida;
+  } catch { return {} }
+}
+
 /** Huella de la fuente, para detectar si lo generado quedó desactualizado. */
 function huellaFuente() {
   const crudo = fs.readFileSync(path.join(ROOT, 'data', 'catalogo.json'));
@@ -180,6 +198,16 @@ const CATALOGO = ${JSON.stringify(
    Si al compilar no hay credenciales en el entorno, esto queda en null y el
    sitio funciona como siempre: las cotizaciones salen sólo por WhatsApp. */
 const BACKEND_CONFIG = ${configBackend()};
+
+/* Los mapas de las sucursales, dibujados en la compilación por
+   tools/make-mapas.js con cuadros reales de OpenStreetMap.
+
+   Se indexan por dirección y no por posición: si mañana se reordenan las
+   sucursales, cada una sigue con su mapa. Cuando "exacta" es false, la
+   dirección no aparece en ningún callejero —una carretera con kilómetro no es
+   un domicilio— y lo que se ve es la ciudad; la página lo dice, porque enseñar
+   el centro de un pueblo como si fuera el patio sería mentir. */
+const MAPAS = ${JSON.stringify(mapasDeSucursales(), null, 2)};
 `;
   fs.writeFileSync(destino, cuerpo, 'utf8');
   return destino;

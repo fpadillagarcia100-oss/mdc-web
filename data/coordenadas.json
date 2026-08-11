@@ -1,0 +1,20 @@
+{
+  "Blvd. Belisario Domínguez 1250, Tuxtla Gutiérrez, Chiapas": {
+    "lat": 16.7606863,
+    "lon": -93.17787,
+    "exacta": true,
+    "archivo": "/assets/img/mapa-0.png"
+  },
+  "Carretera Costera km 4, Tapachula, Chiapas": {
+    "lat": 14.9258055,
+    "lon": -92.3221957,
+    "exacta": false,
+    "archivo": "/assets/img/mapa-1.png"
+  },
+  "Carretera Panamericana 890, San Cristóbal de las Casas, Chiapas": {
+    "lat": 16.735377,
+    "lon": -92.63873,
+    "exacta": false,
+    "archivo": "/assets/img/mapa-2.png"
+  }
+}

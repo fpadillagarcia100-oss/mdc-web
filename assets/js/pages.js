@@ -343,26 +343,25 @@ const ayudaHTML = () => `
  * abrir la app de mapas es mejor que mirar un recuadro.
  */
 function mapaFachadaHTML(b, i){
+  const m = (typeof MAPAS !== 'undefined' && MAPAS) ? MAPAS[b.address] : null;
+
+  /* Sin mapa dibujado no se inventa nada: la sucursal se queda con su
+     dirección y sus tres botones, que es lo que de verdad hace falta para
+     llegar. El primer intento puso aquí un dibujo abstracto de calles y no
+     servía para nada — no eran estas calles. */
+  if(!m) return '';
+
   return `
     <div class="mapa" id="mapa${i}">
       <button class="mapa-fachada" type="button" data-mapa="${i}"
-              aria-label="Ver en el mapa: ${esc(b.name)}">
-        <svg viewBox="0 0 320 150" aria-hidden="true" focusable="false">
-          <rect width="320" height="150" fill="#E8EAE6"/>
-          <path d="M0 96 H320 M0 40 H320 M78 0 V150 M212 0 V150" stroke="#D2D6CE" stroke-width="7"/>
-          <path d="M0 68 H320 M148 0 V150" stroke="#DCE0D8" stroke-width="4"/>
-          <path d="M212 0 V150" stroke="#F0D68A" stroke-width="9"/>
-          <rect x="18" y="106" width="44" height="30" fill="#DDE1D9"/>
-          <rect x="232" y="52" width="58" height="34" fill="#DDE1D9"/>
-          <rect x="96" y="8" width="38" height="24" fill="#DDE1D9"/>
-          <circle cx="160" cy="70" r="26" fill="#1A1A1A" opacity=".08"/>
-          <path d="M160 46 a15 15 0 0 1 15 15 c0 11 -15 27 -15 27 s-15 -16 -15 -27 a15 15 0 0 1 15 -15 z"
-                fill="#D32F2F"/>
-          <circle cx="160" cy="61" r="5.5" fill="#fff"/>
-        </svg>
-        <span class="mapa-txt">🗺️ Ver el mapa</span>
+              aria-label="Ver en el mapa interactivo: ${esc(b.name)}">
+        <img src="${esc(m.archivo)}" alt="Mapa de ${esc(b.name)}" loading="lazy" decoding="async"
+             width="640" height="320">
+        <span class="mapa-txt">🗺️ Abrir en el mapa</span>
       </button>
-      <p class="mapa-nota">Se carga desde Google sólo cuando lo pides.</p>
+      <p class="mapa-nota">${m.exacta
+        ? 'Mapa © OpenStreetMap. El interactivo se carga desde Google sólo cuando lo pides.'
+        : 'Ubicación aproximada de la ciudad: la dirección exacta no aparece en el callejero. Usa «Cómo llegar».'}</p>
     </div>`;
 }
 

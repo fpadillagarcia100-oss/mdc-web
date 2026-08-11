@@ -3,17 +3,8 @@
  *
  * Se corre con:  npm run icons
  *
- * ¿Por qué escribir un PNG a mano en lugar de usar una librería? Porque el
- * proyecto no tiene ninguna de imagen, y meter una dependencia con árbol
- * propio para dibujar tres cuadrados amarillos sale peor que estas ochenta
- * líneas: `zlib` viene con Node y el formato PNG, para un color por pixel sin
- * transparencia progresiva, es sencillo de verdad.
- *
- * Un PNG es: firma, cabecera (IHDR), datos comprimidos (IDAT) y fin (IEND).
- * Cada bloque lleva su longitud, su tipo, su contenido y un CRC32. Los datos
- * son las filas de pixeles, cada una precedida de un byte que dice qué filtro
- * usa; aquí siempre 0 —"sin filtro"—, que comprime peor pero se lee de un
- * vistazo.
+ * El PNG lo escribe tools/png.js, sin dependencias: zlib viene con Node y el
+ * formato, para lo que hace falta aquí, es sencillo de verdad.
  *
  * El icono es la marca: fondo oscuro como el encabezado del sitio, las letras
  * MDC en amarillo y una franja de obra abajo.
@@ -22,60 +13,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const zlib = require('zlib');
 
 const SALIDA = path.join(__dirname, '..', 'assets', 'img');
 
-/* ── PNG ────────────────────────────────────────────────────────────────── */
-
-const TABLA_CRC = (() => {
-  const t = new Int32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c;
-  }
-  return t;
-})();
-
-function crc32(buf) {
-  let c = -1;
-  for (let i = 0; i < buf.length; i++) c = TABLA_CRC[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ -1) >>> 0;
-}
-
-function bloque(tipo, datos) {
-  const largo = Buffer.alloc(4);
-  largo.writeUInt32BE(datos.length);
-  const cuerpo = Buffer.concat([Buffer.from(tipo, 'ascii'), datos]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(cuerpo));
-  return Buffer.concat([largo, cuerpo, crc]);
-}
-
-/** rgba: Buffer de ancho*alto*4 bytes. */
-function png(ancho, alto, rgba) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(ancho, 0);
-  ihdr.writeUInt32BE(alto, 4);
-  ihdr[8] = 8;    // 8 bits por canal
-  ihdr[9] = 6;    // color tipo 6: RGBA
-  // ihdr[10..12] quedan en 0: compresión, filtro e interlazado estándar
-
-  const bruto = Buffer.alloc(alto * (1 + ancho * 4));
-  for (let y = 0; y < alto; y++) {
-    const destino = y * (1 + ancho * 4);
-    bruto[destino] = 0;   // filtro "ninguno" para esta fila
-    rgba.copy(bruto, destino + 1, y * ancho * 4, (y + 1) * ancho * 4);
-  }
-
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-    bloque('IHDR', ihdr),
-    bloque('IDAT', zlib.deflateSync(bruto, { level: 9 })),
-    bloque('IEND', Buffer.alloc(0)),
-  ]);
-}
+/* El PNG lo escribe tools/png.js, compartido con los mapas de las sucursales.
+   Tener dos codificadores del mismo formato binario es garantizar que un dia
+   discrepen en el caso raro y nadie sepa cual arreglar. */
+const { codificar: png } = require('./png');
 
 /* ── DIBUJO ─────────────────────────────────────────────────────────────── */
 
