@@ -72,8 +72,6 @@ const FICHA_TECNICA = [
   { k: 'altura',      etq: 'Altura de elevación',       unidad: 'm',  tipo: 'num', cats: ['Elevación', 'Carga'] },
 ];
 
-const FICHA_POR_CLAVE = FICHA_TECNICA.reduce((m, c) => { m[c.k] = c; return m }, {});
-
 /**
  * Campos que aplican a una categoría.
  *
@@ -140,9 +138,6 @@ function fichaTecnica(eq) {
     .filter(c => a[c.k] !== undefined && a[c.k] !== null && a[c.k] !== '')
     .map(c => ({ k: c.k, etq: c.etq, valor: a[c.k], texto: textoAtributo(c, a[c.k]), mejor: c.mejor }));
 }
-
-/** ¿Tiene este equipo algún dato técnico capturado? */
-const tieneFichaTecnica = eq => fichaTecnica(eq).length > 0;
 
 /**
  * Saca el identificador de YouTube de lo que sea que peguen.

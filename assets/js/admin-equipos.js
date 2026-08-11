@@ -350,9 +350,9 @@ async function handleImageFiles(files, target){
 /**
  * Comprime una imagen y la devuelve como Blob, listo para subir.
  *
- * Es fileToDataURL pero sin convertir a texto. La conversión a data URI infla
- * el tamaño un 33% y sólo servía para meter la foto en el localStorage — que
- * es justamente lo que dejamos de hacer.
+ * Devuelve un Blob y no un data URI a propósito. Convertir a texto infla el
+ * tamaño un 33%, y sólo servía para meter la foto en el localStorage — que es
+ * justamente lo que dejamos de hacer cuando las fotos pasaron a Supabase.
  */
 async function fileToBlob(file, maxW = 1400, quality = 0.82){
   /* Un video arrastrado a la zona de fotos es el error MÁS probable aquí, y

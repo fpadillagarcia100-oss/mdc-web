@@ -21,13 +21,13 @@
     "db:reset": "supabase db reset",
     "db:push": "supabase db push",
     "test:arq": "node tests/arquitectura.test.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "muerto": "node tools/codigo-muerto.js"
   },
   "devDependencies": {
     "eslint": "^10.8.0",
     "espree": "^11.2.0",
     "jsdom": "^30.0.1",
-    "playwright-core": "^1.62.1",
-    "typescript": "^7.0.2"
+    "playwright-core": "^1.62.1"
   }
 }

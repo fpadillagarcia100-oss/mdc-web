@@ -1106,7 +1106,11 @@ body.con-cmp{padding-bottom:78px}
    los dos caminos se activa nunca. */
 @media (prefers-reduced-motion:no-preference){
   @supports (animation-timeline:view()){
-    .pcard,.cat-card,.footer-col,.pagination,.cat-cierre{
+    /* `.similar` es la tarjeta de las páginas de categoría y de las fichas.
+       Aquí había una clase inventada que no existía en ningún marcado, así que
+       la aparición al hacer scroll nunca llegó a aplicarse fuera de la portada.
+       Lo encontró tools/codigo-muerto.js buscando selectores huérfanos. */
+    .pcard,.similar,.footer-col,.pagination,.cat-cierre{
       animation:mAparecer .6s var(--e-out) both;
       animation-timeline:view();
       animation-range:entry 0% cover 22%;

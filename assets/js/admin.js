@@ -13,32 +13,6 @@ let adminQuery = '';
 let editingId = null;   // null = listado, 0 = nuevo, n = editando ese id
 let draftImgs;          // undefined = sin cambios; arreglo = galería en edición
 
-/** Redimensiona y comprime una imagen a data URI. Los SVG se leen tal cual. */
-async function fileToDataURL(file, maxW = 1000, quality = 0.82){
-  if(!file.type.startsWith('image/')) throw new Error('El archivo no es una imagen.');
-  if(file.type === 'image/svg+xml'){
-    if(file.size > 200*1024) throw new Error('El SVG es muy pesado (máx. 200 KB).');
-    return await new Promise((res,rej)=>{
-      const r = new FileReader();
-      r.onload = ()=>res(r.result);
-      r.onerror = ()=>rej(new Error('No se pudo leer el archivo.'));
-      r.readAsDataURL(file);
-    });
-  }
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, maxW / bitmap.width);
-  const w = Math.max(1, Math.round(bitmap.width*scale));
-  const h = Math.max(1, Math.round(bitmap.height*scale));
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const ctx = c.getContext('2d');
-  const keepAlpha = file.type === 'image/png' || file.type === 'image/webp';
-  if(!keepAlpha){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h) }
-  ctx.drawImage(bitmap, 0, 0, w, h);
-  if(bitmap.close) bitmap.close();
-  return c.toDataURL(keepAlpha ? 'image/webp' : 'image/jpeg', quality);
-}
-
 const dataUriBytes = uri => uri ? Math.round((uri.length - (uri.indexOf(',')+1)) * 0.75) : 0;
 
 function openAdmin(tab){
