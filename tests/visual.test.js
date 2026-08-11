@@ -313,6 +313,60 @@ const desbordaX = pagina => pagina.evaluate(() =>
     check('La tarjeta ocupa el ancho del móvil', anchoTarjeta > 300, `${Math.round(anchoTarjeta)} px de 390`);
     await capturar(pm, 'movil-portada');
 
+    /* ── El panel en el celular ──
+       Es donde de verdad se usa: en la obra, el día que llega la máquina. Si
+       dar de alta un equipo desde ahí es una pelea, el catálogo no crece.
+
+       Se fuerza la sesión desde el navegador, contra el servidor LOCAL, sólo
+       para poder mirar el panel dibujado. No es un agujero: `isAdmin` en el
+       navegador no autoriza nada — cada guardado lo comprueba el servidor de
+       Supabase, y eso ya lo verifica tests/seguridad.test.js atacando la base
+       real. Aquí sólo se está midiendo la caja de los botones. */
+    await pm.evaluate(() => {
+      isAdmin = true;
+      document.body.classList.add('is-admin');
+      adminTab = 'products';
+      editingId = null;
+      openAdmin('products');
+    });
+    await pm.waitForSelector('.adm-table');
+
+    const cuerpoPanel = await pm.evaluate(() => {
+      const b = document.querySelector('#adminBody');
+      return b.scrollWidth > b.clientWidth + 1;
+    });
+    check('El panel no obliga a arrastrar de lado en el móvil', !cuerpoPanel,
+      'la tabla se convierte en fichas');
+
+    /* El fallo que se encontró midiendo: los botones de editar, duplicar y
+       borrar quedaban FUERA de la pantalla. No se podía editar un equipo desde
+       el teléfono, y nada avisaba. */
+    const accionesVisibles = await pm.evaluate(() =>
+      [...document.querySelectorAll('.adm-row-actions .icon-btn')].every(b => {
+        const r = b.getBoundingClientRect();
+        return r.left >= 0 && r.right <= innerWidth + 1;
+      }));
+    check('Los botones de cada equipo se alcanzan', accionesVisibles);
+
+    const chicos = await pm.evaluate(() =>
+      [...document.querySelectorAll('#adminBody button, #adminBody input, #adminBody select')]
+        .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.height < 44 }).length);
+    check('Todo lo que se toca mide 44 px o más', chicos === 0,
+      chicos ? `${chicos} por debajo` : 'lo que recomiendan Apple y Google, y lo que hace falta con guantes');
+
+    await capturar(pm, 'movil-panel-equipos');
+
+    // Y el alta, que es el trámite que decide si el inventario crece.
+    await pm.evaluate(() => { editingId = 0; renderAdmin() });
+    await pm.waitForSelector('#pForm');
+    const camposChicos = await pm.evaluate(() =>
+      [...document.querySelectorAll('#pForm input, #pForm select, #pForm textarea')]
+        .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.height < 44 }).length);
+    check('Los campos del alta también', camposChicos === 0,
+      'y con letra de 16 px: por debajo, iOS hace zoom al enfocar y descoloca la pantalla');
+
+    await pm.evaluate(() => { isAdmin = false; document.body.classList.remove('is-admin'); editingId = null; closeAll() });
+
     await pm.locator('#adminEntry').click();
     await pm.waitForSelector('.login-shell');
     const columnas = await pm.evaluate(() =>

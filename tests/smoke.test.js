@@ -872,6 +872,34 @@ const ev = code => window.eval(code);
     !/secreto\s*\)?\s*values\s*\(\s*'[^']{8,}'/i.test(disparador),
     'sólo el ejemplo comentado, con TU_SECRETO de relleno');
 
+  /* ══ LOS DOS CORREOS QUE SE MANDAN SOLOS ══
+     El aviso al entrar algo se puede perder —estabas en obra, se fue la señal—
+     así que hay un segundo que insiste, y un resumen que pone delante lo que
+     ya se está midiendo y nadie mira. */
+  const resumen = fs.readFileSync(path.join(ROOT, 'functions/api/aviso-resumen.js'), 'utf8');
+  const cron = fs.readFileSync(
+    path.join(ROOT, 'supabase/migrations/20260807000002_avisos_programados.sql'), 'utf8');
+
+  check('El correo de pendientes no se manda si no hay nada pendiente',
+    /if \(!cuantos\) return json\(200, \{ ok: true, enviado: false/.test(resumen),
+    'un aviso diario que dice "todo al día" se deja de abrir');
+  check('Y la base tampoco hace el viaje en balde',
+    /if jsonb_array_length\(cot\) = 0 and jsonb_array_length\(preg\) = 0 then\s*return;/.test(cron));
+  check('Sólo insiste con lo que lleva más de un día',
+    /creado_en < now\(\) - interval '24 hours'/.test(cron));
+  check('El resumen marca lo que se mira y nadie cotiza',
+    /e\.vistas >= 8 && Number\(e\.cotizaciones\) === 0/.test(resumen),
+    'que es el único dato accionable del informe');
+  check('Los trabajos programados no se duplican al repetir la migración',
+    (cron.match(/cron\.unschedule/g) || []).length === 2,
+    'sin esto, correrla dos veces manda dos correos por día');
+  check('Las funciones programadas tampoco fallan hacia fuera',
+    (cron.match(/exception when others then/g) || []).length === 2);
+  check('Y fijan su search_path', (cron.match(/set search_path = avisos/g) || []).length === 2);
+  check('La consulta de clientes no sale de la base',
+    !/service_role|SUPABASE_SERVICE/i.test(cron) && !/service_role/i.test(resumen),
+    'sólo viaja el resumen ya hecho, nunca la lista');
+
   check('Ningún secreto quedó escrito en el código',
     !/AVISO_SECRETO\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
     !/RESEND_API_KEY\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
