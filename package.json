@@ -22,7 +22,8 @@
     "db:push": "supabase db push",
     "test:arq": "node tests/arquitectura.test.js",
     "lint": "eslint .",
-    "muerto": "node tools/codigo-muerto.js"
+    "muerto": "node tools/codigo-muerto.js",
+    "db:faltantes": "node tools/sembrar-faltantes.js"
   },
   "devDependencies": {
     "eslint": "^10.8.0",
