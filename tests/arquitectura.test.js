@@ -41,7 +41,14 @@ const check = (nombre, ok, extra = '') =>
 const TOPES = {
   lineasPorArchivo: 900,   // ningún archivo del sitio debe pasar de aquí
   entreCapas: 14,          // dependencias contra el orden ENTRE subsistemas distintos
-  globales: 270,           // el tamaño del contrato compartido
+  /* El tamaño del contrato compartido. Subió de 270 a 280 al entrar la gestión
+     de personal: un subsistema nuevo son sus funciones y su estado, y no hay
+     forma de tenerlo sin nombres nuevos.
+
+     Subirlo es legítimo; que suba sin que nadie lo note, no. Por eso está aquí
+     y no en una constante escondida: quien lo cambie escribe una línea en un
+     commit y alguien la lee. */
+  globales: 280,
 };
 
 const { orden, colisiones, todos } = contrato();

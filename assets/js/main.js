@@ -168,6 +168,12 @@ document.addEventListener('click', e => {
     return;
   }
 
+  const rolBtn = t.closest('[data-usuario-rol]');
+  if(rolBtn){ cambiarRolUsuario(rolBtn.dataset.usuarioRol, rolBtn.dataset.rol); return }
+
+  const usrDel = t.closest('[data-usuario-del]');
+  if(usrDel){ eliminarUsuario(usrDel.dataset.usuarioDel); return }
+
   if(t.closest('#vistosClear')){ vistos = []; saveVistos(); renderVistos(); return }
 
   const favBtn = t.closest('[data-fav]');

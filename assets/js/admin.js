@@ -114,7 +114,11 @@ function renderAdmin(){
   else if(adminTab==='preguntas') body.innerHTML = preguntasAdminHTML();
   else if(adminTab==='brand') body.innerHTML = brandHTML();
   else if(adminTab==='site') body.innerHTML = siteHTML();
+  else if(adminTab==='usuarios') body.innerHTML = usuariosHTML();
   else body.innerHTML = backupHTML();
+
+  const inv = $('#uInvitar');
+  if(inv) inv.addEventListener('click', invitarUsuario);
 
   wireDropzone('dz','imgInput','product');
   wireDropzone('dzLogo','logoInput','logo');

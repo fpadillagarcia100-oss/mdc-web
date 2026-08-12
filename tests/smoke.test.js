@@ -1080,6 +1080,36 @@ const ev = code => window.eval(code);
     `${llena.length} pendientes`);
   ev('colaSolicitudes = []');
 
+  /* ══ GESTIÓN DE PERSONAL ══
+     La función corre en Cloudflare, así que se revisa su código —igual que los
+     avisos—. Lo que se comprueba no es que exista: son los candados que, si
+     faltan, dejan a la empresa fuera de su propio panel o filtran la llave
+     maestra de la base. */
+  const usuarios = fs.readFileSync(path.join(ROOT, 'functions/api/usuarios.js'), 'utf8');
+
+  check('Sólo un administrador gestiona al personal',
+    /filas\[0\]\?\.rol !== 'admin'/.test(usuarios) && usuarios.includes('/auth/v1/user'),
+    'y el token se verifica contra Supabase, no se descifra aquí');
+  check('Nadie puede cambiarse el rol a sí mismo',
+    /if \(id === yo\) return json\(400/.test(usuarios));
+  check('No se puede quitar al último administrador',
+    (usuarios.match(/Es el único administrador/g) || []).length === 2,
+    'protegido al cambiar el rol Y al eliminar la cuenta');
+  check('Se invita en vez de crear con contraseña',
+    usuarios.includes('/auth/v1/invite') && !/password/i.test(usuarios),
+    'la contraseña la elige quien la usa: no pasa por WhatsApp ni por aquí');
+
+  /* La llave de servicio puede saltarse TODAS las políticas de la base. Si
+     alguna vez llega al navegador, cualquiera puede leer la cartera de
+     clientes y borrar el catálogo. */
+  check('La llave de servicio no sale del servidor',
+    !fs.readdirSync(path.join(ROOT, 'assets/js'))
+      .some(f => fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8')
+        .includes('SUPABASE_SERVICE_KEY')),
+    'ningún archivo de assets/js la nombra siquiera');
+  check('Y el panel habla con el servidor, no con Supabase',
+    fs.readFileSync(path.join(ROOT, 'assets/js/admin-usuarios.js'), 'utf8').includes("fetch('/api/usuarios'"));
+
   /* ══ GUÍAS DE COMPRA ══
      El contenido que NO depende del inventario. Una página de categoría que
      sólo lista lo que hay hoy queda vacía el día que se venden esos tres

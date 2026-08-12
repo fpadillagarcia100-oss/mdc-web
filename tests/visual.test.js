@@ -97,6 +97,15 @@ function servir(puerto, raiz = ROOT) {
 async function capturar(objetivo, nombre, opciones = {}) {
   // `objetivo` puede ser la página entera o un elemento concreto. Acotar la
   // captura a lo que se está probando es lo que la mantiene estable.
+
+  /* Esperar a que la tipografía esté lista antes de disparar.
+     Sin esto, unas capturas salían con Inter y otras con la letra de reserva.
+     Como no miden lo mismo, el texto ocupa distinto ancho, la barra superior
+     cambia de alto y TODA la página se desplaza unos pixeles: tres capturas
+     fallaban a la vez por algo que no tenía nada que ver con el cambio. */
+  const pagina = objetivo.page ? objetivo.page() : objetivo;
+  await pagina.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
+
   fs.mkdirSync(CAPTURAS, { recursive: true });
   const referencia = path.join(CAPTURAS, `${nombre}.png`);
   const nueva = await objetivo.screenshot({ animations: 'disabled', ...opciones });
