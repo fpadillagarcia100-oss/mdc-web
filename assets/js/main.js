@@ -131,11 +131,15 @@ document.addEventListener('click', e => {
       guardarSucursalesRemoto(); renderAdmin(); return;
     }
     if(a==='acct-clear'){
-      if(!confirm('Se borrarán tus datos de contacto y el historial de solicitudes de este dispositivo.\n\n¿Continuar?')) return;
+      if(!confirm('Se borrarán tus datos de contacto y el historial de solicitudes de esta sesión.\n\n¿Continuar?')) return;
       account = null;
-      try{ localStorage.removeItem(K.account); localStorage.removeItem(K.requests) }catch{}
+      /* Por `store`, que ahora es memoria. El botón sigue teniendo sentido: no
+         borra de un disco —ahí nunca hubo nada— pero limpia la pantalla en el
+         acto, que es lo que quiere quien lo pulsa en una máquina prestada. */
+      store.write(K.account, null);
+      store.write(K.requests, []);
       updateAcctLabel(); openPage('cuenta');
-      showToast('Datos borrados de este dispositivo'); return;
+      showToast('Datos borrados'); return;
     }
   }
 

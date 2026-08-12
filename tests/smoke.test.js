@@ -114,6 +114,20 @@ const ev = code => window.eval(code);
     ev("window.localStorage.getItem('mdc_v1_products')") === null &&
     ev("window.localStorage.getItem('mdc_v1_settings')") === null);
 
+  /* La regla nueva, y la más fácil de romper sin querer: el sitio NO escribe
+     nada en el navegador. Ni catálogo, ni carrito, ni sesión.
+
+     Basta con que alguien reviva un `store.write` que toque localStorage para
+     que vuelva a haber datos de visitantes tirados en la computadora de la
+     obra. Se mira el TOTAL de claves y no una lista: así una clave nueva que
+     nadie previó también hace fallar esto.
+
+     Además prueba la limpieza: arriba se sembraron a propósito claves de
+     versiones viejas, y a estas alturas ya deben haber desaparecido. */
+  check('El sitio no deja NADA en el navegador',
+    ev('window.localStorage.length') === 0,
+    ev('window.localStorage.length') + ' claves tras arrancar y barrer lo viejo');
+
   check('Catálogo renderiza 9 tarjetas', $$('.pcard').length === 9, `hay ${$$('.pcard').length}`);
   check('Nav de categorías se construye', $$('.nav-cat').length === 7);
   check('Logo muestra la marca', $('#logoSlot').textContent.includes('Maquinaria de Chiapas'));
@@ -196,8 +210,9 @@ const ev = code => window.eval(code);
   submit('#quoteForm');   // consumido por el filtro anti-bot
   submit('#quoteForm');
   check('La cotización se envía por WhatsApp', abierto !== null && abierto.includes('wa.me'));
-  check('Guarda los datos del cliente',
-    (window.localStorage.getItem('mdc_v1_account') || '').includes('Ana López'));
+  check('Recuerda los datos del cliente mientras dure la sesión',
+    (ev('JSON.stringify(account)') || '').includes('Ana López'),
+    'en memoria: al recargar se olvidan, y es lo buscado');
   check('El encabezado muestra el nombre', $('#acctLabel').textContent === 'Ana');
 
   /* ── Galería de fotos ──
@@ -1050,20 +1065,20 @@ const ev = code => window.eval(code);
   /* ── La cola de cotizaciones sin señal ──
      Se prueban las funciones directamente, sin tocar la red: mandar una
      solicitud de verdad desde una prueba escribiría en la base de producción. */
-  ev(`localStorage.removeItem('mdc_v1_cola_solicitudes')`);
+  ev('colaSolicitudes = []');
   ev(`encolarSolicitud({tipo:'cotizacion', nombre:'Prueba', telefono:'9611234567', carrito:[]})`);
-  const cola = JSON.parse(ev(`localStorage.getItem('mdc_v1_cola_solicitudes')`) || '[]');
-  check('Una cotización sin señal se guarda en el teléfono', cola.length === 1 && cola[0].nombre === 'Prueba');
+  const cola = JSON.parse(ev('JSON.stringify(leerCola())'));
+  check('Una cotización sin señal queda en cola', cola.length === 1 && cola[0].nombre === 'Prueba');
   check('Y se anota cuándo se llenó, no cuándo llegó',
     typeof cola[0].encoladaEn === 'string' && cola[0].encoladaEn.includes('T'),
     'llegando tarde, la hora del servidor diría "hoy"');
 
   ev(`for(let i=0;i<30;i++) encolarSolicitud({tipo:'cotizacion', nombre:'N'+i, telefono:'9611234567'})`);
-  const llena = JSON.parse(ev(`localStorage.getItem('mdc_v1_cola_solicitudes')`) || '[]');
+  const llena = JSON.parse(ev('JSON.stringify(leerCola())'));
   check('La cola tiene tope y conserva las últimas',
     llena.length === 20 && llena[llena.length-1].nombre === 'N29',
     `${llena.length} pendientes`);
-  ev(`localStorage.removeItem('mdc_v1_cola_solicitudes')`);
+  ev('colaSolicitudes = []');
 
   /* ══ GUÍAS DE COMPRA ══
      El contenido que NO depende del inventario. Una página de categoría que

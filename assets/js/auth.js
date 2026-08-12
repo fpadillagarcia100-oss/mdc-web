@@ -15,10 +15,16 @@
  *
  * ── Dónde vive la sesión ──
  *
- * En localStorage, para no tener que escribir la contraseña en cada visita.
- * A cambio, el token sobrevive al cierre del navegador: en una computadora
- * compartida hay que cerrar sesión, no sólo cerrar la pestaña. Por eso el
- * botón de salir es visible y no está escondido en un menú.
+ * SÓLO EN MEMORIA. El sitio no escribe nada en el navegador, ni siquiera el
+ * token; al recargar la página hay que volver a entrar.
+ *
+ * Es más incómodo y también más seguro, y en este negocio la segunda parte
+ * pesa más: el panel se abre desde la computadora del taller y desde teléfonos
+ * que se prestan. Un token guardado sobrevive al cierre del navegador y espera
+ * a quien se siente después. Uno en memoria muere con la pestaña.
+ *
+ * El botón de salir sigue siendo visible de todas formas: cerrar sesión a
+ * propósito revoca el token también en el servidor, y eso no lo hace recargar.
  *
  * No se usa la librería oficial de Supabase: la CSP sólo permite scripts del
  * propio sitio, y añadir un CDN abriría esa puerta para ahorrar 80 líneas.
@@ -26,21 +32,22 @@
  */
 'use strict';
 
-const AUTH_LLAVE = 'mdc_sesion';
+/* La sesión, y nada más que aquí. Una variable del módulo: se va con la
+   pestaña, no queda copia en ningún sitio del que haya que acordarse. */
+let sesionActiva = null;
 
 const auth = {
   /** @returns {{access_token:string, refresh_token:string, expira:number, correo:string}|null} */
   sesion() {
-    try { return JSON.parse(localStorage.getItem(AUTH_LLAVE)) || null; }
-    catch { return null; }
+    return sesionActiva;
   },
 
   guardar(s) {
-    try { localStorage.setItem(AUTH_LLAVE, JSON.stringify(s)); } catch {}
+    sesionActiva = s;
   },
 
   olvidar() {
-    try { localStorage.removeItem(AUTH_LLAVE); } catch {}
+    sesionActiva = null;
   },
 
   /** ¿Hay sesión, aunque el token esté por caducar? */

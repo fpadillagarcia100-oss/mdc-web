@@ -118,23 +118,32 @@ async function registrarSolicitud(s) {
  * la bandeja y se descarta en dos segundos; una perdida es un cliente que se
  * fue con otro y del que nunca te enteras.
  */
-const COLA_SOLICITUDES = 'mdc_v1_cola_solicitudes';
 const TOPE_COLA = 20;
 
+/* La cola vive EN MEMORIA, como todo lo demás en este sitio.
+ *
+ * Hay que decir lo que eso cuesta, porque es la única pérdida real de no
+ * escribir en el navegador: la solicitud espera mientras la pestaña siga
+ * abierta y se manda sola en cuanto vuelva la red. Si se cierra antes, se
+ * pierde.
+ *
+ * Lo que la salva en la práctica es que el móvil no cierra las pestañas al
+ * bloquearse: el vendedor llena la cotización, guarda el teléfono, sigue con
+ * la visita y al recuperar señal sale sola. Lo que ya no aguanta es reiniciar
+ * el teléfono o cerrar la pestaña a mano.
+ */
+let colaSolicitudes = [];
+
 function leerCola() {
-  try { return JSON.parse(localStorage.getItem(COLA_SOLICITUDES)) || []; }
-  catch { return []; }
+  return colaSolicitudes;
 }
 
 function encolarSolicitud(s) {
   if (!BACKEND) return;
-  try {
-    const cola = leerCola();
-    // Se guarda cuándo se llenó: al llegar tarde a la bandeja, la hora del
-    // servidor diría "hoy" cuando en realidad se pidió anteayer en la sierra.
-    cola.push({ ...s, encoladaEn: new Date().toISOString() });
-    localStorage.setItem(COLA_SOLICITUDES, JSON.stringify(cola.slice(-TOPE_COLA)));
-  } catch { /* almacenamiento lleno o bloqueado: no hay más que hacer */ }
+  // Se guarda cuándo se llenó: al llegar tarde a la bandeja, la hora del
+  // servidor diría "hoy" cuando en realidad se pidió anteayer en la sierra.
+  colaSolicitudes.push({ ...s, encoladaEn: new Date().toISOString() });
+  colaSolicitudes = colaSolicitudes.slice(-TOPE_COLA);
 }
 
 /**
@@ -183,7 +192,7 @@ async function vaciarColaSolicitudes() {
     }
   }
 
-  try { localStorage.setItem(COLA_SOLICITUDES, JSON.stringify(pendientes)); } catch {}
+  colaSolicitudes = pendientes;
 
   if (enviadas && typeof showToast === 'function') {
     showToast(enviadas === 1

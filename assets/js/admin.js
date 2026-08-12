@@ -520,10 +520,14 @@ function backupHTML(){
   const cls = pct>85 ? 'full' : pct>60 ? 'warn' : '';
   return `
     <p class="adm-note">
-      <strong>Importante:</strong> todo lo que editas se guarda en el <em>localStorage de este navegador</em>, en esta
-      computadora. Tus visitantes <strong>no verán estos cambios</strong>, y se pierden si limpias los datos del navegador
-      o cambias de equipo. Exporta un respaldo con frecuencia. Para que el catálogo sea el mismo para todo el mundo
-      hace falta un servidor con base de datos.
+      <strong>Todo lo que editas se guarda en la base de datos</strong>, no en esta computadora. Lo ve el equipo entero
+      desde cualquier dispositivo, y no se pierde aunque limpies el navegador o cambies de equipo. Los visitantes verán
+      los cambios cuando pulses <em>Publicar cambios</em>.
+    </p>
+    <p class="adm-note">
+      Este sitio <strong>no guarda nada en tu navegador</strong>: ni catálogo, ni sesión, ni carrito. Al recargar la
+      página hay que volver a entrar. Es a propósito — un token olvidado en la computadora del taller es de las cosas
+      que más caro salen.
     </p>
 
     <div class="adm-section">
@@ -662,9 +666,10 @@ async function logoutAdmin(){
   document.body.classList.remove('is-admin');
   editingId = null; draftImgs = undefined;
 
-  /* Se borra el token de este dispositivo y se le avisa al servidor.
-     Importa porque la sesión vive en localStorage y sobrevive al cierre del
-     navegador: en una computadora compartida, cerrar la pestaña NO basta. */
+  /* Se olvida el token y se le avisa al SERVIDOR. Recargar ya borra la sesión
+     de esta pestaña —vive en memoria— pero eso no revoca el token en Supabase:
+     seguiría siendo válido hasta caducar. Sólo cerrar sesión a propósito lo
+     invalida de verdad. */
   await cerrarSesion();
 
   /* Se recarga para volver al catálogo publicado. Sin esto quedaría en

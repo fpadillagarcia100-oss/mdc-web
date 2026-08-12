@@ -6,22 +6,51 @@
  */
 'use strict';
 
-/* ══════════════════ ALMACENAMIENTO ══════════════════ */
+/* ══════════════════ ALMACENAMIENTO ══════════════════
+ *
+ * ESTE SITIO NO ESCRIBE NADA EN EL NAVEGADOR. Ni localStorage, ni
+ * sessionStorage, ni cookies.
+ *
+ * Todo lo del negocio —catálogo, precios, ajustes, cotizaciones, preguntas—
+ * vive en la base de datos y llega igual a todo el mundo. Y lo del visitante
+ * —su carrito, sus favoritos, lo que estaba mirando— vive aquí, en memoria,
+ * mientras la pestaña esté abierta. Al recargar, empieza limpio.
+ *
+ * ── Qué se gana y qué se paga ──
+ *
+ * Se gana que la página no deja rastro: nada que consentir, nada que borrar,
+ * nada que se quede en una computadora prestada. El token del panel muere al
+ * recargar, así que una sesión olvidada en la máquina de la obra deja de ser
+ * un problema.
+ *
+ * Se paga que el carrito se vacía al recargar, que hay que volver a entrar al
+ * panel cada vez, y —esto es lo importante— que una cotización llenada sin
+ * señal sólo se reintenta mientras la pestaña siga abierta. Si se cierra
+ * antes de que vuelva la red, se pierde. Se decidió a sabiendas.
+ *
+ * La interfaz `store` se mantiene igual a propósito: los veinte sitios que
+ * llaman a `store.read` y `store.write` no distinguen dónde acaban los datos,
+ * y así el cambio no se filtra por todo el código.
+ */
+const memoria = new Map();
+
 const store = {
-  read(key,fallback){ try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch{return fallback} },
-  write(key,value){
-    try{ localStorage.setItem(key,JSON.stringify(value)); return true }
-    catch(err){
-      const full = err && (err.name==='QuotaExceededError' || err.code===22);
-      showToast(full
-        ? 'Sin espacio: las imágenes ocupan demasiado. Quita alguna foto o exporta un respaldo.'
-        : 'No se pudo guardar en este navegador.', true);
-      return false;
-    }
+  read(key, fallback){
+    return memoria.has(key) ? memoria.get(key) : fallback;
+  },
+  write(key, value){
+    /* Se guarda una copia y no la referencia. Sin esto, quien llamó seguiría
+       teniendo en la mano el mismo objeto que hay "guardado", y modificarlo
+       después cambiaría lo almacenado sin pasar por aquí — que es justo el
+       tipo de fallo que localStorage no permitía, porque serializa. */
+    try{ memoria.set(key, JSON.parse(JSON.stringify(value))); return true }
+    catch{ memoria.set(key, value); return true }
   },
   usedBytes(){
-    let n=0;
-    try{ for(const k of Object.values(K)){ const v=localStorage.getItem(k); if(v) n+=v.length*2 } }catch{}
+    let n = 0;
+    for(const v of memoria.values()){
+      try{ n += JSON.stringify(v).length * 2 }catch{}
+    }
     return n;
   }
 };
@@ -115,7 +144,7 @@ function normalizeProducts(list){
 /* ══════════════════ DE DÓNDE SALEN LOS DATOS ══════════════════
 
    El catálogo y los ajustes vienen SIEMPRE del sitio publicado, nunca del
-   localStorage de quien mira.
+   navegador de quien mira.
 
    Esto arregla un fallo de los que asustan: dos personas abrían la misma
    dirección y veían páginas distintas. Quien alguna vez editó con el panel
@@ -128,20 +157,28 @@ function normalizeProducts(list){
    realidad los clientes estaban viendo otro.
 
    La fuente es CATALOGO, que build.js escribe al desplegar desde la base de
-   datos. Una sola, igual para todos. Del localStorage sólo sobrevive lo que
-   de verdad es de cada dispositivo: el carrito, los favoritos y los datos de
-   contacto de quien cotiza. */
+   datos. Una sola, igual para todos. En memoria sólo queda lo que de verdad es
+   de quien está mirando: su carrito, sus favoritos y sus datos de contacto —y
+   sólo mientras la pestaña siga abierta. */
 let products = normalizeProducts(DEFAULT_PRODUCTS);
 let settings = Object.assign({}, DEFAULT_SETTINGS);
 
-/* Se borran los restos del panel viejo.
+/* Se borra TODO lo que versiones anteriores dejaron en el navegador.
 
-   Sin esto seguirían ocupando espacio y, sobre todo, seguirían ahí el día que
-   alguien reviviera un `store.read` por descuido. Lo que ya no manda, se va. */
+   No es limpieza cosmética. Miles de visitantes ya tienen ahí su carrito, sus
+   favoritos y —los que administraron— un token de sesión. Si el sitio deja de
+   escribir pero no borra, esos datos se quedan olvidados para siempre en la
+   máquina de cada quien, incluida la de la obra que usan cinco personas.
+
+   Se barre por prefijo y no por lista: así también se van las claves de
+   versiones que ya nadie recuerda. Y `mdc_sesion`, que no lleva el prefijo,
+   se nombra aparte — un token es lo que más urge que desaparezca. */
 try{
-  localStorage.removeItem(K.products);
-  localStorage.removeItem(K.settings);
-}catch{}
+  for(let i = localStorage.length - 1; i >= 0; i--){
+    const clave = localStorage.key(i);
+    if(clave && (clave.startsWith('mdc_v1_') || clave === 'mdc_sesion')) localStorage.removeItem(clave);
+  }
+}catch{ /* navegador sin almacenamiento o en modo privado: nada que borrar */ }
 let cart = store.read(K.cart, []);
 let favorites = new Set(store.read(K.favs, []));
 /* Historial de fichas abiertas, de la más reciente a la más vieja. Sólo ids:
