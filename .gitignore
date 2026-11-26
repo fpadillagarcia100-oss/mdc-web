@@ -41,3 +41,8 @@ assets/js/panel.js
 # Salida de la prueba visual cuando una captura cambia. Las referencias SI se
 # versionan; estas son la comparacion de un momento.
 tests/capturas/*.nueva.png
+
+# ── Servidor (.NET) ──
+servidor/**/bin/
+servidor/**/obj/
+servidor/publicado/
