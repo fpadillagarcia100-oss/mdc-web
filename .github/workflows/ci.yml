@@ -40,10 +40,13 @@ jobs:
 
       # Las pruebas de integración revisan dist/, que no se versiona. Sin este
       # paso el CI fallaba desde agosto por un dist/ que nunca existió aquí. Y
-      # compila con esbuild en Linux, como Cloudflare: si eso se rompe, se ve
+      # minifica con esbuild en Linux, como Cloudflare: si eso se rompe, se ve
       # aquí y no en un despliegue caído.
-      - name: Compilar
-        run: npm run build
+      #
+      # Empaqueta, NO regenera: aquí no hay .env, y build.js escribiría un
+      # catalogo-datos.js sin backend. Se prueba lo que está en git.
+      - name: Empaquetar
+        run: npm run empaquetar
 
       - name: Integración en navegador
         run: npm run test:smoke

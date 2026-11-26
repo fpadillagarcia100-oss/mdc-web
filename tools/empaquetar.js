@@ -60,6 +60,12 @@ function contar(dir) {
   return n;
 }
 
+/* sitio.js y panel.js no se versionan: se unen aquí desde assets/js/, para
+   que empaquetar no dependa de que alguien haya corrido build.js antes. El CI
+   lo necesita así: empaqueta lo que está en git SIN regenerarlo, porque sin
+   el .env build.js escribiría un catalogo-datos.js sin backend. */
+require('./empacar-js').empacarJS();
+
 // Se borra y se rehace: si un equipo se da de baja, su ficha vieja no puede
 // quedarse rondando en el sitio publicado.
 fs.rmSync(DIST, { recursive: true, force: true });
