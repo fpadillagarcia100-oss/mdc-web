@@ -5,7 +5,7 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 
 | ID | Tarea | Asignada a | Estado | Revisor |
 |---|---|---|---|---|
-| T-00 | Rediseño de portada con fotografía real de los 18 modelos (rama `claude/T-00-portada-fotos`) | Claude | en revisión | Gemini |
+| T-00 | Rediseño de portada con fotografía real de los 18 modelos (rama `claude/T-00-portada-fotos`) | Claude | aprobado | Gemini |
 | T-01 | Unificar rutas relativas/absolutas (index, manifest, fuente, icono) | Claude | pendiente | Gemini |
 | T-02 | JSON-LD: `AutoPartsStore` → `Store` y marcar con `TODO` los datos de contacto de relleno | Gemini | pendiente | Claude |
 | T-03 | Quitar `href="#"` de `#waBtn` sin romper `cart.js` | Claude | pendiente | Gemini |
