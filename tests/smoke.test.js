@@ -1186,6 +1186,20 @@ const ev = code => window.eval(code);
   await guardando;
   check('Guardar no cierra el formulario de otro equipo abierto mientras tanto',
     ev('editingId === products[1].id'));
+  /* Subir, mover o quitar una foto redibuja el formulario. Lo escrito y sin
+     guardar tiene que sobrevivir: lo normal es poner el precio y LUEGO las
+     fotos, y antes el precio volvía al viejo sin avisar. */
+  ev(`editingId = products[1].id; draftImgs = undefined; renderAdmin()`);
+  $('#f-price').value = '1234567';
+  $('#f-hot').checked = !$('#f-hot').checked;
+  const hotEscrito = $('#f-hot').checked;
+  ev('draftImgs = []; renderAdmin()');   // lo mismo que hace quitarFoto()
+  check('Redibujar el formulario al tocar las fotos no borra lo escrito',
+    $('#f-price').value === '1234567' && $('#f-hot').checked === hotEscrito, $('#f-price').value);
+  ev(`editingId = products[2].id; draftImgs = undefined; renderAdmin()`);
+  check('Pero abrir otro equipo sí empieza con SUS datos',
+    $('#f-price').value === String(ev('products[2].price')), $('#f-price').value);
+
   ev('isAdmin = false; editingId = null; closeAll()');
 
   /* ── Reporte ── */

@@ -60,7 +60,7 @@ function productFormHTML(){
       <button class="btn-ghost" type="button" data-action="admin-cancel">← Volver al listado</button>
       <strong style="font-size:15px">${nuevo?'Nuevo equipo':'Editar: '+esc(v.name)}</strong>
     </div>
-    <form id="pForm" novalidate>
+    <form id="pForm" novalidate data-editando="${editingId}">
       <div class="adm-section">
         <h3>Fotos del equipo <span class="hint">(hasta ${MAX_FOTOS})</span></h3>
         <p class="sub">Cada una se redimensiona a 1000 px y se comprime automáticamente.

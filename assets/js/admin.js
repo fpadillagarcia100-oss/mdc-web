@@ -108,6 +108,21 @@ function renderAdmin(){
   $$('#adminTabs .admin-tab').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===adminTab)));
 
   const body = $('#adminBody');
+
+  /* Si se redibuja el formulario del MISMO equipo —al subir, mover o quitar
+     una foto—, lo que se lleva escrito sobrevive.
+
+     Antes no: el formulario se rehacía con los datos guardados y se perdía el
+     precio recién tecleado, o en un equipo nuevo, todo. Lo encontró la prueba
+     de punta a punta (tests/e2e-servidor.test.js), no una persona: lo normal
+     es escribir el precio y LUEGO agregar las fotos. */
+  const previo = $('#pForm');
+  const escrito = previo && editingId !== null && previo.dataset.editando === String(editingId)
+    ? [...previo.querySelectorAll('input[id], select[id], textarea[id]')]
+        .filter(el => el.type !== 'file')
+        .map(el => [el.id, el.type === 'checkbox' ? el.checked : el.value])
+    : null;
+
   if(editingId !== null) body.innerHTML = productFormHTML();
   else if(adminTab==='products') body.innerHTML = productListHTML();
   else if(adminTab==='solicitudes') body.innerHTML = solicitudesHTML();
@@ -116,6 +131,14 @@ function renderAdmin(){
   else if(adminTab==='site') body.innerHTML = siteHTML();
   else if(adminTab==='usuarios') body.innerHTML = usuariosHTML();
   else body.innerHTML = backupHTML();
+
+  if(escrito){
+    for(const [id, valor] of escrito){
+      const el = document.getElementById(id);
+      if(!el) continue;
+      if(el.type === 'checkbox') el.checked = valor; else el.value = valor;
+    }
+  }
 
   const inv = $('#uInvitar');
   if(inv) inv.addEventListener('click', invitarUsuario);
@@ -685,7 +708,7 @@ async function logoutAdmin(){
   editingId = null; draftImgs = undefined;
 
   /* Se olvida el token y se le avisa al SERVIDOR. Recargar ya borra la sesión
-     de esta pestaña —vive en memoria— pero eso no revoca el token en Supabase:
+     de esta pestaña —vive en memoria— pero eso no revoca el token en el servidor:
      seguiría siendo válido hasta caducar. Sólo cerrar sesión a propósito lo
      invalida de verdad. */
   await cerrarSesion();

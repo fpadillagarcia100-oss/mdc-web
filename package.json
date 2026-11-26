@@ -23,7 +23,8 @@
     "muerto": "node tools/codigo-muerto.js",
     "db:faltantes": "node tools/sembrar-faltantes.js",
     "mapas": "node tools/make-mapas.js",
-    "test:servidor": "dotnet test servidor/Mdc.sln && powershell -NoProfile -ExecutionPolicy Bypass -File servidor/probar-esquema.ps1"
+    "test:servidor": "dotnet test servidor/Mdc.sln && powershell -NoProfile -ExecutionPolicy Bypass -File servidor/probar-esquema.ps1",
+    "test:e2e": "node tests/e2e-servidor.test.js"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

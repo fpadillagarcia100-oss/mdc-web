@@ -18,7 +18,7 @@ namespace Mdc.Api;
 /// </summary>
 public static class Consola
 {
-    public static bool EsComando(string a) => a is "migrar" or "invitar-admin";
+    public static bool EsComando(string a) => a is "migrar" or "invitar-admin" or "importar";
 
     public static async Task<int> Ejecutar(string[] args)
     {
@@ -34,6 +34,53 @@ public static class Consola
                     var n = await Migraciones.AplicarAsync(cadena, Console.WriteLine);
                     Console.WriteLine(n == 0 ? "La base ya estaba al día." : $"Listo: {n} archivo(s) aplicado(s).");
                     return 0;
+
+                case "importar":
+                {
+                    /* Mdc.Api importar --desde-json data/catalogo.json [--reemplazar]
+                       Mdc.Api importar --desde-supabase [--reemplazar]
+                         (lee SUPABASE_URL y SUPABASE_SERVICE_KEY del entorno de ESA ejecución) */
+                    var reemplazar = args.Contains("--reemplazar");
+                    var imp = new Importar(cadena, config, Console.WriteLine);
+                    Importar.Paquete paquete;
+                    string? urlSupabase = null;
+                    var iJson = Array.IndexOf(args, "--desde-json");
+                    if (iJson > 0 && iJson + 1 < args.Length)
+                    {
+                        Console.WriteLine($"Leyendo {args[iJson + 1]}…");
+                        paquete = Importar.DesdeJson(args[iJson + 1]);
+                    }
+                    else if (args.Contains("--desde-supabase"))
+                    {
+                        urlSupabase = Environment.GetEnvironmentVariable("SUPABASE_URL");
+                        var llave = Environment.GetEnvironmentVariable("SUPABASE_SERVICE_KEY");
+                        if (string.IsNullOrEmpty(urlSupabase) || string.IsNullOrEmpty(llave))
+                        {
+                            Console.Error.WriteLine("Faltan SUPABASE_URL y SUPABASE_SERVICE_KEY en el entorno de esta ejecución.");
+                            return 1;
+                        }
+                        Console.WriteLine("Leyendo Supabase…");
+                        paquete = await Importar.DesdeSupabaseAsync(urlSupabase, llave, Console.WriteLine);
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine("Uso: Mdc.Api importar --desde-json <ruta> | --desde-supabase  [--reemplazar]");
+                        return 1;
+                    }
+
+                    Console.WriteLine("Fotos…");
+                    await imp.TraerFotosAsync(paquete, urlSupabase);
+                    Console.WriteLine("Escribiendo en SQL Server…");
+                    var enlaces = await imp.EscribirAsync(paquete, reemplazar);
+                    if (enlaces.Count > 0)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Las contraseñas no se pueden traer. Manda a cada quien su enlace (caducan en 7 días):");
+                        foreach (var (correo, enlace) in enlaces) Console.WriteLine($"  {correo}  {enlace}");
+                    }
+                    Console.WriteLine("Listo.");
+                    return 0;
+                }
 
                 case "invitar-admin":
                     if (args.Length < 3) { Console.Error.WriteLine("Uso: Mdc.Api invitar-admin correo \"Nombre\""); return 1; }
@@ -60,6 +107,12 @@ public static class Consola
         catch (SqlException ex)
         {
             Console.Error.WriteLine($"SQL Server: {ex.Message}");
+            return 1;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or HttpRequestException)
+        {
+            // Un archivo que no está, una base con datos, Supabase que no contesta: se dice y se sale.
+            Console.Error.WriteLine(ex.Message);
             return 1;
         }
         return 1;

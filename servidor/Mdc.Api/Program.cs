@@ -107,8 +107,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 /* Las fotos. Inmutables: el nombre lleva hora y aleatorio, nunca se reescribe.
-   Sólo .webp: aunque alguien lograra dejar otro archivo en la carpeta, no se
-   serviría. */
+   Sólo imágenes: aunque alguien lograra dejar otro archivo en la carpeta (un
+   .html, un .svg con script), no se serviría. */
 var carpetaFotos = FotosEndpoints.Carpeta(cfg);
 Directory.CreateDirectory(carpetaFotos);
 app.UseStaticFiles(new StaticFileOptions
@@ -117,7 +117,12 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/fotos",
     ServeUnknownFileTypes = false,
     ContentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider(
-        new Dictionary<string, string> { [".webp"] = "image/webp" }),
+        new Dictionary<string, string>
+        {
+            [".webp"] = "image/webp", [".avif"] = "image/avif",
+            // Las fotos anteriores a la compresión en el navegador pueden venir así de Supabase.
+            [".jpg"] = "image/jpeg", [".jpeg"] = "image/jpeg", [".png"] = "image/png",
+        }),
     OnPrepareResponse = r =>
     {
         r.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
