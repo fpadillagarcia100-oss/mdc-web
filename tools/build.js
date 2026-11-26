@@ -120,10 +120,15 @@ function mapasDeSucursales() {
   } catch { return {} }
 }
 
-/** Huella de la fuente, para detectar si lo generado quedó desactualizado. */
+/** Huella de la fuente, para detectar si lo generado quedó desactualizado.
+ *
+ * Sin los \r: git guarda el archivo con LF y en Windows lo entrega con CRLF.
+ * Con los bytes crudos, el mismo catálogo daba una huella en Windows y otra
+ * en el CI de Linux, y el CI fallaba por un sitio que estaba al día.
+ * tools/check-generado.js calcula lo mismo; si cambias una, cambia la otra. */
 function huellaFuente() {
-  const crudo = fs.readFileSync(path.join(ROOT, 'data', 'catalogo.json'));
-  return require('crypto').createHash('sha256').update(crudo).digest('hex').slice(0, 16);
+  const texto = fs.readFileSync(path.join(ROOT, 'data', 'catalogo.json'), 'utf8').replace(/\r\n/g, '\n');
+  return require('crypto').createHash('sha256').update(texto).digest('hex').slice(0, 16);
 }
 
 /**

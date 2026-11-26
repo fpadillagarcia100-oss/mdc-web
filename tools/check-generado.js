@@ -28,8 +28,10 @@ if (!fs.existsSync(datos)) {
 }
 
 /* 1. ¿Coincide la huella? */
+// Sin los \r, igual que huellaFuente() en build.js: si no, Windows y Linux
+// discrepan sobre el mismo archivo.
 const esperada = crypto.createHash('sha256')
-  .update(fs.readFileSync(fuente)).digest('hex').slice(0, 16);
+  .update(fs.readFileSync(fuente, 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 16);
 
 const generado = fs.readFileSync(datos, 'utf8');
 const encontrada = (/CATALOGO_HUELLA = '([a-f0-9]+)'/.exec(generado) || [])[1];
