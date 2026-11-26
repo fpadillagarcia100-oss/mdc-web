@@ -436,7 +436,7 @@ function fichaHTML(eq, catalogo, iconos) {
 <title>${esc(titulo)}</title>
 <meta name="description" content="${esc(resumen)}">
 <meta name="theme-color" content="#1A1A1A">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="canonical" href="${url}">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/assets/img/icon-180.png">
@@ -446,9 +446,7 @@ function fichaHTML(eq, catalogo, iconos) {
 <meta property="og:description" content="${esc(resumen)}">
 <meta property="og:image" content="${esc(imagen)}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/assets/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/css/styles.css">
 <!-- Simulador de financiamiento y botón de impresión. Es un archivo externo,
      no código en línea: así el CSP de esta página sigue sin 'unsafe-inline'. -->
@@ -699,7 +697,7 @@ function categoriaHTML(cat, equipos, catalogo, iconos) {
 <title>${esc(titulo)}</title>
 <meta name="description" content="${esc(resumen.slice(0, 300))}">
 <meta name="theme-color" content="#1A1A1A">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: ${ORIGEN_FOTOS}; connect-src 'self'; frame-src https://www.youtube-nocookie.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="canonical" href="${url}">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/assets/img/icon-180.png">
@@ -709,9 +707,7 @@ function categoriaHTML(cat, equipos, catalogo, iconos) {
 <meta property="og:description" content="${esc(resumen.slice(0, 300))}">
 <meta property="og:image" content="${esc(equipos.map(e => e.img).find(Boolean) || `${SITIO}/assets/img/og.png`)}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/assets/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/css/styles.css">
 <script type="application/ld+json">
 ${JSON.stringify(datos, null, 2)}

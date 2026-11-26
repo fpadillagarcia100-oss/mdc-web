@@ -193,5 +193,5 @@ self.addEventListener('fetch', evento =>{
     })());
   }
 
-  // Todo lo demás —la API de Supabase, las tipografías— pasa de largo.
+  // Todo lo demás —la API de Supabase, los videos— pasa de largo.
 });

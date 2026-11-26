@@ -36,7 +36,7 @@ const serveLocal = requestInterceptor(request => {
       return new Response('', { status: 404 });
     }
   }
-  return new Response('', { headers: { 'Content-Type': type } });   // tipografías externas
+  return new Response('', { headers: { 'Content-Type': type } });   // cualquier cosa de otro dominio
 });
 
 const dom = new JSDOM(html, {

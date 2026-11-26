@@ -476,6 +476,19 @@ const desbordaX = pagina => pagina.evaluate(() =>
       check('Las fichas publicadas abren sin errores y con estilos', rotos.length === 0 && /Inter/.test(estilada),
         rotos[0] || `${ficha} · ${estilada.split(',')[0]}`);
 
+      /* Que la hoja DIGA Inter no prueba que se cargó: si la @font-face
+         apuntara a una ruta rota, todo se vería en la fuente del sistema sin un
+         solo error en consola. Se pregunta al navegador qué cargó, y de dónde. */
+      const fuente = await pd.evaluate(async () => {
+        await document.fonts.ready;
+        return {
+          cargada: [...document.fonts].some(f => f.family.replace(/['"]/g, '') === 'Inter' && f.status === 'loaded'),
+          ajenas: performance.getEntriesByType('resource').filter(r => /fonts\.(googleapis|gstatic)/.test(r.name)).length,
+        };
+      });
+      check('Inter carga desde el propio sitio, sin pasar por Google', fuente.cargada && fuente.ajenas === 0,
+        `${fuente.cargada ? 'cargada' : 'NO cargó'} · ${fuente.ajenas} peticiones a Google`);
+
       await cd.close();
       servidorDist.close();
     }

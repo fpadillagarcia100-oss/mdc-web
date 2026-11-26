@@ -8,11 +8,13 @@
 <meta name="theme-color" content="#1A1A1A">
 <!-- Defensa en profundidad: aunque alguien lograra inyectar contenido, no puede
      cargar scripts externos, incrustar iframes ni sacar datos a otro servidor. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com https://www.google.com; form-action 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com https://www.google.com; form-action 'none'; object-src 'none'; base-uri 'none'">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231A1A1A'/><text y='68' x='50' font-size='42' text-anchor='middle' fill='%23F5C400' font-family='sans-serif' font-weight='bold'>MDC</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Inter se sirve desde aquí mismo, no desde Google: dos conexiones menos
+     (googleapis y gstatic) antes de poder pintar el texto, y una hoja ajena
+     menos que bloquea la página. Se precarga el subconjunto latino, que es el
+     que se usa siempre; la @font-face está en styles.css. -->
+<link rel="preload" href="/assets/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/styles.css">
 
 <!-- ── Vista previa al compartir (WhatsApp, Facebook, LinkedIn) ──

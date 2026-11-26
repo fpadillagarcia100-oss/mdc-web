@@ -205,7 +205,7 @@ if (fs.existsSync(path.join(DIST, 'assets', 'js', 'sitio.js'))) {
     .update(Object.values(rutas).join('|')).digest('hex').slice(0, 10);
   const sw = path.join(DIST, 'sw.js');
   if (fs.existsSync(sw)) {
-    const base = ['/', rutas.css, rutas.sitio];
+    const base = ['/', rutas.css, rutas.sitio, '/assets/fonts/inter-v20-latin.woff2'];
     const cuerpo = fs.readFileSync(sw, 'utf8')
       .replace(/const VERSION = '[^']*';/, `const VERSION = 'mdc-${version}';`)
       .replace(/const BASE = \[[^\]]*\];/, `const BASE = ${JSON.stringify(base)};`);
