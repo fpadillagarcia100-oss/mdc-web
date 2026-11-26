@@ -207,6 +207,32 @@ la URL pelona. El diseño está en `tools/og-image.html`; si lo editas:
 npm run og
 ```
 
+## Animación y renders 3D
+
+La excavadora que se mueve en el hero y las máquinas de las tarjetas sin foto
+salen de **Blender**, pero no de un `.blend`: la escena entera está escrita en
+Python en `tools/blender/`, para que cada cambio se lea en un diff y el render
+se repita igual en cualquier computadora.
+
+```powershell
+npm run render3d                       # todo: video, imagen fija y las seis máquinas (~1 h sin tarjeta de video)
+npm run render3d -- --prueba 1,40,80   # sólo esos cuadros del video, para revisar una pose
+npm run render3d -- --solo-maquinas    # sólo las fotos de las tarjetas (~10 min)
+```
+
+| Archivo | Qué hace |
+|---|---|
+| `tools/blender/mdc3d.py` | Paleta de la marca, materiales, oruga, luces de estudio, piso y fondo |
+| `tools/blender/hero.py` | Modela la excavadora con sus pernos anidados y anima el ciclo de 5 s |
+| `tools/blender/codificar.py` | Saca el WebM (VP9), el MP4 (H.264) y la imagen fija, con el FFmpeg de Blender |
+| `tools/blender/maquinas.py` | Una foto de estudio con sombra y fondo transparente por tipo de máquina |
+| `assets/3d/` | Lo que se publica. Se versiona: ni el CI ni Cloudflare necesitan Blender |
+
+Nada de esto entra en la carga de la página: se pide después de `load`, el
+video sólo en pantallas anchas y nunca con *menos movimiento* o *ahorro de
+datos*. `npm run test:visual` lo comprueba y lo mide con un presupuesto propio.
+Si el dueño sube una imagen de banner desde el panel, esa manda sobre el video.
+
 ## Cómo verlo
 
 **Local:** abre `index.html` con doble clic.

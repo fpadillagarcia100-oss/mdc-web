@@ -25,7 +25,8 @@
     "lint": "eslint .",
     "muerto": "node tools/codigo-muerto.js",
     "db:faltantes": "node tools/sembrar-faltantes.js",
-    "mapas": "node tools/make-mapas.js"
+    "mapas": "node tools/make-mapas.js",
+    "render3d": "node tools/render-3d.js"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

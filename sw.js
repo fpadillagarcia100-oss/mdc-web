@@ -117,6 +117,14 @@ self.addEventListener('fetch', evento =>{
   if(peticion.method !== 'GET') return;
   if(!peticion.url.startsWith('http')) return;
 
+  /* Los videos pasan de largo, también los propios (la excavadora del hero).
+     El navegador los pide por pedazos —con cabecera Range— y espera de vuelta
+     un 206 con ese pedazo: la regla de "código propio" de abajo los mandaba a
+     la red con plazo de 5 s y trataba de guardar la respuesta parcial en el
+     caché, que la rechaza. Safari, además, no reproduce un video si quien
+     responde no sabe de pedazos. Que los atienda el navegador solo. */
+  if(peticion.destination === 'video' || peticion.headers.has('range')) return;
+
   const url = new URL(peticion.url);
   const propio = url.origin === self.location.origin;
 

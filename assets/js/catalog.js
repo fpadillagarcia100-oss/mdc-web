@@ -144,7 +144,14 @@ function badgeHTML(p){
    se nota en un celular de obra: la pagina responde mientras las imagenes
    siguen llegando, en vez de quedarse tiesa. */
 const productMedia = (p, alt=true) => {
-  if(!p.img) return svgs[p.svgKey] || svgs.excavadora;
+  /* Sin foto: el dibujo plano, marcado con su tipo de máquina. El bloque del
+     final del archivo lo cambia por el render 3D cuando ya terminó de bajar.
+     Se devuelve siempre el dibujo y no la imagen porque esto corre durante la
+     carga, y lo que pida aquí entra en el camino crítico de la portada. */
+  if(!p.img){
+    const clave = svgs[p.svgKey] ? p.svgKey : 'excavadora';
+    return svgs[clave].replace('<svg ', `<svg data-maq="${clave}" `);
+  }
 
   /* `sizes` le dice al navegador cuanto ancho ocupara la foto ANTES de
      descargarla, para que elija el archivo adecuado. Sin esto supone que
@@ -380,3 +387,54 @@ function renderChips(){
       + (chips.length>1?'<button class="af-clear" type="button" data-action="clear-filters">Limpiar todo</button>':'')
     : '';
 }
+
+/* ══════════════════ LAS MÁQUINAS EN 3D ══════════════════
+   Los dibujos planos de los equipos sin foto se cambian por renders de
+   Blender (tools/blender/maquinas.py): la misma pintura y la misma luz que
+   la excavadora del hero, sobre fondo transparente.
+
+   Cuándo y cómo, y por qué así:
+   · Después de `load`. Son seis imágenes de ~25-30 kB, pocas, pero la portada
+     ya trae nueve tarjetas y el presupuesto de carga está casi lleno. Antes
+     de eso se ve el dibujo, que viaja dentro del JavaScript y cuesta cero.
+   · Cada tipo se baja UNA vez y se cambia sólo cuando ya está en memoria.
+     Así el cambio es instantáneo y sin hueco: el dibujo no desaparece hasta
+     que la imagen está lista para tomar su lugar.
+   · Con ahorro de datos se quedan los dibujos.
+   · Las tarjetas se redibujan con cada filtro, y la ficha, la cotización y el
+     comparador también usan productMedia(): se vigila el documento entero y
+     el cambio se hace en el mismo turno en que aparece el dibujo, antes de
+     que llegue a pintarse. */
+(function(){
+  if(!window.matchMedia) return;               // jsdom: se quedan los dibujos
+  if(navigator.connection && navigator.connection.saveData) return;
+  const ruta = clave => `assets/3d/maquinas/${clave}.webp`;
+  const estado = {};                           // clave → 'bajando' | 'lista' | 'falla'
+
+  const cambiar = ()=>{
+    document.querySelectorAll('svg[data-maq]').forEach(svg =>{
+      const clave = svg.getAttribute('data-maq');
+      if(!estado[clave]){
+        estado[clave] = 'bajando';
+        const im = new Image();
+        im.onload = ()=>{ estado[clave] = 'lista'; cambiar() };
+        im.onerror = ()=>{ estado[clave] = 'falla' };   // se queda el dibujo
+        im.src = ruta(clave);
+      }
+      if(estado[clave] !== 'lista') return;
+      const img = document.createElement('img');
+      img.className = 'maq3d';
+      img.alt = '';                            // ilustración del tipo, no foto del equipo
+      img.decoding = 'async';
+      img.src = ruta(clave);
+      svg.replaceWith(img);
+    });
+  };
+
+  const arrancar = ()=>{
+    cambiar();
+    new MutationObserver(cambiar).observe(document.body, {childList:true, subtree:true});
+  };
+  if(document.readyState === 'complete') arrancar();
+  else window.addEventListener('load', arrancar, {once:true});
+})();
