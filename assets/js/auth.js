@@ -1,5 +1,5 @@
 /**
- * auth.js — Sesión de administrador contra Supabase.
+ * auth.js — Sesión de administrador contra la API de MDC (servidor/Mdc.Api).
  *
  * ── Qué cambia respecto al PIN ──
  *
@@ -10,8 +10,9 @@
  *
  * Ahora el panel escribe en una base compartida, así que la puerta tiene que
  * ser de verdad. Y lo es por dónde se comprueba: el servidor no acepta una
- * escritura sin un token válido, sin importar lo que diga el JavaScript del
- * cliente. Poner `isAdmin = true` a mano ahora sólo pinta botones que fallan.
+ * escritura sin un token válido de alguien que la base tenga como admin, sin
+ * importar lo que diga el JavaScript del cliente. Poner `isAdmin = true` a
+ * mano ahora sólo pinta botones que fallan.
  *
  * ── Dónde vive la sesión ──
  *
@@ -25,10 +26,6 @@
  *
  * El botón de salir sigue siendo visible de todas formas: cerrar sesión a
  * propósito revoca el token también en el servidor, y eso no lo hace recargar.
- *
- * No se usa la librería oficial de Supabase: la CSP sólo permite scripts del
- * propio sitio, y añadir un CDN abriría esa puerta para ahorrar 80 líneas.
- * No vale el cambio.
  */
 'use strict';
 
@@ -52,22 +49,39 @@ const auth = {
 
   /** ¿Hay sesión, aunque el token esté por caducar? */
   haySesion() { return !!this.sesion(); },
+
+  /** El token del enlace de invitación, si se llegó con uno (main.js lo pone). */
+  invitacion: null,
+
+  /**
+   * Elige la contraseña con el enlace de invitación y deja la sesión abierta.
+   * Va aquí y no como función suelta: el contrato de globales del sitio está
+   * lleno (tests/arquitectura.test.js), y esto es de la sesión.
+   * @throws {Error} con un mensaje ya listo para enseñar al usuario.
+   */
+  async aceptarInvitacion(token, contrasena) {
+    try {
+      guardarDeRespuesta(await authFetch('aceptar-invitacion', { token, contrasena }));
+    } catch (err) {
+      throw new Error(err.estado === 400 ? err.message : 'No se pudo guardar la contraseña. Intenta de nuevo.');
+    }
+  },
 };
 
-/** Petición a la API de autenticación de Supabase. */
+/** Petición a /api/auth/ de la API. */
 async function authFetch(ruta, cuerpo) {
-  if (!BACKEND) throw new Error('Este sitio se compiló sin conexión a la base de datos.');
+  if (!BACKEND) throw new Error('Este sitio se compiló sin conexión al servidor.');
 
-  const r = await fetch(`${BACKEND.url}/auth/v1/${ruta}`, {
+  const r = await fetch(`${BACKEND.url}/api/auth/${ruta}`, {
     method: 'POST',
-    headers: { apikey: BACKEND.llave, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cuerpo),
     signal: AbortSignal.timeout(15000),
   });
 
   const datos = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const e = new Error(datos.error_description || datos.msg || datos.message || `HTTP ${r.status}`);
+    const e = new Error(datos.error || `HTTP ${r.status}`);
     e.estado = r.status;
     throw e;
   }
@@ -81,7 +95,8 @@ function guardarDeRespuesta(d) {
     // Se renueva un minuto ANTES de caducar. Renovar justo al filo deja una
     // ventana en la que la petición sale con un token recién vencido.
     expira: Date.now() + (d.expires_in - 60) * 1000,
-    correo: d.user?.email || '',
+    correo: d.usuario?.correo || '',
+    rol: d.usuario?.rol || '',
   });
 }
 
@@ -91,16 +106,16 @@ function guardarDeRespuesta(d) {
  */
 async function iniciarSesion(correo, contrasena) {
   try {
-    const d = await authFetch('token?grant_type=password', { email: correo, password: contrasena });
+    const d = await authFetch('entrar', { correo, contrasena });
     guardarDeRespuesta(d);
     return true;
   } catch (err) {
-    /* El mensaje que devuelve Supabase es el mismo para "no existe esa cuenta"
-       y para "contraseña incorrecta". Eso es correcto —decir cuál de las dos
-       falló le confirma a un atacante qué correos están registrados— y aquí se
+    /* El servidor responde lo mismo para "no existe esa cuenta" y para
+       "contraseña incorrecta". Eso es correcto —decir cuál de las dos falló
+       le confirma a un atacante qué correos están registrados— y aquí se
        respeta en lugar de intentar afinarlo. */
     if (err.estado === 400) throw new Error('Correo o contraseña incorrectos.');
-    if (err.estado === 429) throw new Error('Demasiados intentos. Espera un momento.');
+    if (err.estado === 429) throw new Error(err.message || 'Demasiados intentos. Espera un momento.');
     throw new Error('No se pudo entrar: ' + err.message);
   }
 }
@@ -111,12 +126,7 @@ async function cerrarSesion() {
   // Se avisa al servidor para invalidar el refresh_token, pero si falla da
   // igual: lo que importa es que este dispositivo ya no lo tiene.
   if (s) {
-    try {
-      await fetch(`${BACKEND.url}/auth/v1/logout`, {
-        method: 'POST',
-        headers: { apikey: BACKEND.llave, Authorization: `Bearer ${s.access_token}` },
-      });
-    } catch {}
+    try { await authFetch('salir', { refresh_token: s.refresh_token }); } catch {}
   }
 }
 
@@ -130,7 +140,7 @@ async function tokenValido() {
   if (Date.now() < s.expira) return s.access_token;
 
   try {
-    const d = await authFetch('token?grant_type=refresh_token', { refresh_token: s.refresh_token });
+    const d = await authFetch('renovar', { refresh_token: s.refresh_token });
     guardarDeRespuesta(d);
     return d.access_token;
   } catch {
@@ -143,26 +153,26 @@ async function tokenValido() {
 /**
  * ¿La sesión actual es de un administrador?
  *
- * No se cree lo que diga el cliente: se le pregunta a la base. La tabla
- * `perfiles` sólo deja ver el perfil propio, así que esta consulta devuelve
- * exactamente una fila —la de quien pregunta— o ninguna.
+ * No se cree lo que diga el cliente: se le pregunta al servidor, que lee el
+ * rol de la base en ese momento. (Supabase hacía esto con una consulta a
+ * `perfiles` sin filtrar por id, que con dos cuentas podía contestar con el
+ * rol de la otra. /api/auth/yo sólo sabe contestar por quien pregunta.)
  *
  * Es informativo, para decidir qué botones pintar. La seguridad real está en
- * las políticas del servidor: aunque esto devolviera `true` por error, la
- * base seguiría rechazando cada escritura.
+ * el servidor: aunque esto devolviera `true` por error, cada escritura del
+ * panel se vuelve a comprobar contra la base.
  */
 async function esAdministrador() {
   const token = await tokenValido();
   if (!token) return false;
 
   try {
-    const r = await fetch(`${BACKEND.url}/rest/v1/perfiles?select=rol&limit=1`, {
-      headers: { apikey: BACKEND.llave, Authorization: `Bearer ${token}` },
+    const r = await fetch(`${BACKEND.url}/api/auth/yo`, {
+      headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(10000),
     });
     if (!r.ok) return false;
-    const filas = await r.json();
-    return filas[0]?.rol === 'admin';
+    return (await r.json()).rol === 'admin';
   } catch {
     return false;
   }

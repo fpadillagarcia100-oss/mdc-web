@@ -459,6 +459,17 @@ if(BACKEND && auth.haySesion()) conPanel(()=> restaurarSesion());   // asíncron
        nada. */
     history.replaceState(null, '', location.pathname + location.hash);
   }
+
+  /* El enlace del correo de invitación: /?invitacion=<token>. Abre el panel
+     en modo "elige tu contraseña" (admin-acceso.js). El token se guarda sólo
+     en memoria y se borra de la barra de direcciones en el acto: si se quedara,
+     cualquiera que viera la pantalla o el historial podría usarlo primero. */
+  const invitacion = new URLSearchParams(location.search).get('invitacion');
+  if(invitacion && /^[A-Za-z0-9_-]{20,100}$/.test(invitacion)){
+    auth.invitacion = invitacion;
+    conPanel(()=>{ editingId = null; draftImgs = undefined; openAdmin('products') });
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
 }
 
 /* ── Botón flotante de WhatsApp ──

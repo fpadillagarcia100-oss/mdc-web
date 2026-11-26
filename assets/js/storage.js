@@ -66,7 +66,7 @@ const store = {
    https". Aceptar cualquier dominio seguro seguiría dejando pasar rastreo de
    terceros, que es la mitad del motivo por el que existe esta comprobación. */
 const ORIGEN_FOTOS = (typeof BACKEND_CONFIG !== 'undefined' && BACKEND_CONFIG)
-  ? BACKEND_CONFIG.url + '/storage/v1/object/public/'
+  ? BACKEND_CONFIG.url + '/fotos/'
   : null;
 
 const imgOk = s => typeof s==='string' && (

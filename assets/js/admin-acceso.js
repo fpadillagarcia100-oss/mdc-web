@@ -216,24 +216,51 @@ function renderLogin(){
   });
   pass.addEventListener('blur', ()=> caps.classList.remove('show'));
 
+  /* Con un enlace de invitación (?invitacion=…, ver main.js) el mismo
+     formulario sirve para ELEGIR la contraseña en vez de escribirla: el
+     correo ya lo sabe el servidor, y la contraseña se pide dos veces porque
+     nadie la ha escrito antes y un error de dedo dejaría la cuenta cerrada. */
+  const invitacion = auth.invitacion;
+  if(invitacion){
+    $('#adminBody .login-form h3').innerHTML = 'Crea tu <em>contraseña</em>';
+    $('#adminBody .login-form .sub').textContent =
+      'Te invitaron al panel. Elige una contraseña de al menos 10 caracteres; sólo tú la vas a conocer.';
+    mail.type = 'password';
+    mail.autocomplete = 'new-password';
+    $('label[for="mailInput"]').textContent = 'Contraseña nueva';
+    pass.autocomplete = 'new-password';
+    $('label[for="passInput"]').textContent = 'Repítela';
+    btn.textContent = 'Guardar y entrar';
+  }
+
   const submit = async ()=>{
     err.textContent = '';
     err.classList.remove('show');
-    if(!mail.value.trim() || !pass.value){
+    if(invitacion){
+      if(mail.value.length < 10){ fallar('La contraseña debe tener al menos 10 caracteres.'); return }
+      if(mail.value !== pass.value){ fallar('Las dos contraseñas no coinciden.'); return }
+    }else if(!mail.value.trim() || !pass.value){
       fallar('Escribe tu correo y tu contraseña.');
       return;
     }
 
     btn.disabled = true;
-    btn.textContent = 'Entrando…';
+    btn.textContent = invitacion ? 'Guardando…' : 'Entrando…';
     try{
-      await iniciarSesion(mail.value.trim(), pass.value);
+      if(invitacion){
+        await auth.aceptarInvitacion(invitacion, mail.value);
+        auth.invitacion = null;   // el enlace es de un solo uso
+      }else{
+        await iniciarSesion(mail.value.trim(), pass.value);
+      }
 
       /* Tener sesión no basta: una cuenta de personal entra pero no administra.
          Se pregunta a la base en vez de suponerlo. */
       if(!await esAdministrador()){
         await cerrarSesion();
-        throw new Error('Tu cuenta no tiene permisos de administrador.');
+        throw new Error(invitacion
+          ? 'Tu contraseña quedó guardada, pero tu cuenta todavía no tiene acceso al panel. Pídeselo a un administrador.'
+          : 'Tu cuenta no tiene permisos de administrador.');
       }
 
       isAdmin = true;
@@ -254,7 +281,7 @@ function renderLogin(){
       pass.focus();
     }finally{
       btn.disabled = false;
-      btn.textContent = 'Entrar al panel';
+      btn.textContent = auth.invitacion ? 'Guardar y entrar' : 'Entrar al panel';
     }
   };
 

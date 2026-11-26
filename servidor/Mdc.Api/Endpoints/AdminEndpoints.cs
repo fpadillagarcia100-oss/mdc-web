@@ -181,14 +181,15 @@ public static class AdminEndpoints
                 await using var c = await bd.AbrirAsync(SoloAdmin.Usuario(http), http.RequestAborted);
                 /* La fecha de respuesta la pone la base, no el navegador: con
                    el reloj de una computadora mal puesta, las preguntas
-                   saldrían ordenadas al revés en la ficha. Y no se publica
-                   lo que no tiene respuesta. */
+                   saldrían ordenadas al revés en la ficha. Y sólo la primera
+                   vez: es cuándo se atendió, no cuándo se corrigió una errata
+                   tres semanas después. No se publica lo que no tiene respuesta. */
                 var n = await c.ExecuteAsync(
                     @"UPDATE dbo.preguntas SET
                         respuesta = @respuesta,
                         publicada = IIF(@respuesta IS NULL, 0, @publicada),
                         respondida_en = CASE WHEN @respuesta IS NULL THEN NULL
-                                             WHEN respuesta IS NULL OR respuesta <> @respuesta THEN SYSDATETIMEOFFSET()
+                                             WHEN respondida_en IS NULL THEN SYSDATETIMEOFFSET()
                                              ELSE respondida_en END
                       WHERE id = @id",
                     new { id, respuesta, publicada = r.publicada ?? false });
