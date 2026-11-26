@@ -24,8 +24,26 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Lógica de negocio
         run: npm run test:unit
+
+      - name: Arquitectura
+        run: npm run test:arq
+
+      # Antes de compilar: comprueba que las páginas versionadas corresponden a
+      # los datos. Después de compilar siempre corresponderían.
+      - name: El sitio generado corresponde a los datos
+        run: npm run test:generado
+
+      # Las pruebas de integración revisan dist/, que no se versiona. Sin este
+      # paso el CI fallaba desde agosto por un dist/ que nunca existió aquí. Y
+      # compila con esbuild en Linux, como Cloudflare: si eso se rompe, se ve
+      # aquí y no en un despliegue caído.
+      - name: Compilar
+        run: npm run build
 
       - name: Integración en navegador
         run: npm run test:smoke
@@ -33,5 +51,3 @@ jobs:
       - name: Integridad del CSP
         run: npm run test:csp
 
-      - name: El sitio generado corresponde a los datos
-        run: npm run test:generado
