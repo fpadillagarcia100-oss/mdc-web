@@ -117,23 +117,76 @@ if (faltan.length) {
   console.log(`  JS y CSS minificados             ${(antes / 1024).toFixed(0)} kB → ${(despues / 1024).toFixed(0)} kB`);
 }
 
-/* El index.html que se publica carga UN script en vez de veintiuno. El del
-   repositorio no se toca: ahí cada error del navegador sigue apuntando a su
-   archivo y a su línea, que es lo que hace posible depurar.
-   La dirección lleva el hash del contenido, así que un despliegue nuevo es
-   una dirección nueva y ningún caché puede servir el JavaScript de ayer. */
+/* El código publicado lleva su huella en el NOMBRE y se guarda un año.
+
+   Antes la huella iba en la consulta (sitio.js?v=…) y el archivo se servía
+   con max-age=0: el navegador volvía a preguntar en cada visita, con la
+   señal de una obra, por un archivo que no había cambiado. Una consulta no
+   sirve para cachear distinto: _headers decide por ruta, no por `?v=`.
+
+   Ahora cada archivo que se publica sale en /assets/v/ con su huella en el
+   nombre —sitio.3f9a…js— y esa carpeta se cachea un año como inmutable. Es
+   seguro porque un archivo con huella NUNCA cambia: si cambia el contenido,
+   cambia el nombre, y el HTML (que sí se revalida siempre) apunta al nuevo.
+
+   Las copias sin huella se quedan en dist/: un HTML viejo que siga en algún
+   caché todavía las pide, y no cuesta nada servírselas. */
 const { htmlConBundle } = require('./empacar-js');
-const bundle = path.join(DIST, 'assets', 'js', 'sitio.js');
 const huella = archivo => require('crypto')
   .createHash('sha256').update(fs.readFileSync(archivo)).digest('hex').slice(0, 10);
-if (fs.existsSync(bundle)) {
-  const version = huella(bundle);
-  const html = htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), {
-    sitio: `/assets/js/sitio.js?v=${version}`,
-    panel: `/assets/js/panel.js?v=${huella(path.join(DIST, 'assets', 'js', 'panel.js'))}`,
-  });
-  fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8');
-  console.log(`  index.html publicado con un solo script (v=${version})`);
+
+const VERSIONADOS = path.join(DIST, 'assets', 'v');
+fs.mkdirSync(VERSIONADOS, { recursive: true });
+/** Copia `rel` (dentro de dist/) a /assets/v/ con su huella. Devuelve la dirección. */
+const versionar = rel => {
+  const origen = path.join(DIST, rel);
+  const { name, ext } = path.parse(rel);
+  const nombre = `${name}.${huella(origen)}${ext}`;
+  fs.copyFileSync(origen, path.join(VERSIONADOS, nombre));
+  return `/assets/v/${nombre}`;
+};
+
+if (fs.existsSync(path.join(DIST, 'assets', 'js', 'sitio.js'))) {
+  const rutas = {
+    sitio: versionar('assets/js/sitio.js'),
+    panel: versionar('assets/js/panel.js'),
+    css:   versionar('assets/css/styles.css'),
+    ficha: versionar('assets/js/ficha.js'),
+  };
+
+  /* El index.html que se publica carga UN script en vez de veintiuno. El del
+     repositorio no se toca: ahí cada error del navegador sigue apuntando a su
+     archivo y a su línea, que es lo que hace posible depurar. */
+  fs.writeFileSync(path.join(DIST, 'index.html'),
+    htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), rutas), 'utf8');
+
+  /* La hoja y el script de las fichas, en TODAS las páginas: la portada, las
+     18 fichas y las 5 categorías. Se cuenta cuántas se tocaron, porque si el
+     día de mañana una plantilla escribe la ruta de otra forma, el reemplazo
+     fallaría en silencio y esa página se quedaría con el caché de un día. */
+  const paginas = [];
+  const recorrer = dir => {
+    for (const f of fs.readdirSync(dir)) {
+      const p = path.join(dir, f);
+      if (fs.statSync(p).isDirectory()) recorrer(p);
+      else if (f.endsWith('.html')) paginas.push(p);
+    }
+  };
+  recorrer(DIST);
+  const sinHoja = [];
+  for (const p of paginas) {
+    const antes = fs.readFileSync(p, 'utf8');
+    const html = antes
+      .replace(/(href=")\/?assets\/css\/styles\.css(")/g, `$1${rutas.css}$2`)
+      .replace(/(src=")\/?assets\/js\/ficha\.js(")/g, `$1${rutas.ficha}$2`);
+    if (!html.includes(rutas.css)) sinHoja.push(path.relative(DIST, p));
+    fs.writeFileSync(p, html, 'utf8');
+  }
+  if (sinHoja.length) {
+    console.error(`✗ Estas páginas no cargan la hoja versionada: ${sinHoja.join(', ')}`);
+    process.exit(1);
+  }
+  console.log(`  ${paginas.length} páginas con código versionado     ${path.basename(rutas.sitio)}, ${path.basename(rutas.css)}`);
 
   /* El trabajador de servicio estrena cachés en cada despliegue.
 
@@ -142,11 +195,24 @@ if (fs.existsSync(bundle)) {
      visitante acababa viendo código nuevo con estilos viejos. Eso no da ningún
      error en consola: simplemente se ve roto, y no hay por dónde empezar a
      mirar. Atando el nombre del caché al contenido publicado, `activate` borra
-     los anteriores y el problema deja de existir. */
+     los anteriores y el problema deja de existir.
+
+     Y lo que guarda al instalarse es lo que de verdad carga la portada
+     publicada. La lista del repositorio nombra los archivos sueltos de
+     desarrollo, que en producción nadie pide: se bajaban sólo para ocupar
+     cuota. */
+  const version = require('crypto').createHash('sha256')
+    .update(Object.values(rutas).join('|')).digest('hex').slice(0, 10);
   const sw = path.join(DIST, 'sw.js');
   if (fs.existsSync(sw)) {
+    const base = ['/', rutas.css, rutas.sitio];
     const cuerpo = fs.readFileSync(sw, 'utf8')
-      .replace(/const VERSION = '[^']*';/, `const VERSION = 'mdc-${version}';`);
+      .replace(/const VERSION = '[^']*';/, `const VERSION = 'mdc-${version}';`)
+      .replace(/const BASE = \[[^\]]*\];/, `const BASE = ${JSON.stringify(base)};`);
+    if (!cuerpo.includes(`const BASE = ${JSON.stringify(base)};`)) {
+      console.error('✗ No pude reescribir la lista BASE de sw.js');
+      process.exit(1);
+    }
     fs.writeFileSync(sw, cuerpo, 'utf8');
     console.log(`  sw.js con cachés propios de este despliegue (mdc-${version})`);
   }

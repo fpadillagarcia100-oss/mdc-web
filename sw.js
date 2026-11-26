@@ -159,6 +159,22 @@ self.addEventListener('fetch', evento =>{
     return;
   }
 
+  /* ── Código con huella: primero el caché ──
+     Lo que se publica en /assets/v/ lleva su huella en el nombre
+     (sitio.3f9a…js) y nunca cambia: si cambia el contenido, cambia el nombre.
+     Ahí no hay despliegue que congelar, así que preguntar a la red sería sólo
+     esperar. Es la excepción que lo de abajo pedía: "sin hash en el nombre". */
+  if(propio && url.pathname.startsWith('/assets/v/')){
+    evento.respondWith((async ()=>{
+      const guardada = await caches.match(peticion);
+      if(guardada) return guardada;
+      const red = await fetch(peticion);
+      if(red.ok) (await caches.open(CODIGO)).put(peticion, red.clone());
+      return red;
+    })());
+    return;
+  }
+
   /* ── Código propio: primero la red ── */
   if(propio){
     evento.respondWith((async ()=>{

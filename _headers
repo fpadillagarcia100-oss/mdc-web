@@ -31,10 +31,17 @@
 /equipos/*
   Cache-Control: public, max-age=0, must-revalidate
 
-# El código también. Los archivos no llevan versión en el nombre (es
-# styles.css, no styles.a1b2c3.css), así que cachearlo una hora significa que
-# durante una hora la gente sigue viendo el sitio viejo — y tú también, aunque
-# el despliegue ya haya terminado.
+# El código que de verdad se publica lleva su huella en el nombre
+# (sitio.3f9a…js) y vive en /assets/v/: se guarda un año sin volver a
+# preguntar. Si cambia, cambia el nombre, y el HTML —que se revalida
+# siempre— apunta al nuevo. Lo pone ahí tools/empaquetar.js.
+/assets/v/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Las copias sin huella (las de desarrollo, o las que pida un HTML viejo
+# todavía en caché) no se pueden guardar: no llevan versión en el nombre, así
+# que cachearlas una hora significa que durante una hora la gente sigue viendo
+# el sitio viejo.
 /assets/js/*
   Cache-Control: public, max-age=0, must-revalidate
 

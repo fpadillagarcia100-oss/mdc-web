@@ -1062,6 +1062,16 @@ const ev = code => window.eval(code);
     /\/sw\.js\s*\n\s*Cache-Control: public, max-age=0/.test(cabeceras),
     'una copia vieja se queda con las reglas viejas para siempre');
 
+  /* El código con huella en el nombre se guarda un año; el resto, nunca. Las
+     dos mitades importan: inmutable sin huella congela el sitio, y huella sin
+     inmutable obliga al teléfono a preguntar en cada visita. */
+  check('El código con huella se guarda un año, y sólo ése',
+    /\/assets\/v\/\*\s*\n\s*Cache-Control: public, max-age=31536000, immutable/.test(cabeceras) &&
+    /\/assets\/js\/\*\s*\n\s*Cache-Control: public, max-age=0/.test(cabeceras));
+  check('El trabajador sirve el código con huella desde el caché',
+    /url\.pathname\.startsWith\('\/assets\/v\/'\)/.test(sw),
+    'no hay despliegue que congelar: el nombre ya cambia');
+
   /* ── La cola de cotizaciones sin señal ──
      Se prueban las funciones directamente, sin tocar la red: mandar una
      solicitud de verdad desde una prueba escribiría en la base de producción. */
