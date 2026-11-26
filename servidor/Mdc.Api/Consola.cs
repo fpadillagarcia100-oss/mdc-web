@@ -129,7 +129,7 @@ public static class Consola
             Console.Error.WriteLine($"SQL Server: {ex.Message}");
             return 1;
         }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException or HttpRequestException)
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or HttpRequestException or System.ComponentModel.Win32Exception)
         {
             // Un archivo que no está, una base con datos, Supabase que no contesta: se dice y se sale.
             Console.Error.WriteLine(ex.Message);

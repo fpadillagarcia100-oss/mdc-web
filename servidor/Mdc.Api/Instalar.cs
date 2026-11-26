@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using Dapper;
@@ -46,7 +45,7 @@ public static class Instalar
         var destino = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Servicio);
         var fotos = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "MdcMaquinaria", "fotos");
         var cadena = $"Server={servidorSql};Database={nombreBase};Integrated Security=True;TrustServerCertificate=True;Application Name=Mdc.Api";
-        var existe = Sc("query", Servicio) == 0;
+        var existe = ServicioWindows.Existe(Servicio);
 
         if (Path.GetFullPath(origen).TrimEnd('\\').Equals(destino, StringComparison.OrdinalIgnoreCase))
         {
@@ -55,7 +54,7 @@ public static class Instalar
         }
 
         Paso("Copiando el programa…");
-        if (existe) { Sc("stop", Servicio); EsperarDetenido(); }
+        if (existe) ServicioWindows.Detener(Servicio);
         Copiar(origen, destino);
 
         Paso($"Aplicando el esquema en {servidorSql} / {nombreBase}…");
@@ -64,12 +63,9 @@ public static class Instalar
         if (!existe)
         {
             Paso("Creando el servicio de Windows…");
-            if (Sc("create", Servicio, "binPath=", $"\"{Path.Combine(destino, "Mdc.Api.exe")}\"", "start=", "delayed-auto",
-                   "obj=", Cuenta, "DisplayName=", "MDC Maquinaria API") != 0)
-                throw new InvalidOperationException("No se pudo crear el servicio.");
-            Sc("description", Servicio, "Servidor de mdcmaquinaria.com sobre SQL Server. Lo publica Cloudflare Tunnel.");
-            // Si se cae, se levanta: a los 5 s, a los 30 s y luego cada minuto.
-            Sc("failure", Servicio, "reset=", "86400", "actions=", "restart/5000/restart/30000/restart/60000");
+            ServicioWindows.Crear(Servicio, "MDC Maquinaria API",
+                "Servidor de mdcmaquinaria.com sobre SQL Server. Lo publica Cloudflare Tunnel.",
+                Path.Combine(destino, "Mdc.Api.exe"), Cuenta);
         }
 
         Paso($"Dando a {Cuenta} lectura y escritura, sin poder cambiar el esquema…");
@@ -98,7 +94,7 @@ public static class Instalar
         if (r != 0) return r;
 
         Paso("Arrancando…");
-        Sc("start", Servicio);
+        ServicioWindows.Arrancar(Servicio);
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
         for (var i = 0; i < 20; i++)
         {
@@ -121,35 +117,6 @@ public static class Instalar
     }
 
     private static void Paso(string texto) { Console.WriteLine(); Console.WriteLine("▸ " + texto); }
-
-    /// <summary>
-    /// sc.exe con cada argumento por separado. ArgumentList pone las comillas
-    /// que hagan falta: la ruta del servicio lleva espacios ("Program Files") y
-    /// sin comillas sería una "ruta de servicio sin entrecomillar", una vía
-    /// clásica para colar otro ejecutable (C:\Program.exe).
-    /// </summary>
-    private static int Sc(params string[] args)
-    {
-        var psi = new ProcessStartInfo("sc.exe") { RedirectStandardOutput = true, UseShellExecute = false };
-        foreach (var a in args) psi.ArgumentList.Add(a);
-        using var p = Process.Start(psi)!;
-        p.StandardOutput.ReadToEnd();
-        p.WaitForExit();
-        return p.ExitCode;
-    }
-
-    private static void EsperarDetenido()
-    {
-        for (var i = 0; i < 30; i++)
-        {
-            var p = Process.Start(new ProcessStartInfo("sc.exe", $"query {Servicio}") { RedirectStandardOutput = true, UseShellExecute = false })!;
-            var salida = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
-            if (salida.Contains("STOPPED")) return;
-            Thread.Sleep(1000);
-        }
-        throw new InvalidOperationException("El servicio no se detuvo a tiempo para actualizarlo.");
-    }
 
     /// <summary>Copia la publicación, salvo los secretos que ya hubiera: actualizar no debe borrarlos.</summary>
     private static void Copiar(string desde, string hacia)
