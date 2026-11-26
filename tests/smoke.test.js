@@ -1146,6 +1146,33 @@ const ev = code => window.eval(code);
     !/\$\s?\d|\bMXN\b|tenemos en existencia|disponible ahora/i.test(textoGuias),
     'contenido que no caduca con el inventario');
 
+  /* ── Dos carreras del panel ──
+     Las marcó eslint (require-atomic-updates) entre una docena de falsas
+     alarmas. Se reproducen con la red simulada: lo que importa es qué pasa
+     MIENTRAS la base contesta, no la base. */
+  ev(`window.__publicaciones = 0;
+      ultimaPublicacion = 0;
+      remotoPublicar = () => { window.__publicaciones++; return Promise.resolve({ mensaje: 'ok' }) };`);
+  await ev('Promise.all([publicarSitio(), publicarSitio()])');
+  check('Dos clics seguidos publican una sola vez', ev('window.__publicaciones') === 1,
+    `${ev('window.__publicaciones')} publicaciones — cada una gasta una compilación y la segunda da 502`);
+
+  ev(`ultimaPublicacion = 0; remotoPublicar = () => Promise.reject(new Error('sin red'))`);
+  await ev('publicarSitio()');
+  check('Si publicar falla, se puede reintentar sin esperar dos minutos', ev('ultimaPublicacion') === 0);
+
+  ev(`isAdmin = true; editingId = products[0].id; draftImgs = undefined; openAdmin('products');
+      window.__soltar = null;
+      remotoGuardarEquipo = e => new Promise(r => { window.__soltar = () => r(e) });`);
+  const guardando = ev('saveProductForm()');
+  await waitFor(() => ev('window.__soltar') !== null, 'que el guardado salga a la red');
+  ev('editingId = products[1].id');            // se abre otro equipo mientras tanto
+  ev('window.__soltar()');
+  await guardando;
+  check('Guardar no cierra el formulario de otro equipo abierto mientras tanto',
+    ev('editingId === products[1].id'));
+  ev('isAdmin = false; editingId = null; closeAll()');
+
   /* ── Reporte ── */
   console.log('\n' + results.join('\n'));
   const fallidas = results.filter(r => r.startsWith('FALLA')).length;

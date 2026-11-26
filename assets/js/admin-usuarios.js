@@ -46,6 +46,7 @@ async function apiUsuarios(metodo, cuerpo){
   return d;
 }
 
+/* eslint-disable require-atomic-updates -- la bandera pidiendo* impide una segunda carga mientras esta sigue en camino */
 async function cargarUsuarios(forzar){
   if(pidiendoUsuarios || (usuarios !== null && !forzar)) return;
   pidiendoUsuarios = true;
@@ -60,6 +61,7 @@ async function cargarUsuarios(forzar){
     if(isAdmin && adminTab === 'usuarios') renderAdmin();
   }
 }
+/* eslint-enable require-atomic-updates */
 
 function usuariosHTML(){
   if(usuarios === null){

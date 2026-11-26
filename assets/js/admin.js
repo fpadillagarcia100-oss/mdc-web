@@ -221,13 +221,19 @@ async function publicarSitio(){
     return;
   }
 
+  /* El turno se aparta ANTES de esperar a la red. Marcándolo al volver, dos
+     clics seguidos pasaban los dos la comprobación de arriba mientras la
+     primera petición seguía en camino, y salían dos publicaciones. */
+  ultimaPublicacion = Date.now();
   if(btn){ btn.disabled = true; btn.textContent = 'Publicando…' }
   try{
     const r = await remotoPublicar();
-    ultimaPublicacion = Date.now();
     showToast(r.mensaje || 'Publicando…');
     cuentaAtrasPublicar();
   }catch(err){
+    // Si no salió, no hay nada que esperar: se devuelve el turno.
+    // eslint-disable-next-line require-atomic-updates -- el turno ya se apartó antes del await
+    ultimaPublicacion = 0;
     showToast(err.message, true);
     if(btn){ btn.disabled = false; btn.textContent = '🚀 Publicar cambios' }
   }
@@ -291,6 +297,7 @@ async function saveProductForm(){
   // Un "precio anterior" que no sea mayor no representa un descuento.
   if(data.original !== null && data.original <= data.price) data.original = null;
 
+  const editando = editingId;
   const prev = editingId ? products.find(p=>p.id===editingId) : null;
   const fotos = draftImgs === undefined ? (prev ? prev.imgs : []) : draftImgs;
   // img es la portada derivada; se guarda junto a imgs para que el resto del
@@ -317,9 +324,16 @@ async function saveProductForm(){
     else products.unshift(guardado);
 
     showToast(prev ? 'Equipo actualizado' : 'Equipo dado de alta');
-    editingId = null; draftImgs = undefined;
     navSignature = '';
-    renderAdmin(); render(); renderCart();
+    /* Sólo se cierra el formulario si sigue siendo el que se guardó. Mientras
+       la base contestaba se pudo abrir otro equipo, y cerrarlo ahora tiraría
+       lo que se lleva escrito en él. */
+    if(editingId === editando){
+      // eslint-disable-next-line require-atomic-updates -- se comprobó justo arriba, ya de vuelta del await
+      editingId = null; draftImgs = undefined;
+      renderAdmin();
+    }
+    render(); renderCart();
   }catch(err){
     showToast(err.message, true);
   }finally{

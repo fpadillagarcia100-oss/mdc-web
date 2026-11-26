@@ -53,6 +53,7 @@
       if(!aviso) return;
       aviso.prompt();
       const { outcome } = await aviso.userChoice;
+      // eslint-disable-next-line require-atomic-updates -- un solo botón, y se quita en cuanto se usa
       aviso = null;                       // el aviso es de un solo uso
       b.remove();
       if(outcome === 'accepted' && typeof showToast === 'function'){

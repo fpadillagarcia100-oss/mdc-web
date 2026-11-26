@@ -16,6 +16,7 @@
 let solicitudes = null;
 let pidiendoSolicitudes = false;
 
+/* eslint-disable require-atomic-updates -- la bandera pidiendo* impide una segunda carga mientras esta sigue en camino */
 async function cargarSolicitudes(){
   if(solicitudes !== null || pidiendoSolicitudes) return;
   pidiendoSolicitudes = true;
@@ -33,6 +34,7 @@ async function cargarSolicitudes(){
   if(adminTab==='solicitudes' && editingId === null) renderAdmin();
   else pintarPendientes();
 }
+/* eslint-enable require-atomic-updates */
 
 /** Cotizaciones que nadie ha atendido. Van en la pestaña para que no se pasen. */
 const solicitudesPendientes = () =>
@@ -132,6 +134,7 @@ async function cambiarEstadoSolicitud(id, estado){
 let preguntas = null;
 let pidiendoPreguntas = false;
 
+/* eslint-disable require-atomic-updates -- la bandera pidiendo* impide una segunda carga mientras esta sigue en camino */
 async function cargarPreguntas(){
   /* renderAdmin() se llama muchas veces —al cambiar de pestaña, al guardar, al
      escribir en el buscador—. Sin este cerrojo cada redibujado dispararía otra
@@ -156,6 +159,7 @@ async function cargarPreguntas(){
   if(adminTab==='preguntas' && editingId === null) renderAdmin();
   else pintarPendientes();
 }
+/* eslint-enable require-atomic-updates */
 
 /** Cuántas esperan respuesta. Va en la pestaña para que no se olviden. */
 const preguntasPendientes = () =>

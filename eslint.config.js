@@ -78,11 +78,14 @@ const reglasDeFondo = {
   'use-isnan': 'error',
   'valid-typeof': 'error',
   'no-implicit-globals': 'off',                         // aquí son el mecanismo, no un accidente
-  /* Baja a aviso: en este código son casi todos estado de interfaz reasignado
-     tras un await y ya protegido por banderas propias (pidiendoSolicitudes,
-     pidiendoPreguntas). Como error bloquearía por ruido; como aviso sigue
-     señalando el sitio si algún día aparece una carrera de verdad. */
-  'require-atomic-updates': 'warn',
+  /* Baja a aviso, y sin propiedades: `boton.textContent = …` tras un await
+     es pintar un elemento, no una carrera, y era la mitad del ruido. Lo que
+     queda se revisa caso por caso: las cargas protegidas por banderas propias
+     (pidiendoSolicitudes…) llevan su eslint-disable con el motivo, y las dos
+     carreras de verdad que encontró (publicar dos veces, cerrar el formulario
+     equivocado al guardar) se corrigieron en admin.js. Un aviso nuevo aquí
+     merece mirarse. */
+  'require-atomic-updates': ['warn', { allowProperties: true }],
   eqeqeq: ['warn', 'smart'],
 };
 
