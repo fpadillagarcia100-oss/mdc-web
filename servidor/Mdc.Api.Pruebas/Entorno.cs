@@ -20,10 +20,18 @@ namespace Mdc.Api.Pruebas;
 /// </summary>
 public sealed class Entorno : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    public const string Servidor = @".\SQLEXPRESS";
+    /* En esta máquina, el SQL Express con la cuenta de Windows. En el CI
+       (Linux, SQL Server en un contenedor) se cambia con MDC_PRUEBAS_SQL,
+       que trae servidor y credenciales pero NO la base: el nombre de la base
+       lo pone siempre la prueba, para que nunca apunte a una de verdad. */
+    private static readonly string Conexion =
+        Environment.GetEnvironmentVariable("MDC_PRUEBAS_SQL") is { Length: > 0 } c ? c
+        : @"Server=.\SQLEXPRESS;Integrated Security=True";
     public string NombreBase { get; init; } = "MdcPrueba_Api";
-    public string Cadena =>
-        $"Server={Servidor};Database={NombreBase};Integrated Security=True;TrustServerCertificate=True;Application Name=Mdc.Api.Pruebas";
+    public string Cadena => new SqlConnectionStringBuilder(Conexion)
+    {
+        InitialCatalog = NombreBase, TrustServerCertificate = true, ApplicationName = "Mdc.Api.Pruebas",
+    }.ConnectionString;
 
     public const string CorreoAdmin = "jefe@mdc.mx", ClaveAdmin = "contraseña-del-jefe-123";
     public const string CorreoStaff = "ayudante@mdc.mx", ClaveStaff = "contraseña-del-ayudante-123";

@@ -54,3 +54,35 @@ jobs:
       - name: Integridad del CSP
         run: npm run test:csp
 
+  # La API contra un SQL Server de verdad. En la oficina es SQL Express con
+  # Windows; aquí, SQL Server 2022 en un contenedor de Linux, que se crea y se
+  # destruye con cada corrida. Las pruebas hacen y borran su propia base.
+  servidor:
+    name: Servidor (.NET + SQL Server)
+    runs-on: ubuntu-latest
+
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          # Contraseña de un contenedor que vive dos minutos y no sale de aquí.
+          MSSQL_SA_PASSWORD: Prueba_CI_2026!
+        ports: ['1433:1433']
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Prueba_CI_2026!' -Q 'SELECT 1' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 12
+
+    env:
+      MDC_PRUEBAS_SQL: Server=localhost,1433;User Id=sa;Password=Prueba_CI_2026!
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: API contra SQL Server
+        run: dotnet test servidor/Mdc.sln
+
