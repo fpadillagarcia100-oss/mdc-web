@@ -77,20 +77,60 @@ if (faltan.length) {
   process.exit(1);
 }
 
+/* Lo publicado va minificado; el repositorio, no.
+
+   Antes no se minificaba, con un motivo razonable: un minificador hecho en
+   casa es justo lo que rompe en silencio. Por eso es esbuild y no uno propio,
+   y por eso se comprueba aquí mismo lo único que de verdad podría romper este
+   sitio: que se renombre una global. Los archivos se hablan entre ellos por
+   nombres globales; si `render` pasara a llamarse `r`, main.js llamaría a
+   algo que no existe. Se compara el contrato de antes y el de después con el
+   mismo analizador que usa la prueba de arquitectura, y si falta un solo
+   nombre la compilación se detiene en vez de publicar.
+
+   Lo de gzip sigue siendo cierto, pero gzip no puede quitar los comentarios:
+   en este código son casi la mitad del peso, y viajaban a cada teléfono. */
+{
+  const esbuild = require('esbuild');
+  const { aportaciones } = require('./contrato-globales');
+  let antes = 0, despues = 0;
+  const minificar = (dir, loader) => {
+    for (const f of fs.readdirSync(dir).filter(n => n.endsWith('.' + loader))) {
+      const ruta = path.join(dir, f);
+      const src = fs.readFileSync(ruta, 'utf8');
+      const { code } = esbuild.transformSync(src, { minify: true, loader, charset: 'utf8' });
+      if (loader === 'js') {
+        const salida = aportaciones(code);
+        const perdidas = [...aportaciones(src)].filter(n => !salida.has(n));
+        if (perdidas.length) {
+          console.error(`✗ Al minificar ${f} se perdieron globales: ${perdidas.join(', ')}`);
+          process.exit(1);
+        }
+      }
+      fs.writeFileSync(ruta, code, 'utf8');
+      antes += Buffer.byteLength(src);
+      despues += Buffer.byteLength(code);
+    }
+  };
+  minificar(path.join(DIST, 'assets', 'js'), 'js');
+  minificar(path.join(DIST, 'assets', 'css'), 'css');
+  console.log(`  JS y CSS minificados             ${(antes / 1024).toFixed(0)} kB → ${(despues / 1024).toFixed(0)} kB`);
+}
+
 /* El index.html que se publica carga UN script en vez de veintiuno. El del
    repositorio no se toca: ahí cada error del navegador sigue apuntando a su
    archivo y a su línea, que es lo que hace posible depurar.
    La dirección lleva el hash del contenido, así que un despliegue nuevo es
    una dirección nueva y ningún caché puede servir el JavaScript de ayer. */
 const { htmlConBundle } = require('./empacar-js');
-const bundle = path.join(ROOT, 'assets', 'js', 'sitio.js');
+const bundle = path.join(DIST, 'assets', 'js', 'sitio.js');
 const huella = archivo => require('crypto')
   .createHash('sha256').update(fs.readFileSync(archivo)).digest('hex').slice(0, 10);
 if (fs.existsSync(bundle)) {
   const version = huella(bundle);
   const html = htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), {
     sitio: `/assets/js/sitio.js?v=${version}`,
-    panel: `/assets/js/panel.js?v=${huella(path.join(ROOT, 'assets', 'js', 'panel.js'))}`,
+    panel: `/assets/js/panel.js?v=${huella(path.join(DIST, 'assets', 'js', 'panel.js'))}`,
   });
   fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8');
   console.log(`  index.html publicado con un solo script (v=${version})`);

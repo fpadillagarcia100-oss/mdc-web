@@ -468,6 +468,14 @@ const desbordaX = pagina => pagina.evaluate(() =>
       check('El panel se baja al entrar, no antes, y abre', resp.ok() && rotos.length === 0,
         rotos[0] || `${kb(Number(resp.headers()['content-length']) || (await resp.body()).length)} al hacer clic`);
 
+      /* Las fichas estáticas cargan su propio script y la misma hoja, también
+         minificados. Una ficha que truena no la ve nadie de aquí: la ve Google. */
+      const ficha = fs.readdirSync(path.join(ROOT, 'dist', 'equipos'))[0];
+      await pd.goto(`http://localhost:8124/equipos/${ficha}/`, { waitUntil: 'networkidle' });
+      const estilada = await pd.evaluate(() => getComputedStyle(document.body).fontFamily);
+      check('Las fichas publicadas abren sin errores y con estilos', rotos.length === 0 && /Inter/.test(estilada),
+        rotos[0] || `${ficha} · ${estilada.split(',')[0]}`);
+
       await cd.close();
       servidorDist.close();
     }

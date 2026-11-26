@@ -27,6 +27,7 @@
     "mapas": "node tools/make-mapas.js"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "eslint": "^10.15.0",
     "espree": "^11.2.0",
     "jsdom": "^31.0.1",
