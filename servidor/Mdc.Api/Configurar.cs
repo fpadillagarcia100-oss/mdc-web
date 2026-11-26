@@ -78,7 +78,11 @@ public static class Configurar
         while (true)
         {
             var k = Console.ReadKey(intercept: true);
-            if (k.Key == ConsoleKey.Enter) break;
+            /* Un Enter con el campo vacío se ignora. Al pegar desde el Bloc de
+               notas suele venir un salto de línea pegado al final: sin esto, ese
+               salto respondía la pregunta SIGUIENTE en blanco (pasó en la
+               primera instalación). */
+            if (k.Key == ConsoleKey.Enter) { if (texto.Length == 0) continue; break; }
             if (k.Key == ConsoleKey.Backspace) { if (texto.Length > 0) texto.Length--; continue; }
             if (!char.IsControl(k.KeyChar)) texto.Append(k.KeyChar);
         }
