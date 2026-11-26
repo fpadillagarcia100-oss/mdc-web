@@ -8,22 +8,25 @@
  * genera las 18 fichas y el sitemap como hasta ahora. El visitante no habla
  * con ninguna base de datos: recibe HTML ya escrito.
  *
- * Lo que se gana frente a consultar Supabase desde el navegador:
- *   · El sitio no se cae si Supabase se cae.
- *   · No hay que abrir `connect-src` en la CSP.
+ * La base es el SQL Server de la oficina, y se lee por la API
+ * (GET /api/catalogo), a través de Cloudflare Tunnel. Lo que se gana frente a
+ * consultarla desde el navegador de cada visitante:
+ *   · El sitio no se cae si la computadora de la oficina se apaga: sigue
+ *     enseñando lo último que se publicó.
  *   · Google indexa las fichas: existen como archivos, no como una promesa
  *     de JavaScript.
- *   · Cero peticiones por visita — y cero costo por visita.
+ *   · Cero peticiones por visita a la oficina, que tiene el internet que tiene.
  *
  * Lo que cuesta: los cambios se ven al desplegar, no al instante. Para un
  * catálogo de maquinaria, donde los precios cambian por semana y no por
- * minuto, es el intercambio correcto.
+ * minuto, es el intercambio correcto. Y si al desplegar la oficina no
+ * contesta, el despliegue falla y Cloudflare sigue sirviendo el anterior:
+ * nunca se publica un sitio vacío.
  *
- *   SUPABASE_URL=https://xxxx.supabase.co SUPABASE_ANON_KEY=eyJ... npm run db:export
+ *   API_URL=https://api.mdcmaquinaria.com npm run db:export
  *
- * Con la llave `anon` se exporta sólo lo publicado — que es exactamente lo
- * que debe salir al sitio. La llave `service_role` NO se usa aquí: no hace
- * falta, y lo que no se usa no se filtra.
+ * No hace falta ninguna llave: /api/catalogo sólo devuelve lo publicado, que
+ * es exactamente lo que ya está a la vista en el sitio.
  */
 'use strict';
 
@@ -33,31 +36,22 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const DESTINO = path.join(ROOT, 'data', 'catalogo.json');
 
-/* ── Credenciales ──
-   Del entorno, o de un .env local que git ya ignora. Nunca del repositorio. */
-require('./entorno').cargarEnv();
-
-const URL_BASE = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-const LLAVE = process.env.SUPABASE_ANON_KEY || '';
-
-if (!URL_BASE || !LLAVE) {
-  console.error('✗ Faltan credenciales.\n');
-  console.error('  Define SUPABASE_URL y SUPABASE_ANON_KEY, o créalas en un archivo .env:\n');
-  console.error('    SUPABASE_URL=https://xxxxxxxx.supabase.co');
-  console.error('    SUPABASE_ANON_KEY=eyJhbGciOi...\n');
-  console.error('  Están en Supabase → Project Settings → API.');
-  console.error('  La llave anon es pública por diseño; la service_role NO va aquí.');
+/* ── Dónde está el servidor ──
+   Del entorno, o de un .env local que git ya ignora. */
+let servidor;
+try {
+  servidor = require('./entorno').servidor();
+} catch (err) {
+  console.error('✗ ' + err.message);
   process.exit(1);
 }
-
-// Un guardarraíl barato: la llave de servicio se salta todo el RLS. Si acaba
-// en un archivo generado, se filtra el catálogo sin publicar — o algo peor.
-// Supabase tiene dos generaciones de llaves y hay que reconocer las dos:
-// las clásicas (JWT con "service_role" dentro) y las nuevas (`sb_secret_…`).
-if (LLAVE.includes('service_role') || LLAVE.startsWith('sb_secret_')) {
-  console.error('✗ Eso es una llave de servicio. Aquí va la pública (anon / sb_publishable_…).');
+if (!servidor) {
+  console.error('✗ Falta la dirección del servidor.\n');
+  console.error('  Define API_URL, o escríbela en un archivo .env:\n');
+  console.error('    API_URL=https://api.mdcmaquinaria.com\n');
   process.exit(1);
 }
+const URL_BASE = servidor.url;
 
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
@@ -68,19 +62,16 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
  * el sitio se queda sin publicar por algo que se arregla solo al reintentar,
  * y el mensaje que ve quien despliega —"fetch failed"— no dice qué hacer.
  *
- * Sólo se reintentan los fallos de RED y los errores 5xx del servidor. Un 401
- * o un 404 no mejoran por insistir: son un problema de credenciales o de
- * nombre, y reintentarlos sólo retrasa el diagnóstico.
+ * Sólo se reintentan los fallos de RED y los errores 5xx del servidor (530 es
+ * el de Cloudflare cuando el túnel no encuentra la oficina: puede ser un
+ * reinicio de dos segundos). Un 404 no mejora por insistir.
  */
 async function consultar(recurso, intentos = 3) {
   let ultimoError;
 
   for (let i = 1; i <= intentos; i++) {
     try {
-      const r = await fetch(`${URL_BASE}/rest/v1/${recurso}`, {
-        headers: { apikey: LLAVE, Authorization: `Bearer ${LLAVE}` },
-        signal: AbortSignal.timeout(30000),
-      });
+      const r = await fetch(`${URL_BASE}/api/${recurso}`, { signal: AbortSignal.timeout(30000) });
 
       if (r.ok) return r.json();
 
@@ -103,40 +94,10 @@ async function consultar(recurso, intentos = 3) {
     }
   }
 
-  throw new Error(`${recurso} falló tras ${intentos} intentos — ${ultimoError.message}`);
-}
-
-/**
- * Consulta algo que MEJORA el sitio pero no lo sostiene.
- *
- * ── El fallo que motiva esta función ──
- *
- * Se añadieron las preguntas al exportador y el despliegue empezó a fallar:
- * la tabla aún no existía en la base, la consulta daba 404, y eso tumbaba la
- * compilación entera. Cuatro despliegues seguidos sin publicar — con el
- * catálogo intacto, las fotos intactas y los precios intactos, todos parados
- * por una tabla que ni siquiera hace falta para vender.
- *
- * La regla que faltaba: **lo que no sostiene el sitio no puede tirar el
- * despliegue.** El catálogo sí (sin equipos no hay página, y por eso más abajo
- * se aborta si vienen cero). Las preguntas no: sin ellas el sitio es el mismo
- * de antes, que funcionaba.
- *
- * Es la misma regla que gobierna backend.js — registrar una cotización es una
- * mejora, WhatsApp es el requisito. Aquí no estaba aplicada, y se notó.
- *
- * El aviso va a la salida de error para que se vea en el registro del
- * despliegue. Degradar en silencio sería lo otro peligroso: publicar sin las
- * preguntas durante semanas sin que nadie se entere.
- */
-async function consultarOpcional(recurso, siFalla, queEs) {
-  try {
-    return await consultar(recurso);
-  } catch (err) {
-    console.error(`  ⚠ ${queEs} no se pudieron traer: ${err.message.slice(0, 160)}`);
-    console.error(`     El sitio se publica sin eso. Si acabas de añadir la función, corre la migración.`);
-    return siFalla;
-  }
+  throw new Error(
+    `${recurso} falló tras ${intentos} intentos — ${ultimoError.message}\n` +
+    '   ¿Está encendida la computadora de la oficina, con el servicio MdcApi y el túnel corriendo?'
+  );
 }
 
 /** Quita los null que el JSON actual no trae, para no ensuciar el diff. */
@@ -146,24 +107,10 @@ const limpiar = (o, campos) => {
 };
 
 (async () => {
-  const [ajustesFilas, sucursales, equipos, preguntas] = await Promise.all([
-    consultar('ajustes?select=*&limit=1'),
-    consultar('sucursales?select=nombre,direccion,telefono,horario&order=orden.asc'),
-    consultar('catalogo_publico?select=*'),
-    /* Las preguntas contestadas y publicadas viajan DENTRO del sitio, como
-       todo lo demás. Se pensó en pedirlas desde el navegador para que una
-       respuesta nueva se viera al momento, y se descartó: sería una petición
-       por visita, una dependencia más que puede caerse, y sobre todo Google no
-       las indexaría — que es la mitad del motivo de tenerlas en público.
-
-       El filtro se repite aquí aunque la política ya lo aplica. Cuesta nada, y
-       el día que alguien afloje la política esto sigue sin publicar preguntas
-       a medio contestar. */
-    consultarOpcional(
-      'preguntas?select=slug,nombre,pregunta,respuesta,respondida_en' +
-      '&publicada=eq.true&respuesta=not.is.null&order=respondida_en.asc',
-      [], 'Las preguntas contestadas'),
-  ]);
+  /* Todo en una sola petición: lo publicado del catálogo, los ajustes, las
+     sucursales y las preguntas contestadas y publicadas. El servidor ya filtra;
+     abajo se vuelve a comprobar lo que no puede faltar. */
+  const { ajustes: ajustesFilas, sucursales, equipos, preguntas } = await consultar('catalogo');
 
   /* Agrupadas por equipo antes de armar la salida: recorrer la lista entera
      por cada máquina sería cuadrático y, con el tiempo, lento sin motivo. */
@@ -181,18 +128,18 @@ const limpiar = (o, campos) => {
   if (!ajustesFilas.length) throw new Error('La tabla `ajustes` está vacía. ¿Corriste las migraciones?');
   if (!equipos.length) {
     // Sobrescribir el catálogo con cero equipos dejaría el sitio en blanco.
-    // Casi siempre significa que el RLS no deja leer o que nada está
-    // publicado — no que de verdad no haya máquinas.
+    // Casi siempre significa que nada está publicado, o que la API apunta a
+    // una base vacía — no que de verdad no haya máquinas.
     throw new Error(
       'La consulta devolvió 0 equipos. No se sobrescribe el catálogo.\n' +
-      '   Revisa que haya equipos con publicado = true y que la política de lectura exista.'
+      '   Revisa que haya equipos publicados y que el servidor use la base correcta (MdcMaquinaria).'
     );
   }
 
   const a = ajustesFilas[0];
 
   const salida = {
-    _comentario: 'GENERADO desde la base de datos con `npm run db:export`. La fuente de verdad es Supabase, no este archivo.',
+    _comentario: 'GENERADO desde la base de datos con `npm run db:export`. La fuente de verdad es la base (SQL Server), no este archivo.',
     generado: new Date().toISOString().slice(0, 10),
     ajustes: {
       marca_principal: a.marca_principal,

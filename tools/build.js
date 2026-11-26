@@ -140,46 +140,45 @@ function huellaFuente() {
 }
 
 /**
- * Credenciales del backend para el navegador, tomadas del entorno.
+ * La dirección del servidor para el navegador, tomada del entorno (API_URL).
  *
- * Se inyectan al compilar en vez de escribirse en un archivo del repositorio
- * para que exista un solo lugar donde cambiarlas: las variables de Netlify.
- * El día que haya que rotar la llave, no hay que buscarla repartida en el
- * código.
+ * Se inyecta al compilar en vez de escribirse en un archivo del repositorio
+ * para que exista un solo lugar donde cambiarla: las variables de Cloudflare.
+ * No es un secreto —sin sesión la API sólo recibe cotizaciones, preguntas y
+ * vistas—, pero sí es lo único que habría que tocar si el servidor se muda.
  *
- * Sin credenciales devuelve `null`, y el sitio sigue funcionando — sólo que
- * las cotizaciones no quedan registradas. Es lo correcto para desarrollo
- * local: nadie debería necesitar una base de datos para ver la portada.
+ * Sin ella devuelve `null`, y el sitio sigue funcionando — sólo que las
+ * cotizaciones no quedan registradas. Es lo correcto para desarrollo local:
+ * nadie debería necesitar un servidor para ver la portada.
  */
 function configBackend() {
-  let cred;
+  let srv;
   try {
-    // Rechaza la llave de servicio. Aquí importa más que en ningún otro lado:
-    // esto se escribe en un archivo que descarga cada visitante del sitio.
-    cred = require('./entorno').credenciales();
+    srv = require('./entorno').servidor();
   } catch (err) {
     console.error('✗ ' + err.message);
     process.exit(1);
   }
 
-  if (!cred) {
-    console.warn('  ⚠ Sin SUPABASE_URL/ANON_KEY: las cotizaciones NO se registrarán.');
+  if (!srv) {
+    console.warn('  ⚠ Sin API_URL: las cotizaciones NO se registrarán.');
     return 'null';
   }
-  return JSON.stringify(cred, null, 2);
+  return JSON.stringify(srv, null, 2);
 }
 
-/* Dominio del que pueden venir las fotos, para la CSP de las fichas.
+/* Dominio del que pueden venir las fotos, para la CSP de las fichas: el del
+   servidor, que las sirve en /fotos/.
 
    Antes decía `https:` a secas: cualquier dominio del mundo. Bastaba con que
    una URL ajena entrara al catálogo para incrustar una imagen de terceros en
    tus páginas —y con ella, un rastreador que ve quién las visita.
 
-   Sin credenciales al compilar no hay fotos remotas que permitir, así que se
+   Sin servidor al compilar no hay fotos remotas que permitir, así que se
    cierra del todo. */
 const ORIGEN_FOTOS = (() => {
-  const cred = require('./entorno').credenciales();
-  return cred ? cred.url : "'none'";
+  const srv = require('./entorno').servidor();
+  return srv ? srv.url : "'none'";
 })();
 
 /* ── 1. Datos para la aplicación ── */

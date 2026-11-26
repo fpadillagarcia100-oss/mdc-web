@@ -15,7 +15,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://api.mdcmaquinaria.com; connect-src 'self' https://api.mdcmaquinaria.com; frame-src https://www.youtube-nocookie.com; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
 
 # El HTML se revalida siempre: si no, un cambio tuyo tardaría horas en verse.
 #
@@ -25,7 +25,7 @@
 # permiso a todo el sitio para una pantalla sería regalar superficie de ataque.
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://qqvwrwsxdgmhhacvgowy.supabase.co; connect-src 'self' https://qqvwrwsxdgmhhacvgowy.supabase.co; frame-src https://www.youtube-nocookie.com https://www.google.com; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://api.mdcmaquinaria.com; connect-src 'self' https://api.mdcmaquinaria.com; frame-src https://www.youtube-nocookie.com https://www.google.com; form-action 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'
 
 # Las fichas se regeneran en cada despliegue: mismo trato.
 /equipos/*
@@ -57,6 +57,14 @@
 # Las imágenes sí se cachean: pesan, y cuando cambian lo hacen con otro nombre.
 /assets/img/*
   Cache-Control: public, max-age=86400
+
+# La excavadora 3D del hero: video e imagen fija, de tools/render-3d.js.
+# Una semana y no un año, porque el nombre NO lleva huella: si se vuelve a
+# renderizar, el archivo se llama igual. Una semana de video viejo es un
+# detalle cosmético; un año, no. Si algún día cambia a menudo, que el nombre
+# lleve versión (excavadora-2.webm) y esto puede pasar a immutable.
+/assets/3d/*
+  Cache-Control: public, max-age=604800
 
 # El trabajador de servicio, nunca. Es el archivo que decide qué se guarda y
 # qué se pide: si el navegador se queda con una copia vieja, se queda también

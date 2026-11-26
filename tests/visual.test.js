@@ -70,6 +70,30 @@ const PRESUPUESTO_PUBLICADO = {
   transferido: 300 * 1024,
 };
 
+/* Lo 3D —la excavadora animada del hero y los renders de los equipos sin
+   foto— va APARTE de los dos presupuestos de arriba, y no para esconderlo:
+   para medirlo con su propia regla.
+
+   Los de arriba miden el camino crítico —lo que hace falta para ver y usar
+   el catálogo—. Lo 3D no está en ese camino: se pide después de `load`
+   (branding.js y catalog.js), y el video sólo en pantallas de más de
+   1080 px y nunca con menos movimiento o ahorro de datos. Sumarlo ahí
+   obligaba a elegir entre subir el tope —y entonces el próximo script de
+   300 kB pasaría sin que nadie lo note— o renunciar a lo 3D. Así, cada cosa
+   con su tope:
+
+   · Se comprueba que de verdad llega DESPUÉS de la carga. Si un día alguien
+     lo pone en el HTML, esta prueba se pone roja aunque pese poco.
+   · Que un teléfono no pide el video.
+   · Y que pesa lo que prometió: imagen fija más UN video, y una imagen por
+     tipo de máquina. */
+const PRESUPUESTO_DIFERIDO = {
+  hero:     { patron: /\/assets\/3d\/excavadora\./, peticiones: 2, transferido: 440 * 1024 },
+  // Los renders de los equipos sin foto: uno por tipo de máquina, seis tipos.
+  maquinas: { patron: /\/assets\/3d\/maquinas\//, peticiones: 6, transferido: 200 * 1024 },
+};
+const DIFERIDO = /\/assets\/3d\//;
+
 const EDGE = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -82,7 +106,8 @@ const check = (nombre, ok, extra = '') =>
 /* ── Servidor de archivos, para no depender de Python ni de nada externo ── */
 const TIPOS = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8',
   '.js':'text/javascript; charset=utf-8', '.json':'application/json', '.png':'image/png',
-  '.svg':'image/svg+xml', '.xml':'application/xml', '.webmanifest':'application/manifest+json' };
+  '.svg':'image/svg+xml', '.xml':'application/xml', '.webmanifest':'application/manifest+json',
+  '.webp':'image/webp', '.webm':'video/webm', '.mp4':'video/mp4' };
 
 function servir(puerto, raiz = ROOT) {
   const server = http.createServer((req, res) => {
@@ -119,6 +144,13 @@ async function capturar(objetivo, nombre, opciones = {}) {
   const pagina = objetivo.page ? objetivo.page() : objetivo;
   await pagina.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
 
+  /* Y a que los dibujos de los equipos sin foto ya sean los renders 3D
+     (catalog.js los cambia en cuanto bajan). Si no, la misma pantalla sale
+     unas veces con dibujo y otras con render, según cuánto tardó la red. */
+  await pagina.waitForFunction(() => !document.querySelector('svg[data-maq]') &&
+    [...document.querySelectorAll('img.maq3d')].every(i => i.complete), null, { timeout: 8000 }).catch(() => {});
+  await pagina.waitForTimeout(500);   // lo que dura el fundido de entrada
+
   fs.mkdirSync(CAPTURAS, { recursive: true });
   const referencia = path.join(CAPTURAS, `${nombre}.png`);
   const nueva = await objetivo.screenshot({ animations: 'disabled', ...opciones });
@@ -134,6 +166,41 @@ async function capturar(objetivo, nombre, opciones = {}) {
   if (!ok) fs.writeFileSync(path.join(CAPTURAS, `${nombre}.nueva.png`), nueva);
   check(`Captura "${nombre}" sin cambios`, ok,
     d.motivo || `${(d.fraccion * 100).toFixed(2)}% de pixeles distintos${ok ? '' : ` — mira ${nombre}.nueva.png`}`);
+}
+
+/* Reparte lo que pidió la página: el camino crítico por un lado y la
+   excavadora 3D por el otro. Corre DENTRO del navegador (Playwright manda el
+   código de la función), y se usa igual en el repositorio y en dist/. */
+function camino(fuente) {
+  const re = new RegExp(fuente);
+  const nav = performance.getEntriesByType('navigation')[0] || {};
+  const todos = performance.getEntriesByType('resource');
+  const criticos = todos.filter(r => !re.test(r.name));
+  return {
+    recursos: criticos.length,
+    peso: criticos.reduce((s, r) => s + (r.encodedBodySize || 0), 0),
+    pesoHTML: nav.encodedBodySize || 0,
+    diferidos: todos.filter(r => re.test(r.name)).map(r => ({ url: r.name, inicio: r.startTime })),
+    carga: nav.loadEventStart || 0,
+  };
+}
+
+/** Lo 3D (hero y máquinas): que llegó, que llegó tarde y que pesa lo que debe.
+    El peso se toma del disco y no de la red: un video se pide por pedazos y
+    el navegador no siempre informa el tamaño de cada uno. */
+function revisarDiferido(m, raiz, kb, donde = '') {
+  const temprano = m.diferidos.filter(d => d.inicio < m.carga);
+  check(`Lo 3D se pide después de cargar la página${donde}`, m.diferidos.length > 0 && temprano.length === 0,
+    temprano.length ? `pedido ANTES de load: ${temprano.map(d => path.basename(d.url)).join(', ')}`
+                    : `${m.diferidos.length} archivos, todos tras load`);
+  for (const [nombre, tope] of Object.entries(PRESUPUESTO_DIFERIDO)) {
+    const urls = [...new Set(m.diferidos.map(d => d.url).filter(u => tope.patron.test(u)))];
+    const peso = urls.reduce((s, u) =>
+      s + fs.statSync(path.join(raiz, decodeURIComponent(new URL(u).pathname))).size, 0);
+    check(`Lo 3D (${nombre}) cabe en su propio presupuesto${donde}`,
+      urls.length > 0 && urls.length <= tope.peticiones && peso <= tope.transferido,
+      `${urls.length} de ${tope.peticiones} peticiones · ${kb(peso)} de ${kb(tope.transferido)}`);
+  }
 }
 
 /** Nada debe salirse por el costado. El scroll horizontal es siempre un error. */
@@ -193,6 +260,28 @@ const desbordaX = pagina => pagina.evaluate(() =>
     await pagina.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
     await pagina.waitForTimeout(400);
 
+    /* La excavadora del hero es un video que no para: cada captura la
+       agarraría en otra pose y la comparación fallaría siempre. Se espera a
+       que arranque —eso también se comprueba— y se congela en el cuadro 0,
+       que es el mismo de la imagen fija. */
+    const hero3d = await pagina.waitForFunction(() => {
+      const v = document.querySelector('#heroArt video');
+      return v && v.classList.contains('lista') && v.currentTime > 0.2;
+    }, null, { timeout: 15000 }).then(() => true, () => false);
+    check('La excavadora 3D del hero se reproduce', hero3d,
+      hero3d ? 'después de load, en la vitrina' : 'el video no arrancó');
+    await pagina.evaluate(() => new Promise(ok => {
+      const v = document.querySelector('#heroArt video');
+      if (!v) return ok();
+      v.pause();
+      // Y que no vuelva a arrancar: branding.js le da play al reaparecer en
+      // pantalla, y las capturas de después (sucursales, panel) la ven de
+      // fondo, borrosa pero distinta en cada pose.
+      v.play = () => Promise.resolve();
+      v.addEventListener('seeked', () => ok(), { once: true });
+      v.currentTime = 0;
+    }));
+    await pagina.waitForTimeout(800);
     await capturar(pagina, 'portada', { fullPage: false });
 
     /* ── La ficha ── */
@@ -327,8 +416,13 @@ const desbordaX = pagina => pagina.evaluate(() =>
       viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
     });
     const pm = await movil.newPage();
+    const pedidas3d = [];
+    pm.on('request', r => { if (PRESUPUESTO_DIFERIDO.hero.patron.test(r.url())) pedidas3d.push(r.url()) });
     await pm.goto(base + '/', { waitUntil: 'networkidle' });
     await pm.waitForSelector('.pcard');
+    await pm.waitForTimeout(500);
+    check('En el teléfono no se baja la excavadora 3D', pedidas3d.length === 0,
+      pedidas3d.length ? pedidas3d.join(', ') : 'la vitrina está escondida y no pide nada');
 
     check('En móvil tampoco se desborda', !(await desbordaX(pm)));
     const anchoTarjeta = (await pm.locator('.pcard').first().boundingBox()).width;
@@ -341,10 +435,17 @@ const desbordaX = pagina => pagina.evaluate(() =>
 
        Se fuerza la sesión desde el navegador, contra el servidor LOCAL, sólo
        para poder mirar el panel dibujado. No es un agujero: `isAdmin` en el
-       navegador no autoriza nada — cada guardado lo comprueba el servidor de
-       Supabase, y eso ya lo verifica tests/seguridad.test.js atacando la base
-       real. Aquí sólo se está midiendo la caja de los botones. */
+       navegador no autoriza nada — cada petición del panel la comprueba la API
+       contra la base, y eso ya lo verifican servidor/Mdc.Api.Pruebas. Aquí
+       sólo se está midiendo la caja de los botones.
+
+       Como no hay sesión de verdad, la bandeja se simula vacía: la API la
+       negaría (bien hecho) y el aviso de "tu sesión terminó" saldría en la
+       captura, que no viene a medir eso. */
     await pm.evaluate(() => {
+      remotoPreguntas = async () => [];
+      remotoSolicitudes = async () => [];
+      remotoMetricas = async () => [];
       isAdmin = true;
       document.body.classList.add('is-admin');
       adminTab = 'products';
@@ -415,6 +516,14 @@ const desbordaX = pagina => pagina.evaluate(() =>
     const visibles = await pq.evaluate(() =>
       [...document.querySelectorAll('.pcard')].every(c => Number(getComputedStyle(c).opacity) > .9));
     check('Y el contenido sigue estando ahí', visibles, 'ninguna tarjeta escondida');
+
+    const fija = await pq.evaluate(() => ({
+      imagen: !!document.querySelector('#heroArt .hero-3d img'),
+      video: !!document.querySelector('#heroArt video'),
+      pedidos: performance.getEntriesByType('resource').filter(r => /\.(webm|mp4)$/.test(r.name)).length,
+    }));
+    check('Con menos animación, la excavadora queda en imagen fija', fija.imagen && !fija.video && fija.pedidos === 0,
+      `imagen: ${fija.imagen ? 'sí' : 'no'} · video: ${fija.video || fija.pedidos ? 'SÍ' : 'no'}`);
     await quieto.close();
 
     /* ══ RENDIMIENTO ══ */
@@ -425,13 +534,12 @@ const desbordaX = pagina => pagina.evaluate(() =>
         dcl: Math.round(nav.domContentLoadedEventEnd || 0),
         carga: Math.round(nav.loadEventEnd || 0),
         fcp: Math.round(fcp ? fcp.startTime : 0),
-        recursos: performance.getEntriesByType('resource').length,
-        peso: performance.getEntriesByType('resource')
-                .reduce((s, r) => s + (r.encodedBodySize || 0), 0),
       };
     });
+    Object.assign(marcas, await pagina.evaluate(camino, DIFERIDO.source));
 
     const kb = n => `${(n / 1024).toFixed(0)} kB`;
+    revisarDiferido(marcas, ROOT, kb);
     check('Peticiones dentro del presupuesto', marcas.recursos <= PRESUPUESTO.peticiones,
       `${marcas.recursos} de ${PRESUPUESTO.peticiones}`);
     check('Peso descargado dentro del presupuesto', marcas.peso <= PRESUPUESTO.transferido,
@@ -459,17 +567,17 @@ const desbordaX = pagina => pagina.evaluate(() =>
       check('El sitio publicado arranca sin errores', rotos.length === 0, rotos[0] || 'ninguno');
       check('Y dibuja el catálogo igual', await pd.locator('.pcard').count() === 9);
 
+      const c = await pd.evaluate(camino, DIFERIDO.source);
       const dm = await pd.evaluate(() => {
           const fcp = performance.getEntriesByName('first-contentful-paint')[0];
         return {
-          recursos: performance.getEntriesByType('resource').length,
           js: performance.getEntriesByType('resource').filter(r => r.name.endsWith('.js') || r.name.includes('.js?')).length,
           fcp: Math.round(fcp ? fcp.startTime : 0),
-          // Con el HTML: es parte de lo que baja, y lo que más crece con el catálogo.
-          peso: [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')]
-                  .reduce((s, r) => s + (r.encodedBodySize || 0), 0),
         };
       });
+      // Con el HTML: es parte de lo que baja, y lo que más crece con el catálogo.
+      Object.assign(dm, c, { peso: c.peso + c.pesoHTML });
+      revisarDiferido(dm, path.join(ROOT, 'dist'), kb, ' (publicado)');
       check('Un solo archivo de JavaScript en producción', dm.js === 1,
         `${dm.js} · ${marcas.recursos} peticiones → ${dm.recursos}`);
       check('Y sigue pintando a tiempo', dm.fcp <= PRESUPUESTO.fcp, `${dm.fcp} ms`);

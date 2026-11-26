@@ -484,13 +484,16 @@ const ev = code => window.eval(code);
      las orugas y las horas del tablero. La base guardaba solo la primera y las
      demas se perdian sin avisar. */
   check('La galeria completa viaja a la base, no solo la portada',
-    ev("typeof filaDesdeEquipo === 'function' && Array.isArray(filaDesdeEquipo({imgs:['https://a/1.webp','https://a/2.webp']}).imagenes) && filaDesdeEquipo({imgs:['https://a/1.webp','https://a/2.webp']}).imagenes.length === 2"));
+    ev("typeof filaDesdeEquipo === 'function' && filaDesdeEquipo({imgs:[ORIGEN_FOTOS+'1.webp',ORIGEN_FOTOS+'2.webp']}).imagenes.length === 2"));
 
+  /* Sólo las fotos del propio servidor. Un https de otro dominio también se
+     cae: serviría para meter en tus fichas un rastreador de terceros, y la
+     base lo rechazaría de todos modos tumbando el guardado entero. */
   check('Se descartan las direcciones que no son del almacenamiento',
-    ev("filaDesdeEquipo({imgs:['https://a/1.webp','javascript:alert(1)','data:image/png;base64,xx']}).imagenes.length === 1"));
+    ev("filaDesdeEquipo({imgs:[ORIGEN_FOTOS+'1.webp','https://otro-sitio.example/x.webp','javascript:alert(1)','data:image/png;base64,xx']}).imagenes.length === 1"));
 
   check('La galeria se corta en el tope de 8 que acepta la base',
-    ev("filaDesdeEquipo({imgs: Array.from({length:20},(_,i)=>'https://a/'+i+'.webp')}).imagenes.length === 8"));
+    ev("filaDesdeEquipo({imgs: Array.from({length:20},(_,i)=>ORIGEN_FOTOS+i+'.webp')}).imagenes.length === 8"));
 
   /* Las fotos anteriores a la doble subida no tienen version pequena.
      Anunciarla en el srcset seria prometer un archivo que da 404. */
@@ -672,7 +675,7 @@ const ev = code => window.eval(code);
     'que la pregunta salga');
   pedidos = JSON.parse(ev('JSON.stringify(globalThis.__pedidos)'));
   check('Una pregunta completa se manda por la función que la valida en el servidor',
-    pedidos.some(u => u.includes('/rpc/preguntar')), pedidos.join(' '));
+    pedidos.some(u => u.includes('/api/preguntas')), pedidos.join(' '));
 
   await waitFor(() => $('.qa-ok') !== null, 'el acuse de recibo');
   /* No se pinta la pregunta como si ya estuviera publicada: quien la escribió
@@ -864,57 +867,54 @@ const ev = code => window.eval(code);
   check('Y la variable de entorno sigue mandando sobre él',
     /env\.AVISO_DESTINO \|\| DESTINO_POR_OMISION/.test(avisoP) &&
     /env\.AVISO_DESTINO \|\| DESTINO_POR_OMISION/.test(aviso));
-  /* ══ EL DISPARADOR QUE SUSTITUYE AL WEBHOOK DEL PANEL ══
-     El panel de Supabase no pudo crear los webhooks: su integración instala un
-     esquema propio que en este proyecto nunca llegó a existir. Se hace con
-     pg_net a mano, y eso trae una responsabilidad que el panel se comía sola. */
-  const disparador = fs.readFileSync(
-    path.join(ROOT, 'supabase/migrations/20260807000001_avisos_por_disparador.sql'), 'utf8');
+  /* ══ EL AVISO AL ENTRAR UNA COTIZACIÓN O UNA PREGUNTA ══
+     Antes lo disparaba la base con pg_net; ahora lo manda la API después de
+     guardar (servidor/Mdc.Api/Avisos/Avisador.cs). Aquí se revisa el código;
+     el comportamiento contra SQL Server de verdad lo prueba
+     servidor/Mdc.Api.Pruebas. */
+  const leerApi = rel => fs.readFileSync(path.join(ROOT, 'servidor/Mdc.Api', rel), 'utf8');
+  const avisador = leerApi('Avisos/Avisador.cs');
+  const publico = leerApi('Endpoints/PublicoEndpoints.cs');
 
   check('Un aviso roto no puede impedir que se guarde una cotización',
-    /exception when others then/i.test(disparador) && /return new;/i.test(disparador),
-    'sin esto, no poder mandar un correo tumbaría el INSERT del cliente');
+    /catch \(Exception ex\) when \(ex is not OperationCanceledException\)/.test(avisador) &&
+    /Encolar[\s\S]*TryWrite/.test(avisador),
+    'va por una cola: el cliente no espera a Resend, y si falla se registra y se sigue');
   check('El aviso se manda DESPUÉS de guardar, no antes',
-    /after insert on public\.solicitudes/i.test(disparador) &&
-    /after insert on public\.preguntas/i.test(disparador));
-  check('El secreto no vive en un esquema que PostgREST exponga',
-    /create schema if not exists avisos/i.test(disparador) &&
-    /revoke all on table avisos\.destinos from anon, authenticated/i.test(disparador),
-    'fuera de public: lo que no se expone no se puede filtrar');
-  check('La función fija su search_path',
-    /set search_path = avisos, net, pg_catalog/i.test(disparador),
-    'una security definer sin eso se puede engañar con una tabla homónima');
-  check('El secreto NO está en la migración',
-    !/secreto\s*\)?\s*values\s*\(\s*'[^']{8,}'/i.test(disparador),
-    'sólo el ejemplo comentado, con TU_SECRETO de relleno');
+    publico.indexOf('INSERT INTO dbo.solicitudes') < publico.indexOf('"/api/aviso-solicitud"') &&
+    publico.indexOf('dbo.preguntar') < publico.indexOf('"/api/aviso-pregunta"'));
+  check('El secreto de los avisos no está en el código del servidor',
+    !/"Secreto"\s*:\s*"[^"]/.test(leerApi('appsettings.json')) &&
+    /config\["Avisos:Secreto"\]/.test(avisador),
+    'lo pone el instalador en la configuración del servicio');
 
   /* ══ LOS DOS CORREOS QUE SE MANDAN SOLOS ══
      El aviso al entrar algo se puede perder —estabas en obra, se fue la señal—
      así que hay un segundo que insiste, y un resumen que pone delante lo que
-     ya se está midiendo y nadie mira. */
+     ya se está midiendo y nadie mira. Antes eran trabajos de pg_cron; ahora
+     corren dentro del servicio (Avisos/Programados.cs). */
   const resumen = fs.readFileSync(path.join(ROOT, 'functions/api/aviso-resumen.js'), 'utf8');
-  const cron = fs.readFileSync(
-    path.join(ROOT, 'supabase/migrations/20260807000002_avisos_programados.sql'), 'utf8');
+  const programados = leerApi('Avisos/Programados.cs');
 
   check('El correo de pendientes no se manda si no hay nada pendiente',
     /if \(!cuantos\) return json\(200, \{ ok: true, enviado: false/.test(resumen),
     'un aviso diario que dice "todo al día" se deja de abrir');
-  check('Y la base tampoco hace el viaje en balde',
-    /if jsonb_array_length\(cot\) = 0 and jsonb_array_length\(preg\) = 0 then\s*return;/.test(cron));
+  check('Y el servidor tampoco hace el viaje en balde',
+    /if \(cot\.Count == 0 && preg\.Count == 0\) return;/.test(programados));
   check('Sólo insiste con lo que lleva más de un día',
-    /creado_en < now\(\) - interval '24 hours'/.test(cron));
+    (programados.match(/creado_en < DATEADD\(HOUR, -24, SYSDATETIMEOFFSET\(\)\)/g) || []).length === 2);
   check('El resumen marca lo que se mira y nadie cotiza',
     /e\.vistas >= 8 && Number\(e\.cotizaciones\) === 0/.test(resumen),
     'que es el único dato accionable del informe');
-  check('Los trabajos programados no se duplican al repetir la migración',
-    (cron.match(/cron\.unschedule/g) || []).length === 2,
-    'sin esto, correrla dos veces manda dos correos por día');
-  check('Las funciones programadas tampoco fallan hacia fuera',
-    (cron.match(/exception when others then/g) || []).length === 2);
-  check('Y fijan su search_path', (cron.match(/set search_path = avisos/g) || []).length === 2);
+  check('A las 9:00 y los lunes a las 8:00, hora de Chiapas',
+    /America\/Mexico_City/.test(programados) && /Siguiente\(ahora, 9, null\)/.test(programados) &&
+    /Siguiente\(ahora, 8, DayOfWeek\.Monday\)/.test(programados));
+  check('Los trabajos programados tampoco fallan hacia fuera',
+    /catch \(Exception ex\) when \(ex is not OperationCanceledException\)/.test(programados));
   check('La consulta de clientes no sale de la base',
-    !/service_role|SUPABASE_SERVICE/i.test(cron) && !/service_role/i.test(resumen),
-    'sólo viaja el resumen ya hecho, nunca la lista');
+    /SELECT TOP 20 nombre, telefono, creado_en/.test(programados) && !/correo|mensaje|carrito/.test(
+      (programados.match(/SELECT TOP 20 nombre, telefono[^"]*/) || [''])[0]),
+    'sólo nombre, teléfono y fecha: nunca el mensaje ni el carrito');
 
   check('Ningún secreto quedó escrito en el código',
     !/AVISO_SECRETO\s*\|\|\s*['"][^'"]/.test(avisoP + aviso) &&
@@ -1092,34 +1092,38 @@ const ev = code => window.eval(code);
   ev('colaSolicitudes = []');
 
   /* ══ GESTIÓN DE PERSONAL ══
-     La función corre en Cloudflare, así que se revisa su código —igual que los
-     avisos—. Lo que se comprueba no es que exista: son los candados que, si
-     faltan, dejan a la empresa fuera de su propio panel o filtran la llave
-     maestra de la base. */
-  const usuarios = fs.readFileSync(path.join(ROOT, 'functions/api/usuarios.js'), 'utf8');
+     Vive en la API (Endpoints/UsuariosEndpoints.cs). Lo que se comprueba no
+     es que exista: son los candados que, si faltan, dejan a la empresa fuera
+     de su propio panel. Las pruebas de .NET los atacan de verdad. */
+  const usuarios = leerApi('Endpoints/UsuariosEndpoints.cs');
+  const esquema = fs.readFileSync(path.join(ROOT, 'servidor/sql/001_esquema.sql'), 'utf8');
 
   check('Sólo un administrador gestiona al personal',
-    /filas\[0\]\?\.rol !== 'admin'/.test(usuarios) && usuarios.includes('/auth/v1/user'),
-    'y el token se verifica contra Supabase, no se descifra aquí');
+    /RequireAuthorization\(\)\.AddEndpointFilter<SoloAdmin>\(\)/.test(usuarios) &&
+    /SELECT rol FROM dbo\.usuarios WHERE id = @id/.test(leerApi('Seguridad/SoloAdmin.cs')),
+    'y el rol se lee de la base en cada petición, no del token');
   check('Nadie puede cambiarse el rol a sí mismo',
-    /if \(id === yo\) return json\(400/.test(usuarios));
+    (usuarios.match(/id == SoloAdmin\.Usuario\(http\)/g) || []).length === 2,
+    'ni cambiarse el rol ni borrarse');
   check('No se puede quitar al último administrador',
+    /CREATE TRIGGER dbo\.usuarios_ultimo_admin ON dbo\.usuarios AFTER UPDATE, DELETE/.test(esquema) &&
     (usuarios.match(/Es el único administrador/g) || []).length === 2,
-    'protegido al cambiar el rol Y al eliminar la cuenta');
+    'lo cumple la base, venga el cambio de donde venga');
   check('Se invita en vez de crear con contraseña',
-    usuarios.includes('/auth/v1/invite') && !/password/i.test(usuarios),
+    // Sólo se LEE si ya la eligió (para "confirmado"); nunca se escribe aquí.
+    /invitacion_hash/.test(usuarios) && !/hash_contrasena\s*=|INSERT INTO dbo\.usuarios \([^)]*hash_contrasena/.test(usuarios),
     'la contraseña la elige quien la usa: no pasa por WhatsApp ni por aquí');
 
-  /* La llave de servicio puede saltarse TODAS las políticas de la base. Si
-     alguna vez llega al navegador, cualquiera puede leer la cartera de
-     clientes y borrar el catálogo. */
-  check('La llave de servicio no sale del servidor',
+  /* Los secretos del servidor no pueden llegar al navegador: con la clave de
+     los tokens cualquiera se fabricaría una sesión de administrador. */
+  check('Los secretos del servidor no salen del servidor',
     !fs.readdirSync(path.join(ROOT, 'assets/js'))
-      .some(f => fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8')
-        .includes('SUPABASE_SERVICE_KEY')),
-    'ningún archivo de assets/js la nombra siquiera');
-  check('Y el panel habla con el servidor, no con Supabase',
-    fs.readFileSync(path.join(ROOT, 'assets/js/admin-usuarios.js'), 'utf8').includes("fetch('/api/usuarios'"));
+      .some(f => /Jwt:Clave|DeployHook|AVISO_SECRETO|SUPABASE_SERVICE_KEY/.test(
+        fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8'))),
+    'ningún archivo de assets/js los nombra siquiera');
+  check('Y el panel de personal pasa por la misma puerta que el resto',
+    fs.readFileSync(path.join(ROOT, 'assets/js/admin-usuarios.js'), 'utf8').includes("apiRemota('usuarios'"),
+    'así también renueva el token: antes a la hora dejaba de funcionar');
 
   /* ══ GUÍAS DE COMPRA ══
      El contenido que NO depende del inventario. Una página de categoría que
@@ -1182,6 +1186,20 @@ const ev = code => window.eval(code);
   await guardando;
   check('Guardar no cierra el formulario de otro equipo abierto mientras tanto',
     ev('editingId === products[1].id'));
+  /* Subir, mover o quitar una foto redibuja el formulario. Lo escrito y sin
+     guardar tiene que sobrevivir: lo normal es poner el precio y LUEGO las
+     fotos, y antes el precio volvía al viejo sin avisar. */
+  ev(`editingId = products[1].id; draftImgs = undefined; renderAdmin()`);
+  $('#f-price').value = '1234567';
+  $('#f-hot').checked = !$('#f-hot').checked;
+  const hotEscrito = $('#f-hot').checked;
+  ev('draftImgs = []; renderAdmin()');   // lo mismo que hace quitarFoto()
+  check('Redibujar el formulario al tocar las fotos no borra lo escrito',
+    $('#f-price').value === '1234567' && $('#f-hot').checked === hotEscrito, $('#f-price').value);
+  ev(`editingId = products[2].id; draftImgs = undefined; renderAdmin()`);
+  check('Pero abrir otro equipo sí empieza con SUS datos',
+    $('#f-price').value === String(ev('products[2].price')), $('#f-price').value);
+
   ev('isAdmin = false; editingId = null; closeAll()');
 
   /* ── Reporte ── */

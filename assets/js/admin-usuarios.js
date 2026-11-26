@@ -16,10 +16,10 @@
  *
  * ── Todo pasa por el servidor ──
  *
- * Este archivo no habla con Supabase: habla con /api/usuarios, que comprueba
- * la sesión y usa la llave de servicio. Esa llave puede saltarse cada política
- * de la base, así que no puede estar en un archivo que descarga cualquiera.
- * Aquí sólo hay pantalla.
+ * Este archivo no decide nada: habla con /api/admin/usuarios, que comprueba
+ * la sesión contra la base, no deja que nadie se quite el rol a sí mismo y
+ * —en la propia base, con un disparador— no deja sin administrador a la
+ * empresa. Aquí sólo hay pantalla.
  */
 'use strict';
 
@@ -27,23 +27,13 @@ let usuarios = null;          // null = no se ha pedido todavía
 let pidiendoUsuarios = false;
 let errorUsuarios = '';
 
-/** Llama a /api/usuarios con la sesión de quien está en el panel. */
+/** Llama a /api/admin/usuarios con la sesión de quien está en el panel.
+ *
+ * Pasa por apiRemota(), como el resto del panel: así también renueva el
+ * token si está por caducar. Antes usaba el token tal cual, y a la hora de
+ * haber entrado la pestaña de personal empezaba a fallar sin decir por qué. */
 async function apiUsuarios(metodo, cuerpo){
-  const s = auth.sesion();
-  if(!s) throw new Error('Tu sesión expiró. Vuelve a entrar.');
-
-  const r = await fetch('/api/usuarios', {
-    method: metodo,
-    headers: {
-      Authorization: `Bearer ${s.access_token}`,
-      ...(cuerpo ? {'Content-Type':'application/json'} : {}),
-    },
-    ...(cuerpo ? { body: JSON.stringify(cuerpo) } : {}),
-  });
-
-  const d = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error || 'No se pudo completar la operación.');
-  return d;
+  return apiRemota('usuarios', { method: metodo, ...(cuerpo ? { body: JSON.stringify(cuerpo) } : {}) });
 }
 
 /* eslint-disable require-atomic-updates -- la bandera pidiendo* impide una segunda carga mientras esta sigue en camino */

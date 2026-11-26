@@ -5,11 +5,16 @@
  * de fondo: antes cada quien editaba su propia copia y creía estar cambiando
  * el sitio. Ahora hay una sola copia y todos la ven.
  *
+ * La base es el SQL Server de la oficina; aquí se habla con la API que la
+ * envuelve (servidor/Mdc.Api, rutas /api/admin/…). Las filas van y vienen con
+ * los nombres de columna de la base, así que las funciones de traducción de
+ * abajo no saben ni les importa qué motor hay detrás.
+ *
  * ── Quién lee qué ──
  *
  * El VISITANTE no usa nada de este archivo. Sigue recibiendo el catálogo
  * escrito dentro del sitio (catalogo-datos.js), generado al desplegar. Por eso
- * la página carga igual de rápido y no se cae si Supabase se cae.
+ * la página carga igual de rápido y no se cae si el servidor se cae.
  *
  * El ADMINISTRADOR sí: al entrar al panel se trae lo que hay en la base, para
  * no editar sobre una copia vieja. Es la diferencia entre "lo que se publicó"
@@ -29,56 +34,48 @@
 const aCentavos = pesos => Math.round(Number(pesos || 0) * 100);
 const aPesos = centavos => (centavos === null || centavos === undefined) ? null : Number(centavos) / 100;
 
-/** Petición autenticada a la base. Lanza con un mensaje entendible. */
-async function apiRemota(recurso, opciones = {}) {
-  if (!BACKEND) throw new Error('Este sitio se compiló sin conexión a la base de datos.');
+/**
+ * Petición autenticada al panel de la API. Lanza con un mensaje entendible.
+ *
+ * Los mensajes ya vienen redactados por el servidor ("El precio anterior debe
+ * ser mayor que el actual", "Ya hay un equipo con esa dirección"): la API
+ * traduce cada restricción de la base al campo que falló. Aquí sólo se
+ * cubren los casos en que el servidor no llegó a contestar algo útil.
+ */
+async function apiRemota(ruta, opciones = {}) {
+  if (!BACKEND) throw new Error('Este sitio se compiló sin conexión al servidor.');
 
   const token = await tokenValido();
-  if (!token && opciones.method && opciones.method !== 'GET') {
-    throw new Error('Tu sesión terminó. Vuelve a entrar.');
+  if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
+
+  let r;
+  try {
+    r = await fetch(`${BACKEND.url}/api/admin/${ruta}`, {
+      ...opciones,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Con FormData el navegador pone su propio Content-Type (con el boundary).
+        ...(opciones.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(opciones.headers || {}),
+      },
+      signal: AbortSignal.timeout(opciones.plazo || 20000),
+    });
+  } catch {
+    /* Sin respuesta: o no hay internet aquí, o el servidor de la oficina está
+       apagado o sin conexión. Decirlo así ahorra buscar el problema en el
+       lugar equivocado. */
+    throw new Error('No hay conexión con el servidor. Revisa tu internet o que la computadora de la oficina esté encendida.');
   }
 
-  const r = await fetch(`${BACKEND.url}/rest/v1/${recurso}`, {
-    ...opciones,
-    headers: {
-      apikey: BACKEND.llave,
-      Authorization: `Bearer ${token || BACKEND.llave}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-      ...(opciones.headers || {}),
-    },
-    signal: AbortSignal.timeout(20000),
-  });
-
   if (!r.ok) {
-    const detalle = await r.text();
-    /* Traducir los errores que se van a ver de verdad. "new row violates
-       row-level security policy" no le dice nada a quien administra un
-       catálogo de maquinaria, y lo manda a buscar en el lugar equivocado. */
-    if (r.status === 401 || r.status === 403 || /row-level security/.test(detalle)) {
-      throw new Error('No tienes permiso para esto. ¿Sigue abierta tu sesión?');
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) throw new Error('Tu sesión terminó. Vuelve a entrar.');
+    if (r.status === 403) throw new Error(d.error || 'Tu cuenta no tiene acceso al panel.');
+    if (r.status === 502 || r.status === 503 || r.status === 530) {
+      // 530 es el de Cloudflare cuando el túnel no encuentra el servidor.
+      throw new Error(d.error || 'El servidor de la oficina no responde. ¿Está encendido?');
     }
-    if (/duplicate key.*slug/.test(detalle)) {
-      throw new Error('Ya existe un equipo con esa dirección web. Cambia el nombre.');
-    }
-    if (/violates check constraint/.test(detalle)) {
-      throw new Error('Algún dato no es válido. Revisa precios, año y textos.');
-    }
-    /* PGRST204 = el panel mandó una columna que la base no tiene.
-
-       Siempre significa lo mismo: el código va por delante de las migraciones.
-       El mensaje original ("Could not find the 'video_url' column of 'equipos'
-       in the schema cache") no le dice a nadie qué hacer, y el guardado falla
-       ENTERO — incluido el precio que se venía a cambiar. */
-    if (/PGRST204|schema cache/.test(detalle)) {
-      const col = (/'([a-z_]+)' column/.exec(detalle) || [])[1];
-      throw new Error(
-        `A la base le falta el campo "${col || 'nuevo'}". Corre las migraciones ` +
-        `pendientes en Supabase → SQL Editor y vuelve a intentar. ` +
-        `Mientras tanto no se puede guardar nada de este equipo.`
-      );
-    }
-    throw new Error(detalle.slice(0, 200) || `Error ${r.status}`);
+    throw new Error(d.error || `Error ${r.status}`);
   }
 
   return r.status === 204 ? null : r.json();
@@ -137,15 +134,15 @@ function filaDesdeEquipo(p) {
     anio: Number(p.year),
     especificaciones: (p.specs || []).slice(0, 12),
     descripcion: (p.desc || '').slice(0, 4000),
-    /* Sólo direcciones https. Las fotos incrustadas (data:) que quedaron del
-       localStorage viejo no caben en una columna de texto ni deben: para eso
-       está el almacenamiento de Supabase.
+    /* Sólo fotos del propio servidor (ORIGEN_FOTOS, en storage.js). Las
+       incrustadas (data:) que quedaron del localStorage viejo no caben en una
+       columna de texto ni deben: para eso están las fotos en /fotos/.
 
-       `imagen_url` no se manda: lo pone la base a partir de imagenes[1]. Que
+       `imagen_url` no se manda: lo pone la base a partir de imagenes[0]. Que
        lo calcule el servidor es lo que impide que portada y galería acaben
        diciendo cosas distintas. */
     imagenes: (Array.isArray(p.imgs) ? p.imgs : [])
-      .filter(u => typeof u === 'string' && u.startsWith('https://'))
+      .filter(u => typeof u === 'string' && ORIGEN_FOTOS !== null && u.startsWith(ORIGEN_FOTOS))
       .slice(0, 8),
     icono: p.svgKey || 'excavadora',
     destacado: !!p.hot,
@@ -211,18 +208,11 @@ const filaDesdeAjustes = s => ({
  * personas los cambios sin darse cuenta.
  */
 async function remotoCargarTodo() {
-  const [equipos, ajustes, sucursales] = await Promise.all([
-    apiRemota('equipos?select=*&order=id.asc'),
-    apiRemota('ajustes?select=*&limit=1'),
-    apiRemota('sucursales?select=*&order=orden.asc'),
-  ]);
-
+  const d = await apiRemota('todo');
   return {
-    equipos: equipos.map(equipoDesdeFila),
-    ajustes: ajustes.length ? ajustesDesdeFila(ajustes[0]) : null,
-    sucursales: sucursales.map(s => ({
-      name: s.nombre, address: s.direccion, phone: s.telefono, hours: s.horario,
-    })),
+    equipos: d.equipos.map(equipoDesdeFila),
+    ajustes: d.ajustes ? ajustesDesdeFila(d.ajustes) : null,
+    sucursales: d.sucursales.map(s => ({ name: s.nombre, address: s.direccion, phone: s.telefono, hours: s.horario })),
   };
 }
 
@@ -230,31 +220,22 @@ async function remotoCargarTodo() {
 async function remotoGuardarEquipo(p) {
   const fila = filaDesdeEquipo(p);
 
-  const filas = p.id
-    ? await apiRemota(`equipos?id=eq.${encodeURIComponent(p.id)}`, {
-        method: 'PATCH', body: JSON.stringify(fila),
-      })
+  const guardado = p.id
+    ? await apiRemota(`equipos/${encodeURIComponent(p.id)}`, { method: 'PUT', body: JSON.stringify(fila) })
     : await apiRemota('equipos', { method: 'POST', body: JSON.stringify(fila) });
 
-  if (!filas || !filas.length) {
-    /* Un PATCH que no devuelve filas significa que el RLS no dejó ver ni tocar
-       ese renglón — no que se haya guardado en silencio. Confundirlo con éxito
-       sería peor que fallar: el administrador se iría creyendo que cambió un
-       precio que sigue igual. */
-    throw new Error('No se guardó: la base no reconoció ese equipo o no tienes permiso.');
-  }
+  if (!guardado) throw new Error('No se guardó: el servidor no devolvió el equipo.');
 
   /* Se comprueba que lo devuelto sea lo enviado.
 
-     Que la base responda "200 OK" con una fila sólo dice que la petición
-     llegó. Si por lo que sea guardó otra cosa —un trigger, una columna que
+     Que el servidor responda "200 OK" con una fila sólo dice que la petición
+     llegó. Si por lo que sea guardó otra cosa —un disparador, una columna que
      no se mandó, un renglón distinto—, el panel diría "Equipo actualizado"
      y el precio seguiría siendo el viejo.
 
      Ése es el peor modo de fallo posible: silencioso y con cara de éxito.
      Quien administra se va tranquilo y el error aparece días después, en el
      sitio, delante de un cliente. Vale mucho más una alerta molesta. */
-  const guardado = filas[0];
   const discrepan = ['precio_cents', 'nombre', 'anio', 'condicion', 'ubicacion']
     .filter(campo => String(guardado[campo]) !== String(fila[campo]));
 
@@ -271,49 +252,40 @@ async function remotoGuardarEquipo(p) {
 }
 
 async function remotoBorrarEquipo(id) {
-  await apiRemota(`equipos?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await apiRemota(`equipos/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
-/** Guarda los ajustes del sitio. La tabla tiene una sola fila, con id = true. */
+/** Guarda los ajustes del sitio (una sola fila). */
 async function remotoGuardarAjustes(s) {
-  const filas = await apiRemota('ajustes?id=eq.true', {
-    method: 'PATCH', body: JSON.stringify(filaDesdeAjustes(s)),
-  });
-  if (!filas || !filas.length) throw new Error('No se guardaron los ajustes. ¿Sigue abierta tu sesión?');
-  return ajustesDesdeFila(filas[0]);
+  return ajustesDesdeFila(await apiRemota('ajustes', { method: 'PUT', body: JSON.stringify(filaDesdeAjustes(s)) }));
 }
 
 /**
  * Reemplaza la lista de sucursales.
  *
- * Se borra y se vuelve a escribir en vez de ir comparando una por una: son
- * tres o cuatro filas sin clave estable propia, y el código para reconciliarlas
- * sería más largo que esto y con más formas de equivocarse.
+ * Se reemplaza entera en vez de ir comparando una por una: son tres o cuatro
+ * filas sin clave estable propia, y el código para reconciliarlas sería más
+ * largo que esto y con más formas de equivocarse. El servidor lo hace en una
+ * transacción: o queda la lista nueva completa o se queda la de antes. (Con
+ * Supabase eran dos peticiones sueltas, y si fallaba la segunda la empresa se
+ * quedaba sin sucursales.)
  *
- * El riesgo asumido: si falla el alta después del borrado, quedan cero
- * sucursales. Por eso se vuelven a leer al terminar — así el panel enseña lo
- * que realmente hay, no lo que se esperaba que hubiera.
+ * Devuelve lo que quedó guardado, no lo que se mandó.
  */
 async function remotoGuardarSucursales(lista) {
-  await apiRemota('sucursales?id=gt.0', { method: 'DELETE' });
-
-  if (lista.length) {
-    await apiRemota('sucursales', {
-      method: 'POST',
-      body: JSON.stringify(lista.map((b, i) => ({
-        nombre: b.name, direccion: b.address,
-        telefono: String(b.phone || '').slice(0, 20),
-        horario: b.hours || '', orden: i,
-      }))),
-    });
-  }
-
-  const filas = await apiRemota('sucursales?select=*&order=orden.asc');
+  const filas = await apiRemota('sucursales', {
+    method: 'PUT',
+    body: JSON.stringify(lista.map(b => ({
+      nombre: b.name, direccion: b.address,
+      telefono: String(b.phone || '').slice(0, 20),
+      horario: b.hours || '',
+    }))),
+  });
   return filas.map(s => ({ name: s.nombre, address: s.direccion, phone: s.telefono, hours: s.horario }));
 }
 
 /**
- * Pide a Netlify que reconstruya y publique el sitio.
+ * Pide a Cloudflare que reconstruya y publique el sitio.
  *
  * Los cambios se guardan al instante en la base y otro administrador los ve de
  * inmediato, pero el sitio público es HTML escrito de antemano: hasta que no
@@ -321,34 +293,22 @@ async function remotoGuardarSucursales(lista) {
  *
  * La dirección que dispara la reconstrucción NO va en este archivo. Cualquiera
  * que la lea podría lanzar despliegues sin parar hasta agotar la cuota del
- * mes. Va en una función del servidor que primero comprueba que quien pide sea
+ * mes. La guarda el servidor, que primero comprueba que quien pide sea
  * administrador.
  */
 async function remotoPublicar() {
-  const token = await tokenValido();
-  if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
-
-  const r = await fetch('/api/publicar', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(20000),
-  });
-
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error || `No se pudo publicar (${r.status}).`);
-  return d;
+  return apiRemota('publicar', { method: 'POST' });
 }
 
 
 /* ── Solicitudes ────────────────────────────────────────────────────────────
-   La bandeja de cotizaciones. Sólo la ve el personal: la política de la base
-   rechaza esta consulta a cualquiera sin sesión de administrador, y eso está
-   comprobado en tests/seguridad.test.js. */
+   La bandeja de cotizaciones. Sólo la ve el personal: el servidor rechaza
+   esta consulta a cualquiera sin sesión de administrador, y eso está
+   comprobado en servidor/Mdc.Api.Pruebas. */
 
 /** Trae las solicitudes, las más recientes primero. */
 async function remotoSolicitudes(estado = null) {
-  const filtro = estado ? `&estado=eq.${encodeURIComponent(estado)}` : '';
-  return apiRemota(`solicitudes?select=*&order=creado_en.desc&limit=200${filtro}`);
+  return apiRemota('solicitudes' + (estado ? `?estado=${encodeURIComponent(estado)}` : ''));
 }
 
 /**
@@ -359,27 +319,18 @@ async function remotoSolicitudes(estado = null) {
  * marcan como spam, pero se quedan.
  */
 async function remotoEstadoSolicitud(id, estado) {
-  const filas = await apiRemota(`solicitudes?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH', body: JSON.stringify({ estado }),
-  });
-  if (!filas || !filas.length) throw new Error('No se pudo actualizar. ¿Sigue abierta tu sesión?');
-  return filas[0];
+  await apiRemota(`solicitudes/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ estado }) });
+  return { id, estado };
 }
 
 /* ── Fotos ──────────────────────────────────────────────────────────────────
-   Van al almacenamiento de Supabase, no incrustadas en la base.
+   Van al disco del servidor, no incrustadas en la base.
 
    El sistema viejo las guardaba como texto dentro del navegador de quien las
    subía: ocupaban el límite de 5 MB del localStorage, no las veía nadie más y
-   se perdían al limpiar el navegador. Aquí quedan en un CDN, con dirección
-   permanente, y las ve todo el mundo. */
+   se perdían al limpiar el navegador. Aquí quedan con dirección permanente,
+   detrás de la caché de Cloudflare, y las ve todo el mundo. */
 
-/**
- * Sube una foto y devuelve su dirección pública.
- *
- * @param {Blob} archivo   ya redimensionado y comprimido por el panel
- * @param {string} slug    para agrupar las fotos por equipo
- */
 /**
  * Sube una foto en dos tamaños y devuelve la dirección de la grande.
  *
@@ -400,46 +351,17 @@ async function remotoEstadoSolicitud(id, estado) {
  * las que se subieron antes de esto. Sin él habría que adivinar si existe la
  * versión pequeña, y adivinar mal significa una imagen rota.
  *
- * Si falla cualquiera de las dos subidas, no se guarda ninguna. Media foto
+ * Van las dos en la misma petición: o se guardan ambas o ninguna. Media foto
  * subida es una imagen rota esperando a que alguien la mire.
  */
 async function remotoSubirFoto(archivo, slug, hacerPequena) {
-  const token = await tokenValido();
-  if (!token) throw new Error('Tu sesión terminó. Vuelve a entrar.');
+  const form = new FormData();
+  form.append('slug', slug || 'equipo');
+  form.append('w1400', archivo, 'w1400.webp');
+  form.append('w700', typeof hacerPequena === 'function' ? await hacerPequena() : archivo, 'w700.webp');
 
-  const base = `${slug || 'equipo'}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
-  const subir = async (blob, sufijo) => {
-    const r = await fetch(`${BACKEND.url}/storage/v1/object/equipos/${base}${sufijo}.webp`, {
-      method: 'POST',
-      headers: {
-        apikey: BACKEND.llave,
-        Authorization: `Bearer ${token}`,
-        'Content-Type': blob.type || 'image/webp',
-      },
-      body: blob,
-      signal: AbortSignal.timeout(60000),
-    });
-
-    if (!r.ok) {
-      const detalle = await r.text();
-      if (/exceeded the maximum allowed size/i.test(detalle)) {
-        throw new Error('la foto pesa más de 3 MB');
-      }
-      if (r.status === 401 || r.status === 403) {
-        throw new Error('sin permiso, ¿sigue abierta tu sesión?');
-      }
-      throw new Error(detalle.slice(0, 120));
-    }
-    return `${BACKEND.url}/storage/v1/object/public/equipos/${base}${sufijo}.webp`;
-  };
-
-  /* La pequeña primero. Si va a fallar algo —cuota, permisos, red— que falle
-     con el archivo ligero, no después de haber subido el pesado. */
-  if (typeof hacerPequena === 'function') {
-    await subir(await hacerPequena(), '-w700');
-  }
-  return subir(archivo, '-w1400');
+  const d = await apiRemota('fotos', { method: 'POST', body: form, plazo: 60000 });
+  return d.url;
 }
 
 /**
@@ -457,18 +379,18 @@ function fotoSrcset(url) {
 
 /** Contadores por equipo. Sólo los ve un administrador. */
 async function remotoMetricas() {
-  return apiRemota('metricas?select=*&order=vistas.desc');
+  return apiRemota('metricas');
 }
 
 
 /* ── Preguntas del público ─────────────────────────────────────────────────
    Con sesión de administrador se ven TODAS, incluidas las que aún no tienen
-   respuesta. Sin sesión, la política de la base sólo deja ver las contestadas
-   y publicadas — que es lo que lee el exportador para armar las fichas. */
+   respuesta. Al público sólo le llegan las contestadas y publicadas, dentro
+   del sitio, cuando se compila. */
 
 /** Todas las preguntas, las más nuevas primero. */
 async function remotoPreguntas() {
-  return apiRemota('preguntas?select=*&order=creado_en.desc&limit=300');
+  return apiRemota('preguntas');
 }
 
 /**
@@ -478,21 +400,17 @@ async function remotoPreguntas() {
  * conviene publicar —un descuento, un dato de un cliente— y hace falta poder
  * cerrarla sin que salga en la página.
  *
- * `respondida_en` la pone el servidor sólo la primera vez: es cuándo se
+ * `respondida_en` la pone el servidor, y sólo la primera vez: es cuándo se
  * atendió, no cuándo se corrigió una errata tres semanas después.
  */
-async function remotoResponderPregunta(id, respuesta, publicada, yaRespondida) {
-  const cambios = {
-    respuesta: respuesta ? String(respuesta).slice(0, 1000) : null,
-    publicada: !!publicada,
-  };
-  if (respuesta && !yaRespondida) cambios.respondida_en = new Date().toISOString();
-
-  const filas = await apiRemota(`preguntas?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH', body: JSON.stringify(cambios),
+async function remotoResponderPregunta(id, respuesta, publicada) {
+  return apiRemota(`preguntas/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      respuesta: respuesta ? String(respuesta).slice(0, 1000) : null,
+      publicada: !!publicada,
+    }),
   });
-  if (!filas || !filas.length) throw new Error('No se guardó la respuesta. ¿Sigue abierta tu sesión?');
-  return filas[0];
 }
 
 /**
@@ -503,5 +421,5 @@ async function remotoResponderPregunta(id, respuesta, publicada, yaRespondida) {
  * volver a mirarla cada vez que se abre la bandeja.
  */
 async function remotoBorrarPregunta(id) {
-  await apiRemota(`preguntas?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await apiRemota(`preguntas/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

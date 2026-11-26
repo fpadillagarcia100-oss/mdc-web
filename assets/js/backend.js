@@ -1,7 +1,9 @@
 /**
  * backend.js — Registra las solicitudes en la base de datos.
  *
- * Es lo único del sitio público que habla con Supabase. Todo lo demás
+ * Es lo único del sitio público que habla con el servidor (servidor/Mdc.Api,
+ * sobre el SQL Server de la oficina, publicado por Cloudflare Tunnel en
+ * api.mdcmaquinaria.com). Todo lo demás
  * (catálogo, precios, sucursales) viaja dentro del sitio, escrito al
  * desplegar. Aquí no se puede: una cotización nace en el navegador del
  * cliente y tiene que llegar a algún lado en ese momento.
@@ -10,19 +12,18 @@
  *
  * WhatsApp SIEMPRE se abre, guarde o no la base.
  *
- * Registrar es una mejora, no un requisito. Si Supabase está caído, si el
- * cliente tiene mala señal, si la llave caducó — el cliente no se entera y su
- * mensaje sale igual. Al revés estaría mal: convertir un canal que funciona
- * desde hace meses en algo que depende de un servicio nuevo sería cambiar una
- * venta por un renglón en una tabla.
+ * Registrar es una mejora, no un requisito. Si el servidor está caído —la
+ * computadora de la oficina apagada, sin internet—, si el cliente tiene mala
+ * señal: el cliente no se entera y su mensaje sale igual. Al revés estaría
+ * mal: convertir un canal que funciona desde hace meses en algo que depende
+ * de un servidor sería cambiar una venta por un renglón en una tabla.
  *
- * ── Por qué la llave está a la vista ──
+ * ── Por qué no hay llave ──
  *
- * Es la llave `publishable`, diseñada para viajar en el navegador. Cualquiera
- * puede leerla en el código fuente. Lo que impide que sirva para algo son las
- * políticas RLS de la base: con ella se puede INSERTAR una solicitud y nada
- * más. Leer la cartera de clientes, cambiar precios o borrar equipos está
- * cerrado, y se comprueba en tests/seguridad.test.js.
+ * Sin sesión, la API sólo deja hacer tres cosas: mandar una solicitud, dejar
+ * una pregunta y sumar una vista. Leer la cartera de clientes, cambiar precios
+ * o borrar equipos exige un token de administrador que la base reconozca, y
+ * se comprueba en servidor/Mdc.Api.Pruebas.
  */
 'use strict';
 
@@ -54,23 +55,11 @@ async function registrarSolicitud(s) {
   if (!BACKEND || typeof fetch !== 'function') return false;
 
   try {
-    const r = await fetch(`${BACKEND.url}/rest/v1/solicitudes`, {
+    const r = await fetch(`${BACKEND.url}/api/solicitudes`, {
       method: 'POST',
-      headers: {
-        apikey: BACKEND.llave,
-        Authorization: `Bearer ${BACKEND.llave}`,
-        'Content-Type': 'application/json',
-        /* `return=minimal` NO es optimización: es obligatorio.
-
-           Con `return=representation`, PostgREST hace INSERT ... RETURNING, y
-           devolver la fila exige permiso de LECTURA sobre `solicitudes` — que
-           el público no tiene, precisamente para que nadie descargue la lista
-           de clientes. La inserción entera se rechazaría.
-
-           El error diría "violates row-level security policy", que suena a
-           política de INSERT mal puesta. No lo es. Se pierden horas ahí. */
-        Prefer: 'return=minimal',
-      },
+      // La API contesta 204 sin cuerpo: devolver la fila sería devolver datos
+      // de un cliente a quien no tiene por qué leerlos.
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         tipo: s.tipo,
         nombre: s.nombre,
@@ -164,14 +153,9 @@ async function vaciarColaSolicitudes() {
 
   for (const s of cola) {
     try {
-      const r = await fetch(`${BACKEND.url}/rest/v1/solicitudes`, {
+      const r = await fetch(`${BACKEND.url}/api/solicitudes`, {
         method: 'POST',
-        headers: {
-          apikey: BACKEND.llave,
-          Authorization: `Bearer ${BACKEND.llave}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tipo: s.tipo,
           nombre: s.nombre,
@@ -224,14 +208,10 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
 function contar(slug, tipo) {
   if (!BACKEND || typeof fetch !== 'function' || !slug) return;
 
-  fetch(`${BACKEND.url}/rest/v1/rpc/contar`, {
+  fetch(`${BACKEND.url}/api/contar`, {
     method: 'POST',
-    headers: {
-      apikey: BACKEND.llave,
-      Authorization: `Bearer ${BACKEND.llave}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ p_slug: slug, p_tipo: tipo }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, tipo }),
     /* `keepalive` deja que la petición termine aunque la persona cierre la
        pestaña justo después. Sin esto se perderían precisamente las visitas
        de quien mira y se va — que son la mayoría. */
@@ -262,25 +242,21 @@ async function preguntar(slug, nombre, pregunta) {
   }
 
   try {
-    const r = await fetch(`${BACKEND.url}/rest/v1/rpc/preguntar`, {
+    const r = await fetch(`${BACKEND.url}/api/preguntas`, {
       method: 'POST',
-      headers: {
-        apikey: BACKEND.llave,
-        Authorization: `Bearer ${BACKEND.llave}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ p_slug: slug, p_nombre: nombre, p_pregunta: pregunta }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, nombre, pregunta }),
       signal: AbortSignal.timeout(10000),
     });
 
     if (r.ok) return { ok: true };
 
-    /* Los mensajes de la función están escritos para leerse tal cual ("Espera
-       unos minutos", "Escribe tu nombre"): se validan en el servidor porque es
-       el único sitio donde la validación cuenta, y se redactan pensando en que
-       van a acabar delante de una persona. */
+    /* Los mensajes del procedimiento dbo.preguntar están escritos para leerse
+       tal cual ("Espera unos minutos", "Escribe tu nombre"): se validan en la
+       base porque es el único sitio donde la validación cuenta, y se redactan
+       pensando en que van a acabar delante de una persona. */
     const d = await r.json().catch(() => ({}));
-    return { ok: false, error: d.message || 'No se pudo enviar tu pregunta. Inténtalo de nuevo.' };
+    return { ok: false, error: d.error || 'No se pudo enviar tu pregunta. Inténtalo de nuevo.' };
   } catch {
     return { ok: false, error: 'No se pudo enviar tu pregunta. Revisa tu conexión.' };
   }

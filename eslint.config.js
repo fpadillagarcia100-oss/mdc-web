@@ -126,7 +126,7 @@ module.exports = [
      pero las funciones que entran en page.evaluate() se ejecutan DENTRO del
      navegador y ven el DOM y las globales del sitio. Es real, no un atajo. */
   {
-    files: ['tests/visual.test.js'],
+    files: ['tests/visual.test.js', 'tests/e2e-servidor.test.js'],
     languageOptions: {
       ecmaVersion: 2023, sourceType: 'commonjs',
       globals: { ...node, ...navegador, ...delSitio },

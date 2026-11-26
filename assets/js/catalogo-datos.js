@@ -497,8 +497,7 @@ const CATALOGO = {
    Si al compilar no hay credenciales en el entorno, esto queda en null y el
    sitio funciona como siempre: las cotizaciones salen sólo por WhatsApp. */
 const BACKEND_CONFIG = {
-  "url": "https://qqvwrwsxdgmhhacvgowy.supabase.co",
-  "llave": "sb_publishable_cL0Nxnx-ViiZWq9HAswzOA_GjiT5R_k"
+  "url": "https://api.mdcmaquinaria.com"
 };
 
 /* Los mapas de las sucursales, dibujados en la compilación por
