@@ -225,7 +225,7 @@ const ev = code => window.eval(code);
   const equipo = { id: ev('products[0].id'), imgs: fotos };
 
   check('La tarjeta anuncia cuántas fotos hay',
-    ($('.pcard-fotos') || {}).textContent === '📷 3');
+    ($('.pcard-fotos') || {}).textContent.trim() === '3' && !!$('.pcard-fotos svg'));
 
   ev(`openModal(${equipo.id})`);
   check('La ficha abre con la portada', $('.gal-main').getAttribute('src') === equipo.imgs[0]);
@@ -528,9 +528,10 @@ const ev = code => window.eval(code);
   ev(`products[0].video = '${idVideo}'; products[0].imgs = ${JSON.stringify(fotos)};
       products[0].img = products[0].imgs[0]; render()`);
 
+  // Lo que anuncia el video es la etiqueta: el ▶ ahora es un ícono, y un ícono no se lee.
   check('La tarjeta anuncia que hay video',
-    ($('.pcard-fotos') || {}).textContent.includes('▶'),
-    ($('.pcard-fotos') || {}).textContent);
+    /video/.test(($('.pcard-fotos') || { getAttribute: () => '' }).getAttribute('aria-label')),
+    ($('.pcard-fotos') || { getAttribute: () => '' }).getAttribute('aria-label'));
 
   ev(`openModal(${equipo.id})`);
   check('La ficha empieza en las fotos, no en el video',

@@ -1390,6 +1390,466 @@ body.sin-red::before{content:'📡 Sin señal · lo que ya viste sigue disponibl
   .adm-search{flex:1 1 100%}
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   DISEÑO 2026
+   ══════════════════════════════════════════════════════════════════════════
+   Una capa sobre todo lo anterior, no una reescritura: lo de arriba sigue
+   decidiendo la estructura (rejillas, columnas, qué se esconde en el móvil) y
+   esto decide cómo se ve. Por eso aquí casi no se tocan medidas de rejilla:
+   las reglas de arriba que las cambian por tamaño de pantalla tienen que
+   seguir mandando.
+
+   Lo que cambia, y por qué:
+   · Fondo cálido en vez de gris de oficina, y superficies sin borde que se
+     separan por sombra suave. El borde gris de 1 px en cada caja es lo que
+     más fechaba el sitio: es el lenguaje de los marketplaces de 2015.
+   · Radios grandes y botones en píldora.
+   · Tipografía con jerarquía de verdad: titulares grandes y apretados, cifras
+     tabulares en precios y especificaciones.
+   · Íconos de línea (ico() en icons.js) en vez de emojis.
+   · El amarillo se reserva para lo que se pulsa y lo que importa. Repartido
+     por todas partes deja de señalar.
+
+   La marca no se toca: el amarillo y el negro de maquinaria siguen siendo los
+   mismos, y el panel de marca los sigue pudiendo cambiar en caliente. */
+
+:root{
+  --bg:#F4F3EF;
+  --ink:#121211;
+  --dark:#121211;
+  --text:#2B2B29;
+  --muted:#62625D;
+  --light:#7A7A74;
+  --border:rgba(18,18,17,.09);
+  --border2:rgba(18,18,17,.18);
+  --surface:#fff;
+  --surface-2:#EDECE7;
+  --radius:14px;
+  --r-lg:22px;
+  --r-pill:999px;
+  --sombra-1:0 1px 2px rgba(18,18,17,.05),0 2px 8px -2px rgba(18,18,17,.06);
+  --sombra-2:0 2px 4px rgba(18,18,17,.04),0 18px 40px -12px rgba(18,18,17,.18);
+  --facil:cubic-bezier(.2,.8,.2,1);
+}
+
+body{font-size:15px;letter-spacing:-.005em;font-feature-settings:'cv11','ss01'}
+::selection{background:var(--y);color:var(--ink)}
+:focus-visible{border-radius:8px}
+
+/* ── Íconos ── */
+.ico{width:1.1em;height:1.1em;flex-shrink:0;vertical-align:-.17em;fill:none;stroke:currentColor;
+  stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ico path[d^="M8 5.5v13"]{fill:currentColor;stroke:none}
+
+/* ── Barra superior y encabezado: una sola pieza oscura ── */
+.topbar{background:var(--ink);color:rgba(255,255,255,.55);font-size:12.5px;padding:8px 0}
+.topbar a,.topbar button{color:rgba(255,255,255,.62);font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.topbar a:hover,.topbar button:hover{color:#fff;text-decoration:none}
+
+header{background:rgba(18,18,17,.92);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+  padding:12px 0;box-shadow:none;border-bottom:1px solid rgba(255,255,255,.06)}
+.logo-text{font-size:24px;font-weight:800;letter-spacing:-.04em}
+.logo-sub{font-size:9.5px;letter-spacing:.16em;color:rgba(255,255,255,.45);font-weight:600}
+
+.search-wrap{height:46px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r-pill);padding:4px;transition:background .2s,border-color .2s}
+.search-wrap:focus-within{background:#fff;border-color:#fff}
+.search-cat{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.8);
+  border-radius:var(--r-pill) 0 0 var(--r-pill);padding:0 12px 0 16px}
+.search-cat option{color:var(--ink)}
+.search-wrap:focus-within .search-cat{color:var(--text);border-right-color:var(--border)}
+.search-input{background:transparent;color:#fff;font-size:14.5px}
+.search-input::placeholder{color:rgba(255,255,255,.5)}
+.search-wrap:focus-within .search-input{color:var(--ink)}
+.search-wrap:focus-within .search-input::placeholder{color:var(--light)}
+.search-input:focus{box-shadow:none}
+.search-btn{border-radius:var(--r-pill);width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:var(--ink);flex-shrink:0}
+
+.hbtn{border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.85);border-radius:var(--r-pill);
+  padding:9px 16px;font-size:13px;font-weight:500;gap:8px}
+.hbtn .ico{font-size:16px}
+.hbtn:hover{border-color:rgba(255,255,255,.35);color:#fff;background:rgba(255,255,255,.05)}
+.hbtn.primary{font-weight:650}
+.hbtn.primary:hover{color:var(--ink)}
+.cart-badge{background:var(--y);color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+
+/* ── Categorías: chips, no pestañas subrayadas ── */
+.nav-cats{background:var(--bg);border-bottom:none;padding:14px 0 0}
+.nav-cats-inner{gap:8px}
+.nav-cat{padding:8px 16px;border-radius:var(--r-pill);font-size:13.5px;color:var(--muted);
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--border);transition:background .2s,color .2s,box-shadow .2s}
+.nav-cat::after{display:none}
+.nav-cat:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--border2)}
+.nav-cat[aria-current="true"]{background:var(--ink);color:#fff;box-shadow:none;font-weight:600}
+
+/* ── Hero ── */
+.hero-banner{margin:14px auto 0;max-width:1240px;border-radius:28px;padding:56px 48px;
+  background:
+    radial-gradient(60% 90% at 85% 50%,rgba(245,196,0,.20),transparent 65%),
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/40px 40px,
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/40px 40px,
+    var(--ink)}
+.hero-banner::after{display:none}
+.hero-tag{font-size:12px;letter-spacing:.14em;font-weight:650;color:var(--y);margin-bottom:18px;
+  display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--r-pill);
+  background:rgba(245,196,0,.1);box-shadow:inset 0 0 0 1px rgba(245,196,0,.25)}
+.hero-h{font-size:clamp(30px,4.4vw,58px);font-weight:800;letter-spacing:-.04em;line-height:1.02;margin-bottom:18px;text-wrap:balance}
+.hero-p{font-size:16px;color:rgba(255,255,255,.62);line-height:1.6;max-width:500px;margin-bottom:28px}
+.hbtn-lg{border-radius:var(--r-pill);padding:14px 26px;font-size:15px;transition:background .2s,transform .2s var(--facil),border-color .2s}
+.hbtn-lg:hover{transform:translateY(-1px)}
+.hbtn-lg.out{border:1px solid rgba(255,255,255,.22);color:#fff}
+.hbtn-lg.out:hover{border-color:#fff;color:#fff;background:rgba(255,255,255,.06)}
+.hero-badges{gap:22px;margin-top:34px}
+.badge{background:none;border:none;padding:0;color:rgba(255,255,255,.6);font-size:13px;gap:8px}
+.badge .ico{color:var(--y);font-size:18px}
+.badge span{color:#fff;font-weight:600}
+.hero-art{opacity:1;width:400px;aspect-ratio:5/4;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 60%,rgba(245,196,0,.16),rgba(255,255,255,.03) 70%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.hero-art svg{width:84%}
+.hero-art img{width:100%;height:100%;object-fit:cover;border-radius:var(--r-lg)}
+
+/* ── Filtros ── */
+.main{padding-top:28px}
+.filter-card{border:none;border-radius:var(--r-lg);box-shadow:var(--sombra-1);padding:20px;top:96px}
+.filter-title{font-size:15px;font-weight:700;letter-spacing:-.01em;border-bottom-color:var(--border)}
+.filter-title button{color:var(--muted);text-decoration:none;font-weight:500;font-size:12px}
+.filter-title button:hover{color:var(--ink)}
+.filter-group-title{font-size:11px;letter-spacing:.12em;color:var(--light);font-weight:650}
+.filter-opt{font-size:14px;padding:6px 0}
+.filter-opt input{width:17px;height:17px}
+.price-input,.sort-sel{border-radius:10px;border-color:var(--border2);padding:9px 12px}
+.sort-sel{background:var(--surface)}
+
+/* ── Resultados ── */
+.results-count{font-size:14px}
+.view-btn{border-radius:10px;width:38px;height:38px;border-color:var(--border)}
+.view-btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.filters-toggle{border-radius:var(--r-pill);padding:9px 16px;border-color:var(--border2)}
+.af-tag{border-radius:var(--r-pill);border-color:var(--border2);display:inline-flex;align-items:center;gap:6px}
+.af-clear{color:var(--muted);text-decoration:none}
+
+/* ── Tarjetas ── */
+.product-grid{gap:20px}
+.pcard{border:none;border-radius:var(--r-lg);box-shadow:var(--sombra-1);
+  transition:box-shadow .3s var(--facil),translate .3s var(--facil)}
+.pcard:hover{box-shadow:var(--sombra-2);translate:0 -4px}
+.pcard:focus-within{box-shadow:var(--sombra-2),0 0 0 2px var(--y)}
+.pcard-img{background:linear-gradient(180deg,#F3F2EE,#E9E8E2);height:210px;border-bottom:none;margin:8px 8px 0;border-radius:16px}
+.pcard-img svg{height:150px;transition:transform .4s var(--facil)}
+.pcard:hover .pcard-img svg,.pcard:hover .pcard-img img{transform:scale(1.04)}
+.pcard-img img{transition:transform .5s var(--facil)}
+.pcard-badge{top:12px;left:12px;font-size:11px;letter-spacing:.02em;text-transform:none;font-weight:650;
+  padding:5px 10px 5px 9px;border-radius:var(--r-pill);background:rgba(255,255,255,.92);color:var(--ink);
+  display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(18,18,17,.08)}
+.pcard-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge-new::before{background:#2F6FDE}
+.badge-used::before{background:#E07A1F}
+.badge-hot::before{background:#E5484D}
+.badge-rent::before{background:#2E9E5B}
+.badge-vendido{background:var(--ink);color:#fff}
+.badge-vendido::before{background:#fff}
+.badge-apartado{background:#E07A1F;color:#fff}
+.badge-apartado::before{background:#fff}
+.pcard-fav,.pcard-cmp{border:none;background:rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(18,18,17,.12);
+  width:34px;height:34px;backdrop-filter:blur(6px)}
+.pcard-fotos{border-radius:var(--r-pill);background:rgba(18,18,17,.7);backdrop-filter:blur(6px);
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px}
+
+.pcard-body{padding:16px 18px 6px;gap:6px}
+.pcard-cat{font-size:11px;letter-spacing:.1em;font-weight:600;color:var(--light)}
+.pcard-name{font-size:16.5px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.pcard-name:hover{text-decoration:none;color:var(--ink)}
+.pcard-meta{font-size:12.5px;gap:6px}
+.pcard-meta .ico{color:var(--light)}
+.pcard-seller-tag{background:none;color:#2E7D32;padding:0;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:3px;margin-left:2px}
+.pcard-specs-row{gap:6px;margin-top:8px}
+.pcard-spec{font-size:12px;background:var(--bg);border-radius:8px;padding:4px 9px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
+.pcard-price-area{border-top:none;padding:10px 18px 18px}
+.pcard-price{font-size:24px;font-weight:800;letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums}
+.pcard-original{font-size:13px}
+.pcard-disc{font-size:12px;font-weight:700;color:#C2272D;background:#FDECEC;padding:2px 7px;border-radius:var(--r-pill);margin-left:6px}
+.pcard-finance,.pcard-shipping{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:4px}
+.pcard-finance .ico,.pcard-shipping .ico{color:#2E7D32}
+.pcard-actions{margin-top:14px}
+.btn-add{border-radius:var(--r-pill);padding:11px 12px;font-size:13px;font-weight:650;white-space:nowrap;transition:background .2s,transform .2s var(--facil)}
+.btn-add:active{transform:scale(.97)}
+.btn-quote{border-radius:var(--r-pill);padding:11px 16px;font-size:13px;font-weight:550;border-color:var(--border2)}
+.btn-quote:hover{border-color:var(--ink);background:var(--ink);color:#fff}
+
+.list .pcard-img{border-right:none;margin:8px;border-radius:16px}
+.list .pcard-price-area{border-left:1px solid var(--border)}
+
+.empty-state{border:none;border-radius:var(--r-lg);box-shadow:var(--sombra-1)}
+.empty-state .icon{font-size:40px;color:var(--light)}
+.empty-state button{border-radius:var(--r-pill);padding:11px 22px}
+
+.pag-btn{border-radius:12px;border-color:var(--border);min-width:40px;height:40px;background:var(--surface)}
+.pag-btn[aria-current="page"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ── Botones y campos de todo el sitio ── */
+.btn-primary,.btn-ghost{border-radius:var(--r-pill);padding:10px 18px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-ghost{border-color:var(--border2)}
+.btn-ghost:hover{border-color:var(--ink)}
+.field input[type=text],.field input[type=number],.field input[type=email],.field input[type=tel],
+.field select,.field textarea{border-radius:12px}
+.field label{font-size:12.5px}
+
+/* ── Ficha (modal) ── */
+.modal-overlay{background:rgba(18,18,17,.55);backdrop-filter:blur(6px)}
+.modal{border-radius:28px;box-shadow:0 40px 80px -20px rgba(0,0,0,.45)}
+.modal-close{border:none;box-shadow:var(--sombra-1);font-size:22px;width:38px;height:38px}
+.modal-img{background:linear-gradient(180deg,#F3F2EE,#E7E6E0);border-right:none;border-radius:28px 0 0 28px}
+.modal-img img,.modal-img.has-photo .gal-main{border-radius:28px 0 0 0}
+.modal-info{padding:36px 36px 32px}
+.modal-cat{font-size:11.5px;letter-spacing:.1em;font-weight:600}
+.modal-name{font-size:30px;font-weight:800;letter-spacing:-.035em;line-height:1.08}
+.modal-seller{display:inline-flex;align-items:center;gap:5px}
+.modal-verified{background:#E8F3EB;color:#2E7D32;border-radius:var(--r-pill);padding:3px 10px 3px 8px;display:inline-flex;align-items:center;gap:4px}
+.modal-price{font-size:36px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.modal-price-sub{color:var(--muted);display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:6px}
+.modal-price-sub .ico{color:#2E7D32}
+.modal-specs{gap:10px}
+.modal-spec{background:var(--bg);border-radius:14px;padding:12px 14px}
+.modal-spec-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--light);font-weight:600}
+.modal-spec-val{font-size:15px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.modal-add{border-radius:var(--r-pill);padding:15px;font-size:15px}
+.modal-quote{border-radius:var(--r-pill);display:inline-flex;align-items:center;gap:8px;border-color:var(--border2);font-weight:550}
+.modal-quote:hover{background:var(--bg)}
+.modal-extra{border-top-color:var(--border)}
+
+/* ── Cotización (cajón) ── */
+.cart-drawer{border-radius:28px 0 0 28px;box-shadow:-30px 0 60px -20px rgba(0,0,0,.3)}
+.cart-header h2{font-size:18px;font-weight:750;letter-spacing:-.02em}
+.cart-empty-icon{font-size:44px;opacity:.35}
+.cart-item-img{border:none;border-radius:12px;background:var(--bg)}
+.qty-btn{border-radius:10px}
+.btn-checkout{border-radius:var(--r-pill);font-weight:700}
+.btn-quote-all{border-radius:var(--r-pill)}
+.filter-drawer{border-radius:0 28px 28px 0}
+
+/* ── Páginas (ayuda, sucursales, cotizar…) ── */
+.page-overlay{background:rgba(18,18,17,.55);backdrop-filter:blur(6px)}
+.page-panel{border-radius:28px;box-shadow:0 40px 80px -20px rgba(0,0,0,.45)}
+.page-head{background:var(--surface);color:var(--ink);padding:24px 28px 8px}
+.page-head h2{font-size:24px;font-weight:800;letter-spacing:-.035em}
+.page-head .close{border:none;background:var(--bg);color:var(--ink);border-radius:50%;width:38px;height:38px}
+.page-head .close:hover{background:var(--ink);color:#fff}
+.page-body{padding:16px 28px 28px}
+.page-body p{font-size:14px}
+.faq{border:none;border-radius:16px;background:var(--bg)}
+.faq details{border-bottom-color:var(--border)}
+.faq summary{font-size:14px;padding:16px 18px}
+.faq summary:hover{background:rgba(18,18,17,.03)}
+.branch{border:none;background:var(--bg);border-radius:18px;padding:20px}
+.branch p .ico{color:var(--light);margin-right:6px}
+.branch .links a{border-radius:var(--r-pill);background:var(--surface);border-color:transparent;display:inline-flex;align-items:center;gap:6px;padding:8px 14px}
+.branch .links a:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.acct-card,.req-item,.cart-recap{border-radius:16px}
+.page-body p .ico,.acct-card .ico{color:var(--light);margin-right:6px}
+.calc{border-radius:20px;border-color:var(--border)}
+
+/* ── Aviso ── */
+.toast{border-radius:var(--r-pill);padding:13px 22px;box-shadow:0 20px 40px -12px rgba(0,0,0,.35)}
+
+/* ── Pie ── */
+footer{background:var(--ink);color:rgba(255,255,255,.55);margin-top:64px;padding:56px 24px 32px;font-size:14px;
+  border-radius:28px 28px 0 0}
+footer a,footer button{color:rgba(255,255,255,.6)}
+footer a:hover,footer button:hover{color:#fff;text-decoration:none}
+.footer-col h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:650;margin-bottom:14px}
+.footer-col ul{gap:10px}
+.footer-legal{border-top-color:rgba(255,255,255,.08);color:rgba(255,255,255,.35);padding-top:20px;margin-top:40px}
+
+/* ── Fichas estáticas y páginas de categoría ── */
+.ficha-grid{border:none;border-radius:28px;box-shadow:var(--sombra-1)}
+.ficha-media{background:linear-gradient(180deg,#F3F2EE,#E7E6E0);border-right:none}
+.ficha-info h1{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1.08}
+.ficha-precio{font-size:36px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.ficha-cat{letter-spacing:.1em;font-weight:600}
+.ficha-meta .ico{color:var(--light)}
+.ficha-extra{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.ficha-extra .ico{color:#2E7D32}
+.ficha-acciones .btn-primary,.ficha-acciones .btn-ghost{border-radius:var(--r-pill)}
+.similar{border:none;border-radius:var(--r-lg);box-shadow:var(--sombra-1);overflow:hidden;
+  transition:box-shadow .3s var(--facil),transform .3s var(--facil)}
+.similar:hover{box-shadow:var(--sombra-2);transform:translateY(-4px)}
+.similar-img{background:linear-gradient(180deg,#F3F2EE,#E9E8E2);margin:8px 8px 0;border-radius:16px}
+.similar-body{padding:14px 18px 18px}
+.similar-cat{letter-spacing:.1em;font-weight:600;color:var(--light)}
+.similar h2,.similar h3{font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.similar-precio{font-size:20px;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.cat-meta{display:flex;align-items:center;gap:5px;font-size:12px}
+.cat-pagina h1,.cat-intro h1{font-size:clamp(28px,3.6vw,44px);font-weight:800;letter-spacing:-.04em;line-height:1.05}
+
+/* ── Lo que cambia con el tamaño de pantalla ──
+   Va aquí y no arriba: estas reglas pisan a las de esta misma capa, y en la
+   cascada gana la que va después. */
+@media(max-width:1080px){
+  .hero-banner{margin:12px 16px 0;padding:44px 32px}
+  /* La de arriba ya la escondía; esta capa le dio display:flex y la revivió. */
+  .hero-art{display:none}
+}
+@media(max-width:900px){
+  .modal-img{border-radius:28px 28px 0 0}
+  .modal-img img,.modal-img.has-photo .gal-main{border-radius:28px 28px 0 0}
+  .modal-info{padding:28px 24px}
+  .list .pcard-price-area{border-left:none}
+}
+@media(max-width:600px){
+  body{font-size:14.5px}
+  /* Logo y botones en un renglón, el buscador en el siguiente. Sin el
+     subtítulo del logo y con los botones más justos caben en 390 px; antes
+     eran tres renglones y el encabezado se comía un cuarto de la pantalla. */
+  .logo-sub{display:none}
+  .header-inner{flex-wrap:wrap;row-gap:12px}
+  .header-actions{gap:6px}
+  .hbtn{padding:9px 12px}
+  .hbtn.primary{padding:9px 14px}
+  .search-wrap{height:44px}
+  .search-input{border-radius:0}
+  .nav-cats{padding-top:12px}
+  .hero-banner{margin:10px 12px 0;padding:32px 22px;border-radius:24px}
+  .hero-h{font-size:30px}
+  .hero-tag{font-size:11px;letter-spacing:.1em}
+  .hero-p{font-size:15px}
+  .hero-btns .hbtn-lg{flex:1 1 100%;text-align:center}
+  .product-grid{gap:16px}
+  .pcard-img{height:200px}
+  .modal{border-radius:24px}
+  .page-panel{border-radius:24px}
+  .cart-drawer{border-radius:0}
+  footer{border-radius:24px 24px 0 0;padding:40px 20px 28px}
+}
+
+/* ── LENGUAJE VISUAL DE LA ERA DE LA IA ──
+   Aurora de luz detrás del hero, texto con gradiente que se mueve despacio,
+   bordes que giran, vidrio esmerilado y brillos al pasar el cursor. Es el
+   idioma visual que hoy asocia la gente con producto nuevo.
+
+   Ojo con lo que esto NO es: no hay "IA" escrita en ninguna parte. El sitio
+   no usa inteligencia artificial para nada que vea el cliente, y decir que sí
+   sería mentirle. Se ve de esta época; no promete lo que no hace.
+
+   Todo se mueve lento (entre 8 y 18 s) para que se sienta vivo y no distraiga
+   de la máquina. Y quien pidió menos movimiento lo ve todo quieto: el
+   interruptor general de abajo apaga estas animaciones igual que las demás. */
+
+/* Un ángulo animable: sin @property el navegador no sabe interpolar un
+   ángulo dentro de un gradiente y el borde saltaría en vez de girar. */
+@property --giro{syntax:'<angle>';inherits:false;initial-value:0deg}
+
+:root{
+  --aurora-1:#F5C400;
+  --aurora-2:#FF8A3D;
+  --aurora-3:#8B5CF6;
+  --aurora-4:#22D3EE;
+  --borde-vivo:conic-gradient(from var(--giro),#F5C400,#FF8A3D,#8B5CF6,#22D3EE,#F5C400);
+}
+@keyframes girar{to{--giro:360deg}}
+@keyframes deriva{
+  0%  {transform:translate3d(0,0,0) scale(1)}
+  33% {transform:translate3d(6%,-8%,0) scale(1.08)}
+  66% {transform:translate3d(-5%,6%,0) scale(.96)}
+  100%{transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes brillo{to{background-position:200% center}}
+
+/* ── La página respira: un halo tenue arriba, detrás de todo ── */
+body{background:
+  radial-gradient(900px 420px at 15% -120px,rgba(139,92,246,.10),transparent 70%),
+  radial-gradient(800px 380px at 90% -80px,rgba(245,196,0,.14),transparent 70%),
+  var(--bg) no-repeat}
+
+/* ── Hero: aurora viva ── */
+.hero-banner{isolation:isolate}
+.hero-banner::before{content:'';position:absolute;inset:-20%;z-index:0;pointer-events:none;filter:blur(60px);opacity:.9;
+  background:
+    radial-gradient(26% 34% at 70% 42%,rgba(245,196,0,.55),transparent 70%),
+    radial-gradient(22% 28% at 90% 72%,rgba(255,138,61,.45),transparent 70%),
+    radial-gradient(30% 38% at 52% 88%,rgba(139,92,246,.65),transparent 70%),
+    radial-gradient(24% 30% at 92% 18%,rgba(34,211,238,.45),transparent 70%),
+    radial-gradient(18% 22% at 38% 10%,rgba(139,92,246,.35),transparent 70%);
+  animation:deriva 18s ease-in-out infinite}
+.hero-banner::after{display:block;content:'';position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(120% 80% at 0% 0%,rgba(18,18,17,.85),transparent 60%)}
+.hero-inner{z-index:1}
+
+/* El renglón amarillo del titular, en gradiente que corre despacio. */
+.hero-h span{background:linear-gradient(90deg,#F5C400 0%,#FFB13D 30%,#FFE27A 50%,#FFB13D 70%,#F5C400 100%);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:brillo 8s linear infinite}
+
+/* La etiqueta de temporada: vidrio con un borde que gira. */
+.hero-tag{position:relative;background:rgba(18,18,17,.55);box-shadow:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hero-tag::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:var(--borde-vivo);animation:girar 6s linear infinite;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+
+/* El botón principal brilla un poco más al acercarse. */
+.hbtn-lg.yel{background:linear-gradient(135deg,#FFD84A,#F5C400 45%,#FFA62B);
+  box-shadow:0 8px 30px -8px rgba(245,196,0,.6),inset 0 1px 0 rgba(255,255,255,.45)}
+.hbtn-lg.yel:hover{background:linear-gradient(135deg,#FFE070,#F5C400 45%,#FF9A1F);
+  box-shadow:0 12px 40px -8px rgba(245,196,0,.75),inset 0 1px 0 rgba(255,255,255,.5)}
+.hbtn-lg.out{background:rgba(255,255,255,.04);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+/* La máquina, en una vitrina de vidrio con su propio borde vivo. */
+.hero-art{position:relative;background:rgba(255,255,255,.04);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:none}
+.hero-art::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:.7;
+  background:var(--borde-vivo);animation:girar 10s linear infinite;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.hero-art svg{filter:drop-shadow(0 20px 30px rgba(245,196,0,.25))}
+
+/* ── Buscador: anillo de luz al enfocar ── */
+.search-wrap{position:relative}
+.search-wrap::before{content:'';position:absolute;inset:-2px;border-radius:inherit;padding:2px;pointer-events:none;opacity:0;
+  background:var(--borde-vivo);animation:girar 4s linear infinite;transition:opacity .3s;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.search-wrap:focus-within::before{opacity:1}
+.search-wrap:focus-within{box-shadow:0 0 0 6px rgba(139,92,246,.12),0 10px 40px -10px rgba(245,196,0,.5)}
+.search-btn{background:linear-gradient(135deg,#FFD84A,#F5C400 50%,#FFA62B)}
+
+/* ── Chip activo de categoría ── */
+.nav-cat[aria-current="true"]{background:linear-gradient(135deg,#1E1E1C,#121211);
+  box-shadow:0 6px 18px -6px rgba(18,18,17,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+
+/* ── Tarjetas: borde de luz al pasar el cursor ── */
+.pcard::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;z-index:4;
+  background:var(--borde-vivo);opacity:0;transition:opacity .35s var(--facil);animation:girar 5s linear infinite;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.pcard:hover::before,.pcard:focus-within::before{opacity:1}
+.pcard:hover{box-shadow:0 24px 50px -16px rgba(139,92,246,.28),0 10px 30px -12px rgba(245,196,0,.35)}
+.pcard-img{background:
+  radial-gradient(80% 70% at 50% 100%,rgba(245,196,0,.14),transparent 70%),
+  linear-gradient(180deg,#F5F4F0,#EAE9E3)}
+.btn-add{background:linear-gradient(135deg,#FFD84A,#F5C400 50%,#FFA62B);box-shadow:0 6px 18px -8px rgba(245,196,0,.7)}
+.btn-add:hover{background:linear-gradient(135deg,#FFE070,#F5C400 50%,#FF9A1F)}
+
+/* ── Ficha y cotización: el mismo vidrio ── */
+.modal-overlay,.page-overlay{background:rgba(18,18,17,.45);backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2)}
+.modal-img{background:
+  radial-gradient(70% 60% at 50% 70%,rgba(245,196,0,.16),transparent 70%),
+  radial-gradient(50% 40% at 80% 20%,rgba(139,92,246,.10),transparent 70%),
+  linear-gradient(180deg,#F5F4F0,#E7E6E0)}
+.modal-add,.btn-checkout{background:linear-gradient(135deg,#FFD84A,#F5C400 50%,#FFA62B);box-shadow:0 10px 30px -10px rgba(245,196,0,.7)}
+.modal-name,.ficha-info h1{background:linear-gradient(180deg,#121211 30%,#4A4A46);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ── Pie: el halo vuelve a asomar abajo ── */
+footer{position:relative;overflow:hidden;isolation:isolate}
+footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120%;z-index:-1;pointer-events:none;filter:blur(70px);opacity:.45;
+  background:radial-gradient(40% 50% at 30% 30%,rgba(139,92,246,.5),transparent 70%),
+             radial-gradient(40% 50% at 75% 40%,rgba(245,196,0,.45),transparent 70%)}
+
+@media(max-width:600px){
+  .hero-banner::before{filter:blur(40px);opacity:.6}
+}
+
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se
    apaga a medias: se apaga todo, incluido el scroll suave. */

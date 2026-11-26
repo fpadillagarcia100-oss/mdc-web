@@ -92,3 +92,35 @@ const svgs = {
   </svg>`
 };
 const SVG_LABELS = {excavadora:'Excavadora',retro:'Retroexcavadora',bulldozer:'Bulldozer',compactador:'Compactador',minicargador:'Minicargador',grua:'Grúa'};
+
+/* ══════════════════ ÍCONOS DE INTERFAZ ══════════════════
+   Línea de 1.75 sobre 24×24, en currentColor: toman el color del texto que
+   los rodea y escalan con su tamaño de letra. Sustituyen a los emojis, que
+   cada sistema dibuja a su manera —en Windows son planos, en Android
+   caricaturas— y le daban al sitio un aire de hace cinco años.
+
+   Siempre decorativos (aria-hidden): el texto de al lado es el que dice qué
+   es. Un ícono que tuviera que leerse solo necesitaría su propia etiqueta. */
+const ico = (()=>{
+  const trazos = {
+    pin:    '<path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    camara: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+    tarjeta:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/>',
+    camion: '<path d="M2.5 6.5h11v9.5h-11zM13.5 10h4.2l3.3 3.4V16h-7.5"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+    check:  '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    escudo: '<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    banco:  '<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/>',
+    lupa:   '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+    persona:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
+    lista:  '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v2H9zM9 10.5h6M9 14h6M9 17.5h3"/>',
+    candado:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    impresora:'<path d="M7 9V3.5h10V9M7 17H4.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h15a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H17"/><rect x="7" y="14" width="10" height="7"/>',
+    play:   '<path d="M8 5.5v13l10.5-6.5z"/>',
+    telefono:'<path d="M5 4h3.5l1.5 4-2 1.5a11 11 0 0 0 6.5 6.5l1.5-2 4 1.5V19a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4z"/>',
+    reloj:  '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    mensaje:'<path d="M20 11.5a8 8 0 0 1-11.8 7L4 19.5l1.1-3.9A8 8 0 1 1 20 11.5z"/>',
+    basura: '<path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13.5h9l1-13.5M10 10.5v6M14 10.5v6"/>',
+    correo: '<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/>',
+  };
+  return nombre => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${trazos[nombre] || ''}</svg>`;
+})();

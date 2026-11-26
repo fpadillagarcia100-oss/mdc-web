@@ -60,7 +60,7 @@ function renderCart(){
 
   if(!lines.length){
     $('#cartItems').innerHTML = `<div class="cart-empty">
-      <div class="cart-empty-icon" aria-hidden="true">🏗️</div>
+      <div class="cart-empty-icon" aria-hidden="true">${ico('lista')}</div>
       <p>Tu cotización está vacía.</p>
       <p style="font-size:12px;margin-top:6px">Agrega equipos para solicitar precios.</p></div>`;
     $('#cartSummary').innerHTML = '';
@@ -83,7 +83,7 @@ function renderCart(){
           <button class="qty-btn" type="button" data-qty="1" data-id="${item.id}" aria-label="Agregar una unidad de ${esc(item.name)}">+</button>
         </div>
       </div>
-      <button class="cart-item-del" type="button" data-del="${item.id}" aria-label="Eliminar ${esc(item.name)}">🗑</button>
+      <button class="cart-item-del" type="button" data-del="${item.id}" aria-label="Eliminar ${esc(item.name)}">${ico('basura')}</button>
     </div>`).join('');
 
   const buyLines = lines.filter(i=>i.cond!=='Renta'), rentLines = lines.filter(i=>i.cond==='Renta');

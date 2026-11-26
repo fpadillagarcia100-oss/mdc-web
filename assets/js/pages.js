@@ -69,14 +69,14 @@ function deliver(channel, subject, body, datos){
 
 /* ── Definición de páginas ── */
 const PAGES = {
-  ayuda:       {title:'❓ Centro de ayuda',        html:()=>ayudaHTML()},
-  sucursales:  {title:'📍 Nuestras sucursales',    html:()=>sucursalesHTML()},
-  vender:      {title:'📤 Publica tu equipo',      html:()=>venderHTML()},
-  cuenta:      {title:'👤 Mi cuenta',              html:()=>cuentaHTML()},
-  privacidad:  {title:'🔐 Aviso de privacidad',    html:()=>privacidadHTML()},
-  cotizar:     {title:'📋 Solicitar cotización',   html:()=>cotizarHTML()},
+  ayuda:       {title:'Centro de ayuda',        html:()=>ayudaHTML()},
+  sucursales:  {title:'Nuestras sucursales',    html:()=>sucursalesHTML()},
+  vender:      {title:'Publica tu equipo',      html:()=>venderHTML()},
+  cuenta:      {title:'Mi cuenta',              html:()=>cuentaHTML()},
+  privacidad:  {title:'Aviso de privacidad',    html:()=>privacidadHTML()},
+  cotizar:     {title:'Solicitar cotización',   html:()=>cotizarHTML()},
   comparar:    {title:'⇄ Comparar equipos',        html:()=>compararHTML()},
-  financiamiento:{title:'🧮 Financiamiento',       html:()=>financiamientoHTML()}
+  financiamiento:{title:'Financiamiento',       html:()=>financiamientoHTML()}
 };
 
 /* ── Financiamiento ── */
@@ -110,25 +110,25 @@ function financiamientoHTML(){
     ${calculadoraHTML(base, {msi: eq[0] ? eq[0].finance : null})}
 
     <div class="fin-acciones">
-      <button class="btn-primary" type="button" data-action="fin-wa">💬 Enviar esta simulación por WhatsApp</button>
+      <button class="btn-primary" type="button" data-action="fin-wa">${ico('mensaje')}Enviar esta simulación por WhatsApp</button>
     </div>
 
     <div class="fin-opciones">
       <h3>Tres formas de pagar tu equipo</h3>
       <div class="fin-op">
-        <strong>💳 Meses sin intereses</strong>
+        <strong>${ico('tarjeta')}Meses sin intereses</strong>
         <p>Pagas el precio de lista repartido en mensualidades iguales, sin un peso
           de intereses. Es la opción más barata cuando el equipo la tiene disponible;
           en el catálogo aparece marcada en cada ficha.</p>
       </div>
       <div class="fin-op">
-        <strong>🏦 Crédito simple</strong>
+        <strong>${ico('banco')}Crédito simple</strong>
         <p>Das un enganche y financias el resto a plazo con una tasa. Es lo que
           calcula el simulador de arriba. El equipo queda a tu nombre desde el
           primer día.</p>
       </div>
       <div class="fin-op">
-        <strong>📄 Arrendamiento puro</strong>
+        <strong>${ico('lista')}Arrendamiento puro</strong>
         <p>Pagas por usar el equipo sin comprarlo. La renta suele ser deducible al
           100%, así que conviene revisarlo con tu contador antes de decidir.
           Los equipos que lo permiten están marcados en el catálogo.</p>
@@ -297,12 +297,12 @@ function openPage(kind){
 
 /* ── Ayuda ── */
 const FAQ = [
-  ['¿Cómo pido una cotización?','Agrega los equipos que te interesen con el botón «+ Agregar a cotización». Cuando termines, abre el carrito 🛒 arriba a la derecha y presiona «Solicitar cotización formal». Te pedimos tus datos y nos llega la solicitud por WhatsApp o correo. Respondemos en menos de 24 horas hábiles.'],
+  ['¿Cómo pido una cotización?','Agrega los equipos que te interesen con el botón «+ Agregar a cotización». Cuando termines, abre la cotización arriba a la derecha y presiona «Solicitar cotización formal». Te pedimos tus datos y nos llega la solicitud por WhatsApp o correo. Respondemos en menos de 24 horas hábiles.'],
   ['¿Los precios que veo son finales?','No. Son precios de referencia en pesos mexicanos y no incluyen IVA. El precio final depende de accesorios, condiciones de entrega y el esquema de pago que elijas. Por eso siempre confirmamos con una cotización formal.'],
   ['¿Qué necesito para el financiamiento a meses sin intereses?','Identificación oficial, comprobante de domicilio, y para persona moral el acta constitutiva y poder del representante legal. Los MSI aplican con tarjetas participantes; también manejamos arrendamiento puro y crédito simple para montos mayores.'],
   ['¿Cómo funciona la renta?','La renta es mensual e incluye mantenimiento preventivo, seguro y, en los equipos marcados, operador certificado. Se requiere depósito en garantía y contrato. Para obras cortas consulta la disponibilidad de renta semanal.'],
   ['¿Qué garantía tienen los equipos?','Los equipos nuevos traen 12 meses de garantía de fábrica. Los usados certificados pasan una inspección de más de 100 puntos y salen con 6 meses de garantía en tren motriz e hidráulico. Los equipos en renta están cubiertos durante todo el contrato.'],
-  ['¿Hacen entregas a pie de obra?','Sí. Los equipos marcados con 🚚 incluyen el envío dentro de Chiapas. Fuera del estado cotizamos la maniobra y el traslado por separado, según distancia y peso del equipo.'],
+  ['¿Hacen entregas a pie de obra?','Sí. Los equipos marcados con «Envío incluido» lo traen dentro de Chiapas. Fuera del estado cotizamos la maniobra y el traslado por separado, según distancia y peso del equipo.'],
   ['¿Puedo vender o consignar mi maquinaria?','Sí. Usa la opción «Vende tu equipo»: llena la ficha con marca, modelo, año y horas de uso. Un valuador te contacta, agenda la inspección y te damos una oferta en firme o lo tomamos a consignación.'],
   ['¿Aceptan mi equipo a cuenta?','Sí, recibimos maquinaria a cuenta como parte del pago. El avalúo se hace en sitio y el monto se aplica directo al precio del equipo nuevo.']
 ];
@@ -314,11 +314,11 @@ const ayudaHTML = () => `
   </div>
   <h3>¿Sigues con dudas?</h3>
   <div class="branch">
-    <p>📞 <a href="tel:${esc(settings.phone.replace(/\s/g,''))}" style="color:inherit">${esc(settings.phone)}</a><br>
-       ✉️ <a href="mailto:${esc(settings.email)}" style="color:inherit">${esc(settings.email)}</a><br>
-       🕘 ${esc(settings.hours)}</p>
+    <p>${ico('telefono')}<a href="tel:${esc(settings.phone.replace(/\s/g,''))}" style="color:inherit">${esc(settings.phone)}</a><br>
+       ${ico('correo')}<a href="mailto:${esc(settings.email)}" style="color:inherit">${esc(settings.email)}</a><br>
+       ${ico('reloj')}${esc(settings.hours)}</p>
     <div class="links">
-      <a href="${waLink('Hola '+settings.brandMain+settings.brandAccent+', tengo una duda sobre sus equipos.')}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>
+      <a href="${waLink('Hola '+settings.brandMain+settings.brandAccent+', tengo una duda sobre sus equipos.')}" target="_blank" rel="noopener">${ico('mensaje')}Escribir por WhatsApp</a>
       <a href="#" data-goto="sucursales">📍 Ver sucursales</a>
     </div>
   </div>`;
@@ -357,7 +357,7 @@ function mapaFachadaHTML(b, i){
               aria-label="Ver en el mapa interactivo: ${esc(b.name)}">
         <img src="${esc(m.archivo)}" alt="Mapa de ${esc(b.name)}" loading="lazy" decoding="async"
              width="640" height="320">
-        <span class="mapa-txt">🗺️ Abrir en el mapa</span>
+        <span class="mapa-txt">${ico('pin')}Abrir en el mapa</span>
       </button>
       <p class="mapa-nota">${m.exacta
         ? 'Mapa © OpenStreetMap. El interactivo se carga desde Google sólo cuando lo pides.'
@@ -377,14 +377,14 @@ const sucursalesHTML = () => `
   ${(settings.branches||[]).map((b,i)=>`
     <div class="branch">
       <h3><span class="dot"></span>${esc(b.name)}</h3>
-      <p>📍 ${esc(b.address)}<br>
-         📞 <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}" style="color:inherit">${esc(b.phone)}</a><br>
-         🕘 ${esc(b.hours)}</p>
+      <p>${ico('pin')}${esc(b.address)}<br>
+         ${ico('telefono')}<a href="tel:${esc((b.phone||'').replace(/\s/g,''))}" style="color:inherit">${esc(b.phone)}</a><br>
+         ${ico('reloj')}${esc(b.hours)}</p>
       ${mapaFachadaHTML(b, i)}
       <div class="links">
-        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}" target="_blank" rel="noopener">🗺️ Cómo llegar</a>
-        <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}">📞 Llamar</a>
-        <a href="${waLink('Hola, quiero información de la sucursal '+b.name+'.')}" target="_blank" rel="noopener">💬 WhatsApp</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}" target="_blank" rel="noopener">${ico('pin')}Cómo llegar</a>
+        <a href="tel:${esc((b.phone||'').replace(/\s/g,''))}">${ico('telefono')}Llamar</a>
+        <a href="${waLink('Hola, quiero información de la sucursal '+b.name+'.')}" target="_blank" rel="noopener">${ico('mensaje')}WhatsApp</a>
       </div>
     </div>`).join('') || '<p>Aún no hay sucursales registradas.</p>'}`;
 
@@ -432,8 +432,8 @@ const venderHTML = () => `
         <textarea id="v-notes" placeholder="Mantenimientos, accesorios incluidos, detalles a considerar…"></textarea></div>
     </div>
     <div class="send-row">
-      <button class="btn-primary" type="submit" data-send="wa">💬 Enviar por WhatsApp</button>
-      <button class="btn-ghost" type="button" data-send="mail">✉️ Enviar por correo</button>
+      <button class="btn-primary" type="submit" data-send="wa">${ico('mensaje')}Enviar por WhatsApp</button>
+      <button class="btn-ghost" type="button" data-send="mail">${ico('correo')}Enviar por correo</button>
     </div>
   </form>
   <div class="privacy-note">Usamos tus datos únicamente para contactarte sobre este equipo.
@@ -516,8 +516,8 @@ function cotizarHTML(){
         <label class="check full"><input type="checkbox" id="c-save"${account?' checked':''}> Guardar mis datos en este dispositivo para la próxima vez</label>
       </div>
       <div class="send-row">
-        <button class="btn-primary" type="submit" data-send="wa">💬 Enviar por WhatsApp</button>
-        <button class="btn-ghost" type="button" data-send="mail">✉️ Enviar por correo</button>
+        <button class="btn-primary" type="submit" data-send="wa">${ico('mensaje')}Enviar por WhatsApp</button>
+        <button class="btn-ghost" type="button" data-send="mail">${ico('correo')}Enviar por correo</button>
       </div>
     </form>
     <div class="privacy-note">Tus datos se usan sólo para atender esta cotización.
@@ -598,7 +598,7 @@ function cuentaHTML(){
     ${account ? `
       <div class="acct-card">
         <strong>${esc(account.name)}</strong><br>
-        📞 ${esc(account.phone)}${account.email?`<br>✉️ ${esc(account.email)}`:''}
+        ${ico('telefono')}${esc(account.phone)}${account.email?`<br>${ico('correo')}${esc(account.email)}`:''}
       </div>` : ''}
     ${form}
 

@@ -350,7 +350,7 @@ function rentaVsCompraHTML(p){
   const base = p.cond !== 'Renta' ? enRenta.length : enVenta.length;
   return `
     <section class="rvc">
-      <h3>⚖️ ¿Rentar o comprar?</h3>
+      <h3>¿Rentar o comprar?</h3>
       ${cuerpo}
       <p class="rvc-nota">Estimación a partir de ${base} equipo${base===1?'':'s'} de la misma
          categoría en este catálogo. No incluye mantenimiento, operador, traslados ni el
@@ -381,16 +381,16 @@ function openModal(id){
     <p class="modal-cat">${esc(p.cat)} · ${esc(p.brand)}</p>
     <h2 class="modal-name" id="modalName">${esc(p.name)}</h2>
     <div class="modal-seller-row">
-      <span class="modal-seller">Vendedor: ${esc(settings.sellerName)} · 📍 ${esc(p.location)}</span>
-      <span class="modal-verified">✓ Verificado</span>
+      <span class="modal-seller">Vendedor: ${esc(settings.sellerName)} · ${ico('pin')}${esc(p.location)}</span>
+      <span class="modal-verified">${ico('check')}Verificado</span>
     </div>
     <div class="modal-price-area">
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
         <span class="modal-price">${fmtFull(p.price)}${p.cond==='Renta'?'<small> /mes</small>':''}</span>${disc}
       </div>
-      ${months?`<p class="modal-price-sub">💳 ${esc(p.finance)} sin intereses = ${fmtFull(Math.round(p.price/months))} al mes</p>`:''}
-      ${p.leasing?`<p class="modal-price-sub">🏦 Disponible en arrendamiento puro</p>`:''}
-      ${p.shipping?`<p style="font-size:13px;color:#2E7D32;margin-top:4px">🚚 Envío incluido a pie de obra</p>`:''}
+      ${months?`<p class="modal-price-sub">${ico('tarjeta')}${esc(p.finance)} sin intereses = ${fmtFull(Math.round(p.price/months))} al mes</p>`:''}
+      ${p.leasing?`<p class="modal-price-sub">${ico('banco')}Disponible en arrendamiento puro</p>`:''}
+      ${p.shipping?`<p class="modal-price-sub">${ico('camion')}Envío incluido a pie de obra</p>`:''}
     </div>
     <div class="modal-specs">
       ${p.specs.map((s,i)=>`<div class="modal-spec"><div class="modal-spec-label">${['Capacidad','Potencia','Detalle'][i]||'Especificación'}</div><div class="modal-spec-val">${esc(s)}</div></div>`).join('')}
@@ -401,7 +401,7 @@ function openModal(id){
     <div class="modal-actions">
       <button class="modal-add" type="button" data-add="${p.id}" data-close-after>+ Agregar a cotización</button>
       <button class="modal-quote" type="button" data-fav="${p.id}">${favorites.has(p.id)?'♥ Guardado':'♡ Guardar'}</button>
-      <button class="modal-quote" type="button" data-imprimir>🖨 Imprimir ficha</button>
+      <button class="modal-quote" type="button" data-imprimir>${ico('impresora')}Imprimir ficha</button>
       ${p.slug?`<a class="modal-quote" href="/equipos/${esc(p.slug)}/" style="text-decoration:none">Ficha completa ↗</a>`:''}
       ${isAdmin?`<button class="modal-quote" type="button" data-edit="${p.id}">✎ Editar</button>`:''}
     </div>`;

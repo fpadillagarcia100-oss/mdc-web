@@ -63,6 +63,14 @@ function cargarIconos() {
   return vm.runInContext('svgs', ctx);
 }
 
+/* Y los íconos de interfaz, del mismo archivo: las fichas y las categorías
+   se ven como el resto del sitio sin copiar un solo trazo. */
+const ico = (() => {
+  const ctx = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/icons.js'), 'utf8'), ctx);
+  return vm.runInContext('ico', ctx);
+})();
+
 /**
  * Toma el catálogo de datos técnicos del mismo archivo que usa la aplicación.
  *
@@ -475,7 +483,7 @@ ${JSON.stringify(datosFAQ, null, 2)}
     </a>
     <div class="header-actions">
       <a class="hbtn" href="/#catalogo">← Ver todo el catálogo</a>
-      <a class="hbtn primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar por WhatsApp</a>
+      <a class="hbtn primary" href="${esc(wa)}" target="_blank" rel="noopener">${ico('mensaje')}Cotizar por WhatsApp</a>
     </div>
   </div>
 </header>
@@ -502,17 +510,17 @@ ${JSON.stringify(datosFAQ, null, 2)}
           <a href="${SITIO}/#catalogo">Ver equipos disponibles</a></p>` : ''}
       ${eq.disponibilidad === 'apartado' ? `
         <p class="ficha-agotado apartado">Apartada. Escríbenos por si se libera.</p>` : ''}
-      <p class="ficha-meta">📍 ${esc(eq.location)} · Año ${eq.year} ·
-        <span class="pcard-seller-tag">✓ ${esc(eq.cond === 'Renta' ? 'En renta' : eq.cond === 'Nuevo' ? 'Nuevo' : 'Usado certificado')}</span>
+      <p class="ficha-meta">${ico('pin')}${esc(eq.location)} · Año ${eq.year} ·
+        <span class="pcard-seller-tag">${ico('check')}${esc(eq.cond === 'Renta' ? 'En renta' : eq.cond === 'Nuevo' ? 'Nuevo' : 'Usado certificado')}</span>
       </p>
 
       <p class="ficha-precio">
         ${precioCompleto(eq.price)}${esRenta ? '<small> / mes</small>' : ''}
         ${descuento ? `<span class="pcard-original">${precioCorto(eq.original)}</span><span class="pcard-disc">−${descuento}%</span>` : ''}
       </p>
-      ${eq.finance ? `<p class="ficha-extra">💳 ${esc(eq.finance)} sin intereses = ${precioCompleto(Math.round(eq.price / parseInt(eq.finance, 10)))} al mes</p>` : ''}
-      ${eq.leasing ? '<p class="ficha-extra">🏦 Disponible en arrendamiento puro</p>' : ''}
-      ${eq.shipping ? '<p class="ficha-extra">🚚 Envío incluido a pie de obra</p>' : ''}
+      ${eq.finance ? `<p class="ficha-extra">${ico('tarjeta')}${esc(eq.finance)} sin intereses = ${precioCompleto(Math.round(eq.price / parseInt(eq.finance, 10)))} al mes</p>` : ''}
+      ${eq.leasing ? `<p class="ficha-extra">${ico('banco')}Disponible en arrendamiento puro</p>` : ''}
+      ${eq.shipping ? `<p class="ficha-extra">${ico('camion')}Envío incluido a pie de obra</p>` : ''}
 
       <div class="ficha-specs">
         ${eq.specs.map((s, i) => `<div class="modal-spec">
@@ -535,9 +543,9 @@ ${JSON.stringify(datosFAQ, null, 2)}
       </div>` : ''}
 
       <div class="ficha-acciones">
-        <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar este equipo</a>
-        <a class="btn-ghost" href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">📞 ${esc(a.telefono)}</a>
-        <button class="btn-ghost" type="button" data-imprimir>🖨 Imprimir o guardar en PDF</button>
+        <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">${ico('mensaje')}Cotizar este equipo</a>
+        <a class="btn-ghost" href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">${ico('telefono')}${esc(a.telefono)}</a>
+        <button class="btn-ghost" type="button" data-imprimir>${ico('impresora')}Imprimir o guardar en PDF</button>
       </div>
     </div>
   </div>
@@ -736,7 +744,7 @@ ${JSON.stringify(guiaFAQ, null, 2)}
     </a>
     <div class="header-actions">
       <a class="hbtn" href="/#catalogo">← Ver todo el catálogo</a>
-      <a class="hbtn primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Cotizar por WhatsApp</a>
+      <a class="hbtn primary" href="${esc(wa)}" target="_blank" rel="noopener">${ico('mensaje')}Cotizar por WhatsApp</a>
     </div>
   </div>
 </header>
@@ -765,7 +773,7 @@ ${JSON.stringify(guiaFAQ, null, 2)}
           <p class="similar-cat">${esc(e.cat)} · ${esc(e.brand)} · ${e.year}</p>
           <h2>${esc(e.name)}</h2>
           <p class="similar-precio">${precioCorto(e.price)}${e.cond === 'Renta' ? ' <small>/mes</small>' : ''}</p>
-          <p class="cat-meta">📍 ${esc(e.location)}${e.specs.length ? ' · ' + esc(e.specs[0]) : ''}</p>
+          <p class="cat-meta">${ico('pin')}${esc(e.location)}${e.specs.length ? ' · ' + esc(e.specs[0]) : ''}</p>
         </div>
       </a>`).join('')}
   </div>
@@ -777,7 +785,7 @@ ${guiaHTML}
     <p>Movemos maquinaria constantemente y no todo alcanza a publicarse. Dinos qué
       necesitas y qué presupuesto manejas, y te decimos qué tenemos o qué nos entra.</p>
     <p>
-      <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>
+      <a class="btn-primary" href="${esc(wa)}" target="_blank" rel="noopener">${ico('mensaje')}Escribir por WhatsApp</a>
       <a class="btn-ghost" href="/#catalogo">Ver el catálogo completo</a>
     </p>
   </section>

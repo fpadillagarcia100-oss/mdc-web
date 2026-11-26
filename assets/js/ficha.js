@@ -59,7 +59,7 @@ function calculadoraHTML(precio, opts = {}) {
   const msi = opts.msi ? parseInt(opts.msi, 10) : 0;
   return `
 <section class="calc" data-calc data-precio="${precio}" data-msi="${msi || ''}" aria-labelledby="calcTitulo">
-  <h3 id="calcTitulo">🧮 Simula tu financiamiento</h3>
+  <h3 id="calcTitulo">Simula tu financiamiento</h3>
 
   <div class="calc-campos">
     <div class="calc-campo">

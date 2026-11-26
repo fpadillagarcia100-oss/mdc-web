@@ -134,7 +134,7 @@ function badgeHTML(p){
   if(p.disponibilidad==='vendido') return '<span class="pcard-badge badge-vendido">Vendido</span>';
   if(p.disponibilidad==='apartado') return '<span class="pcard-badge badge-apartado">Apartado</span>';
   if(p.cond==='Renta') return '<span class="pcard-badge badge-rent">En renta</span>';
-  if(p.hot) return '<span class="pcard-badge badge-hot">🔥 Más vendido</span>';
+  if(p.hot) return '<span class="pcard-badge badge-hot">Más vendido</span>';
   if(p.cond==='Nuevo') return '<span class="pcard-badge badge-new">Nuevo</span>';
   return '<span class="pcard-badge badge-used">Usado cert.</span>';
 }
@@ -173,7 +173,7 @@ function cardHTML(p){
     <div class="pcard-img">
       ${productMedia(p)}
       ${p.imgs.length>1||p.video?`<span class="pcard-fotos" aria-label="${p.imgs.length} fotos${p.video?' y video':''}">${
-        p.imgs.length>1?`📷 ${p.imgs.length}`:''}${p.imgs.length>1&&p.video?' · ':''}${p.video?'▶':''}</span>`:''}
+        p.imgs.length>1?`${ico('camara')}${p.imgs.length}`:''}${p.imgs.length>1&&p.video?' · ':''}${p.video?ico('play'):''}</span>`:''}
       ${badgeHTML(p)}
       <button class="pcard-fav" type="button" data-fav="${p.id}" aria-pressed="${fav}"
               aria-label="${fav?'Quitar de':'Guardar en'} favoritos: ${esc(p.name)}">${fav?'♥':'♡'}</button>
@@ -184,13 +184,13 @@ function cardHTML(p){
     <div class="pcard-body">
       <p class="pcard-cat">${esc(p.cat)} · ${esc(p.brand)}</p>
       <h3><button class="pcard-name" type="button" data-open="${p.id}">${esc(p.name)}</button></h3>
-      <p class="pcard-meta">📍 ${esc(p.location)} · ${p.year} <span class="pcard-seller-tag">✓ Verificado</span></p>
+      <p class="pcard-meta">${ico('pin')}${esc(p.location)} · ${p.year} <span class="pcard-seller-tag">${ico('check')}Verificado</span></p>
       <div class="pcard-specs-row">${p.specs.map(s=>`<span class="pcard-spec">${esc(s)}</span>`).join('')}</div>
     </div>
     <div class="pcard-price-area">
       ${priceHTML(p)}
-      ${p.finance?`<p class="pcard-finance">💳 ${esc(p.finance)} sin intereses</p>`:''}
-      ${p.shipping?`<p class="pcard-shipping">🚚 Envío incluido a obra</p>`:''}
+      ${p.finance?`<p class="pcard-finance">${ico('tarjeta')}${esc(p.finance)} sin intereses</p>`:''}
+      ${p.shipping?`<p class="pcard-shipping">${ico('camion')}Envío incluido a obra</p>`:''}
       <div class="pcard-actions">
         <button class="btn-add" type="button" data-add="${p.id}">+ Agregar a cotización</button>
         <button class="btn-quote" type="button" data-open="${p.id}">Ver ficha</button>
@@ -267,7 +267,7 @@ function render(){
 
   if(!results.length){
     grid.innerHTML = `<div class="empty-state">
-      <div class="icon" aria-hidden="true">${products.length?'🔍':'📦'}</div>
+      <div class="icon" aria-hidden="true">${products.length?ico('lupa'):ico('lista')}</div>
       <h3>${products.length?'Sin resultados':'Aún no hay equipos publicados'}</h3>
       <p>${products.length?'Ningún equipo coincide con los filtros seleccionados.':'Entra al panel de administración para publicar el primero.'}</p>
       <button type="button" data-action="${products.length?'clear-filters':'admin-new'}">${products.length?'Limpiar filtros':'+ Publicar equipo'}</button>
