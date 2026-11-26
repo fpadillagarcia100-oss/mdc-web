@@ -54,8 +54,15 @@ public sealed class Avisador(IHttpClientFactory http, IConfiguration config, ILo
                 };
                 req.Headers.Add("x-aviso-secreto", config["Avisos:Secreto"]);
                 using var r = await cliente.SendAsync(req, alto);
-                if (!r.IsSuccessStatusCode)
-                    log.LogWarning("Aviso {Ruta}: el sitio respondió {Codigo}", aviso.Ruta, (int)r.StatusCode);
+                var cuerpo = await r.Content.ReadAsStringAsync(alto);
+                /* Las funciones de aviso contestan 200 aunque el correo no salga
+                   ({ok:false, motivo}), para que nadie las reintente en bucle.
+                   Por eso no basta mirar el código: hay que leer la respuesta. */
+                if (!r.IsSuccessStatusCode || cuerpo.Contains("\"ok\":false"))
+                    log.LogWarning("Aviso {Ruta}: NO salió ({Codigo}) {Respuesta}", aviso.Ruta, (int)r.StatusCode,
+                        cuerpo.Length > 300 ? cuerpo[..300] : cuerpo);
+                else
+                    log.LogInformation("Aviso {Ruta}: enviado", aviso.Ruta);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

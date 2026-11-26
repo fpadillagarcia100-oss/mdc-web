@@ -68,6 +68,11 @@ public static class Instalar
                 Path.Combine(destino, "Mdc.Api.exe"), Cuenta);
         }
 
+        /* El origen "MdcApi" del Visor de eventos. Sólo un administrador puede
+           crearlo; sin él, el servicio escribe su registro al vacío. */
+        if (!System.Diagnostics.EventLog.SourceExists(Servicio))
+            System.Diagnostics.EventLog.CreateEventSource(Servicio, "Application");
+
         Paso($"Dando a {Cuenta} lectura y escritura, sin poder cambiar el esquema…");
         await using (var c = new SqlConnection(new SqlConnectionStringBuilder(cadena) { InitialCatalog = "master" }.ConnectionString))
         {

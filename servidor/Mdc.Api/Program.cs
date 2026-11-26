@@ -29,6 +29,13 @@ if (args.Length > 0 && Consola.EsComando(args[0]))
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseWindowsService(o => o.ServiceName = "MdcApi");
 
+/* El registro va al Visor de eventos (Registros de Windows → Aplicación,
+   origen MdcApi). El origen lo crea el instalador: la cuenta del servicio no
+   tiene permiso para crearlo, y sin él todo se perdía en silencio — en la
+   primera semana no se podía saber si un correo de aviso había salido. */
+if (OperatingSystem.IsWindows())
+    builder.Logging.AddEventLog(s => s.SourceName = "MdcApi");
+
 var cfg = builder.Configuration;
 builder.Services.AddSingleton<Bd>();
 builder.Services.AddSingleton<Tokens>();
