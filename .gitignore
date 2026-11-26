@@ -46,3 +46,9 @@ tests/capturas/*.nueva.png
 servidor/**/bin/
 servidor/**/obj/
 servidor/publicado/
+
+# Caché de Python que deja Blender al importar tools/blender/*.py entre sí.
+__pycache__/
+
+# Capturas sueltas para revisar a ojo; las de referencia van en tests/capturas.
+tmp-shots/

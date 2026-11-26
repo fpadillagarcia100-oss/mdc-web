@@ -58,6 +58,14 @@
 /assets/img/*
   Cache-Control: public, max-age=86400
 
+# La excavadora 3D del hero: video e imagen fija, de tools/render-3d.js.
+# Una semana y no un año, porque el nombre NO lleva huella: si se vuelve a
+# renderizar, el archivo se llama igual. Una semana de video viejo es un
+# detalle cosmético; un año, no. Si algún día cambia a menudo, que el nombre
+# lleve versión (excavadora-2.webm) y esto puede pasar a immutable.
+/assets/3d/*
+  Cache-Control: public, max-age=604800
+
 # El trabajador de servicio, nunca. Es el archivo que decide qué se guarda y
 # qué se pide: si el navegador se queda con una copia vieja, se queda también
 # con las reglas viejas, y no hay forma de corregirlo desde el despliegue.

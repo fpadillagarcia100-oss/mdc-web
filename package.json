@@ -24,7 +24,8 @@
     "db:faltantes": "node tools/sembrar-faltantes.js",
     "mapas": "node tools/make-mapas.js",
     "test:servidor": "dotnet test servidor/Mdc.sln && powershell -NoProfile -ExecutionPolicy Bypass -File servidor/probar-esquema.ps1",
-    "test:e2e": "node tests/e2e-servidor.test.js"
+    "test:e2e": "node tests/e2e-servidor.test.js",
+    "render3d": "node tools/render-3d.js"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

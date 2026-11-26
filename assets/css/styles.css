@@ -1804,6 +1804,29 @@ body{background:
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .hero-art svg{filter:drop-shadow(0 20px 30px rgba(245,196,0,.25))}
 
+/* La excavadora 3D (branding.js). El video trae su propio fondo —la aurora
+   pintada en Blender— y llena la vitrina de borde a borde; el borde vivo
+   (::before) queda encima para que el marco siga siendo el de la web.
+   Imagen fija y video entran fundiéndose: la vitrina vacía de antes de que
+   carguen es la misma de siempre, con su brillo amarillo. */
+.hero-art::before{z-index:1}
+.hero-3d{position:absolute;inset:0;border-radius:inherit;overflow:hidden}
+.hero-3d img,.hero-3d video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  border-radius:inherit;opacity:0;transition:opacity .7s var(--e-out)}
+.hero-3d.lista img,.hero-3d video.lista{opacity:1}
+.hero-3d.plana{display:flex;align-items:center;justify-content:center}
+.hero-3d.plana svg{width:84%}
+
+/* Los renders 3D de los equipos sin foto (catalog.js). Traen su sombra, así
+   que nada de recuadro: se asientan en el fondo de la tarjeta. En el carrito
+   la regla general recorta (`cover`), y una máquina recortada no se lee. */
+.cart-item-img img.maq3d{object-fit:contain;padding:4px}
+.cmp-chip-img img.maq3d,.cmp-th-img img.maq3d{width:100%;height:100%;object-fit:contain}
+@media (prefers-reduced-motion:no-preference){
+  .maq3d{animation:mFundir .45s var(--e-out) both}
+}
+@keyframes mFundir{from{opacity:0}}
+
 /* ── Buscador: anillo de luz al enfocar ── */
 .search-wrap{position:relative}
 .search-wrap::before{content:'';position:absolute;inset:-2px;border-radius:inherit;padding:2px;pointer-events:none;opacity:0;
