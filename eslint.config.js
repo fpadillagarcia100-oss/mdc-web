@@ -90,7 +90,7 @@ const reglasDeFondo = {
 };
 
 module.exports = [
-  { ignores: ['node_modules/**', 'dist/**', 'assets/js/sitio.js', 'assets/js/catalogo-datos.js', 'supabase/**'] },
+  { ignores: ['node_modules/**', 'dist/**', 'assets/js/sitio.js', 'assets/js/panel.js', 'assets/js/catalogo-datos.js', 'supabase/**'] },
 
   // El sitio: scripts clásicos que comparten globales.
   {

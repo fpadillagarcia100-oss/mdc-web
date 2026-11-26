@@ -92,19 +92,57 @@ check('El contrato compartido no engorda', todos.length <= TOPES.globales,
    El empaquetado lee el orden del propio index.html. Si algún día se genera
    de otra forma, esto lo detecta antes de que se publique un sitio con los
    scripts en otro orden — que es un fallo de los que no dan síntoma claro. */
-const { scriptsDelHtml } = require('../tools/empacar-js');
-const bundlePath = path.join(ROOT, 'assets', 'js', 'sitio.js');
-if (fs.existsSync(bundlePath)) {
-  const bundle = fs.readFileSync(bundlePath, 'utf8');
-  const enBundle = (bundle.match(/══════════ (assets\/js\/[^\s]+) ══════════/g) || [])
+const { scriptsDelHtml, esDelPanel } = require('../tools/empacar-js');
+const bloques = nombre => {
+  const p = path.join(ROOT, 'assets', 'js', nombre);
+  if (!fs.existsSync(p)) return null;
+  return (fs.readFileSync(p, 'utf8').match(/══════════ (assets\/js\/[^\s]+) ══════════/g) || [])
     .map(m => m.replace(/══════════ | ══════════/g, ''));
+};
+const enSitio = bloques('sitio.js'), enPanel = bloques('panel.js');
+if (enSitio && enPanel) {
+  /* Cada archivo en su paquete y en el orden del HTML. Juntos son todos: si un
+     script nuevo no entrara en ninguno, el sitio publicado no lo tendría. */
   const esperado = scriptsDelHtml(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'));
   check('El empaquetado conserva el orden exacto del HTML',
-    JSON.stringify(enBundle) === JSON.stringify(esperado),
-    `${enBundle.length} bloques`);
+    JSON.stringify(enSitio) === JSON.stringify(esperado.filter(r => !esDelPanel(r))) &&
+    JSON.stringify(enPanel) === JSON.stringify(esperado.filter(esDelPanel)),
+    `${enSitio.length} bloques en sitio.js, ${enPanel.length} en panel.js`);
 } else {
   check('El empaquetado conserva el orden exacto del HTML', true, 'sin compilar: se salta');
 }
+
+/* ── 4b. El panel se puede bajar tarde ──
+   En producción panel.js llega DESPUÉS de main.js, y sólo cuando alguien
+   entra al panel. Eso exige dos cosas que en desarrollo —donde todo se carga
+   junto y en orden— se rompen sin dar ningún síntoma:
+
+   · Que el panel no haga nada al cargarse. Un admin-*.js que pusiera un
+     listener o pintara algo al arrancar dejaría de hacerlo en la portada.
+   · Que nadie de fuera lo use sin pasar por conPanel(). Con el panel aún sin
+     bajar, esa llamada es un ReferenceError en el teléfono de un cliente. */
+const espree = require('espree');
+const delPanel = orden.filter(esDelPanel);
+const sueltas = [];
+for (const rel of delPanel) {
+  const arbol = espree.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8'),
+    { ecmaVersion: 2023, sourceType: 'script', loc: true });
+  for (const n of arbol.body) {
+    const declara = n.type === 'FunctionDeclaration' ||
+      (n.type === 'ExpressionStatement' && n.directive) ||
+      (n.type === 'VariableDeclaration' &&
+        n.declarations.every(d => !d.init || !/Call|New|Await|Assignment/.test(d.init.type)));
+    if (!declara) sueltas.push(`${rel}:${n.loc.start.line}`);
+  }
+}
+check('El panel no ejecuta nada al cargarse', sueltas.length === 0,
+  sueltas.length ? sueltas.join(', ') : `${delPanel.length} archivos, sólo declaraciones`);
+
+const desdeFuera = dep.aristas.filter(a =>
+  esDelPanel(a.de) && !esDelPanel(a.archivo) && (!a.archivo.endsWith('main.js') || a.enCarga));
+check('Sólo main.js entra al panel, y nunca al cargar', desdeFuera.length === 0,
+  desdeFuera.length ? desdeFuera.slice(0, 5).map(a => `${a.usa} en ${a.archivo}`).join(', ')
+                    : 'siempre por conPanel()');
 
 /* ── 5. Informativo: cuánto de lo global necesita serlo ──
    No falla nunca. Es la medida de cuánto margen hay para encerrar cosas si

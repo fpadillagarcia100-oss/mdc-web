@@ -42,8 +42,8 @@ function archivosPropios() {
     if (!fs.existsSync(abs)) continue;
     for (const f of fs.readdirSync(abs)) {
       if (!f.endsWith('.js')) continue;
-      // sitio.js es la concatenación generada: contarlo duplicaría todo.
-      if (f === 'sitio.js') continue;
+      // sitio.js y panel.js son la concatenación generada: contarlos duplicaría todo.
+      if (f === 'sitio.js' || f === 'panel.js') continue;
       salida.push(path.join(d, f).replace(/\\/g, '/'));
     }
   }
@@ -187,7 +187,7 @@ function marcadoDelProyecto() {
       const p = path.join(dir, f);
       const st = fs.statSync(p);
       if (st.isDirectory()) { if (f !== 'node_modules' && f !== 'dist' && f !== '.git') leer(p); continue }
-      if (/\.(html|js)$/.test(f) && f !== 'sitio.js') texto += '\n' + fs.readFileSync(p, 'utf8');
+      if (/\.(html|js)$/.test(f) && f !== 'sitio.js' && f !== 'panel.js') texto += '\n' + fs.readFileSync(p, 'utf8');
     }
   };
   leer(ROOT);

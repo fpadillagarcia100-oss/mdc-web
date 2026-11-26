@@ -458,6 +458,16 @@ const desbordaX = pagina => pagina.evaluate(() =>
         `${dm.js} · ${marcas.recursos} peticiones → ${dm.recursos}`);
       check('Y sigue pintando a tiempo', dm.fcp <= PRESUPUESTO.fcp, `${dm.fcp} ms`);
 
+      /* El panel viaja aparte y se baja al entrar. Sólo aquí se puede probar:
+         en el repositorio todos los scripts se cargan juntos y conPanel()
+         nunca tiene que ir a buscar nada. */
+      const panelPedido = pd.waitForResponse(r => /\/panel\.[^/]*js/.test(r.url()));
+      await pd.locator('#adminEntry').click();
+      const resp = await panelPedido;
+      await pd.waitForSelector('#mailInput', { timeout: 10000 });
+      check('El panel se baja al entrar, no antes, y abre', resp.ok() && rotos.length === 0,
+        rotos[0] || `${kb(Number(resp.headers()['content-length']) || (await resp.body()).length)} al hacer clic`);
+
       await cd.close();
       servidorDist.close();
     }

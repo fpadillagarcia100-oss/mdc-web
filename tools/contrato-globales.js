@@ -174,8 +174,8 @@ function huerfanos() {
   const cargados = new Set(ordenDeCarga().map(r => path.basename(r)));
   return fs.readdirSync(path.join(ROOT, 'assets', 'js'))
     .filter(f => f.endsWith('.js'))
-    // sitio.js lo genera la compilación: no se carga en desarrollo y es correcto.
-    .filter(f => f !== 'sitio.js' && !cargados.has(f));
+    // sitio.js y panel.js los genera la compilación: no se cargan en desarrollo y es correcto.
+    .filter(f => f !== 'sitio.js' && f !== 'panel.js' && !cargados.has(f));
 }
 
 /**

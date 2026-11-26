@@ -33,9 +33,10 @@ $RECYCLE.BIN/
 ~$*
 dist/
 
-# Generado por tools/empacar-js.js en cada compilacion. No se versiona: son
-# los mismos archivos de assets/js/ pegados, y cambiaria en cada commit.
+# Generados por tools/empacar-js.js en cada compilacion. No se versionan: son
+# los mismos archivos de assets/js/ pegados, y cambiarian en cada commit.
 assets/js/sitio.js
+assets/js/panel.js
 
 # Salida de la prueba visual cuando una captura cambia. Las referencias SI se
 # versionan; estas son la comparacion de un momento.

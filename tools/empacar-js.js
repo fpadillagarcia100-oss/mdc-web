@@ -1,5 +1,5 @@
 /**
- * empacar-js.js — Une los 21 scripts del sitio en uno solo para publicar.
+ * empacar-js.js — Une los scripts del sitio en dos archivos para publicar.
  *
  * Parte de MDC · Maquinaria de Chiapas. Lo llama tools/build.js.
  *
@@ -28,9 +28,20 @@
  * El resultado es más estricto que antes, no menos: antes cada archivo era
  * estricto por su cuenta y ahora lo es el conjunto entero.
  *
- * No se minifica. Cloudflare comprime con gzip al servir, que es de donde sale
- * la mayor parte del ahorro, y un minificador propio es justo el tipo de
- * herramienta que rompe en silencio un martes por la tarde.
+ * ── Dos archivos, no uno ──
+ *
+ * Los admin-*.js (equipos, bandeja, personal, la escena de la obra) eran casi
+ * un tercio del total y sólo los usan quienes administran. Van en panel.js,
+ * que main.js baja con conPanel() la primera vez que alguien entra al panel.
+ * El resto de los visitantes no lo descarga nunca.
+ *
+ * Funciona porque el panel no hace nada al cargarse: sólo declara funciones y
+ * estado, y nadie de fuera lo llama sin pasar por conPanel(). Las dos cosas
+ * las vigila tests/arquitectura.test.js.
+ *
+ * Aquí no se minifica: sitio.js y panel.js quedan legibles, con un rótulo por
+ * archivo, que es lo que lee la prueba de arquitectura. Lo que se publica en
+ * dist/ sí va minificado; eso lo hace empaquetar.js.
  */
 'use strict';
 
@@ -48,11 +59,11 @@ function scriptsDelHtml(html) {
   return orden;
 }
 
-function empacarJS() {
-  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  const archivos = scriptsDelHtml(html);
-  if (!archivos.length) throw new Error('No encontré scripts en index.html');
+/** Lo que sólo usa quien administra: viaja aparte, en panel.js. */
+const esDelPanel = rel => path.basename(rel).startsWith('admin');
 
+/** Une `archivos`, en ese orden, en assets/js/<nombre>. */
+function unir(archivos, nombre) {
   const partes = [
     `/* MDC · Maquinaria de Chiapas — ${archivos.length} archivos unidos por tools/empacar-js.js.`,
     `   NO se edita a mano: se regenera en cada 'npm run build'.`,
@@ -70,15 +81,30 @@ function empacarJS() {
     partes.push(`\n/* ══════════ ${rel} ══════════ */\n${limpio}`);
   }
 
-  const destino = path.join(ROOT, 'assets', 'js', 'sitio.js');
   const salida = partes.join('\n');
-  fs.writeFileSync(destino, salida, 'utf8');
+  fs.writeFileSync(path.join(ROOT, 'assets', 'js', nombre), salida, 'utf8');
 
   return {
     archivos: archivos.length,
     antes: bytes,
     despues: Buffer.byteLength(salida),
-    destino: 'assets/js/sitio.js',
+    destino: `assets/js/${nombre}`,
+  };
+}
+
+function empacarJS() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const archivos = scriptsDelHtml(html);
+  if (!archivos.length) throw new Error('No encontré scripts en index.html');
+
+  const sitio = unir(archivos.filter(r => !esDelPanel(r)), 'sitio.js');
+  const panel = unir(archivos.filter(esDelPanel), 'panel.js');
+
+  return {
+    archivos: sitio.archivos + panel.archivos,
+    antes: sitio.antes + panel.antes,
+    despues: sitio.despues + panel.despues,
+    destino: `${sitio.destino} + ${panel.destino}`,
   };
 }
 
@@ -88,22 +114,25 @@ function empacarJS() {
  * Devuelve el HTML modificado; NO toca el archivo del repositorio. El
  * index.html con sus 21 scripts es el que se trabaja y el que depuras: ahí
  * cada error apunta a su archivo y a su línea de verdad.
+ *
+ * `rutas` son las direcciones publicadas de los dos archivos: { sitio, panel }.
  */
-function htmlConBundle(html, version) {
+function htmlConBundle(html, rutas) {
   const scripts = scriptsDelHtml(html);
   const primero = html.indexOf(`<script src="${scripts[0]}"`);
   const ultimoTag = `<script src="${scripts[scripts.length - 1]}" defer></script>`;
   const fin = html.indexOf(ultimoTag) + ultimoTag.length;
   if (primero < 0 || fin < ultimoTag.length) throw new Error('No pude ubicar el bloque de scripts');
 
-  /* La versión en la dirección es lo que hace que un despliegue llegue de
-     verdad: el archivo no cambia de nombre, pero sí la petición, así que
-     ningún caché intermedio puede servir el de ayer. */
+  /* Las direcciones llevan el hash del contenido: un despliegue nuevo es una
+     dirección nueva, así que ningún caché puede servir el código de ayer. La
+     del panel va en data-panel, y main.js la lee cuando alguien entra. */
   return html.slice(0, primero) +
-    `<!-- Los ${scripts.length} scripts de assets/js/ unidos en la compilación. El original,\n` +
-    `     archivo por archivo, sigue en el repositorio: es el que se edita. -->\n` +
-    `<script src="/assets/js/sitio.js?v=${version}" defer></script>` +
+    `<!-- Los ${scripts.length} scripts de assets/js/ unidos en la compilación; los del panel van\n` +
+    `     aparte y se bajan al entrar a él. El original, archivo por archivo, sigue en el\n` +
+    `     repositorio: es el que se edita. -->\n` +
+    `<script src="${rutas.sitio}" data-panel="${rutas.panel}" defer></script>` +
     html.slice(fin);
 }
 
-module.exports = { empacarJS, htmlConBundle, scriptsDelHtml };
+module.exports = { empacarJS, htmlConBundle, scriptsDelHtml, esDelPanel };

@@ -73,7 +73,7 @@ document.addEventListener('click', e => {
 
   /* — Admin — */
   const admOpen = t.closest('[data-admin-open]');
-  if(admOpen){ editingId = null; draftImgs = undefined; openAdmin(admOpen.dataset.adminOpen); return }
+  if(admOpen){ conPanel(()=>{ editingId = null; draftImgs = undefined; openAdmin(admOpen.dataset.adminOpen) }); return }
 
   const tabBtn = t.closest('.admin-tab');
   if(tabBtn){
@@ -82,7 +82,7 @@ document.addEventListener('click', e => {
   }
 
   const editBtn = t.closest('[data-edit]');
-  if(editBtn){ editingId = Number(editBtn.dataset.edit); draftImgs = undefined; openAdmin('products'); return }
+  if(editBtn){ conPanel(()=>{ editingId = Number(editBtn.dataset.edit); draftImgs = undefined; openAdmin('products') }); return }
 
   const fotoMov = t.closest('[data-foto-mov]');
   if(fotoMov){ moverFoto(Number(fotoMov.dataset.fotoMov), Number(fotoMov.dataset.paso)); return }
@@ -365,8 +365,8 @@ $('#modalClose').addEventListener('click', closeAll);
 $('#modalOverlay').addEventListener('click', e => { if(e.target.id==='modalOverlay') closeAll() });
 $('#adminClose').addEventListener('click', closeAll);
 $('#adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverlay') closeAll() });
-$('#adminEntry').addEventListener('click', ()=>{ editingId = null; draftImgs = undefined; openAdmin('products') });
-$('#adminLogout').addEventListener('click', logoutAdmin);
+$('#adminEntry').addEventListener('click', ()=> conPanel(()=>{ editingId = null; draftImgs = undefined; openAdmin('products') }));
+$('#adminLogout').addEventListener('click', ()=> conPanel(()=> logoutAdmin()));
 
 $('#pageClose').addEventListener('click', closeAll);
 $('#pageOverlay').addEventListener('click', e => { if(e.target.id==='pageOverlay') closeAll() });
@@ -388,14 +388,52 @@ document.addEventListener('keydown', e => {
   // Ctrl+Shift+A abre el panel de administración
   if(e.ctrlKey && e.shiftKey && (e.key==='A' || e.key==='a')){
     e.preventDefault();
-    editingId = null; draftImgs = undefined;
-    openAdmin('products');
+    conPanel(()=>{ editingId = null; draftImgs = undefined; openAdmin('products') });
   }
   trapTab(e);
 });
 
+/**
+ * El panel se descarga sólo cuando alguien lo va a usar.
+ *
+ * Son cinco archivos —equipos, bandeja, personal, la escena de la obra— que
+ * suman casi un tercio del JavaScript del sitio, y los usan dos personas. El
+ * resto de los visitantes los bajaba en cada primera visita, con la señal de
+ * una obra, para nunca ejecutarlos. En producción viajan aparte, en panel.js,
+ * y la dirección la pone la compilación en el data-panel del script del sitio.
+ *
+ * En desarrollo el index.html los sigue cargando uno por uno, así que el panel
+ * ya está aquí y conPanel() llama directo, sin esperar ni un ciclo: el clic
+ * abre el panel en el mismo instante, como siempre — y las pruebas que hacen
+ * clic y miran enseguida siguen diciendo la verdad.
+ *
+ * Todo lo que entra al panel desde fuera pasa por aquí. Lo que está DENTRO del
+ * panel (pestañas, guardar, fotos) no hace falta: si se ve, ya cargó.
+ */
+const conPanel = (()=>{
+  let enCamino = null;
+  const cargar = ()=> enCamino || (enCamino = new Promise((listo, fallo)=>{
+    const s = document.createElement('script');
+    s.src = document.querySelector('script[data-panel]')?.dataset.panel || '';
+    s.onload = listo;
+    s.onerror = ()=>{
+      enCamino = null;   // sin señal se puede volver a intentar; no se queda atorado
+      s.remove();
+      fallo(new Error('No se pudo abrir el panel. Revisa la conexión e inténtalo otra vez.'));
+    };
+    document.head.appendChild(s);
+  }));
+  return fn =>{
+    if(typeof openAdmin === 'function') return fn();
+    cargar().then(fn, err => showToast(err.message, true));
+  };
+})();
+
 /* ══════════════════ INIT ══════════════════ */
-restaurarSesion();   // asíncrono: el panel se abre al confirmar, no antes
+/* Sin sesión guardada no hay nada que restaurar, y por tanto nada que bajar:
+   la comprobación de restaurarSesion() se adelanta aquí para que un visitante
+   normal no descargue el panel sólo para enterarse de que no lo necesita. */
+if(BACKEND && auth.haySesion()) conPanel(()=> restaurarSesion());   // asíncrono: el panel se abre al confirmar, no antes
 
 /**
  * Enlace directo a una pestaña del panel:  /?panel=preguntas
@@ -415,8 +453,7 @@ restaurarSesion();   // asíncrono: el panel se abre al confirmar, no antes
 {
   const panelPedido = new URLSearchParams(location.search).get('panel');
   if(panelPedido && ['products','solicitudes','preguntas','brand','site','backup'].includes(panelPedido)){
-    adminTab = panelPedido;
-    openAdmin(panelPedido);
+    conPanel(()=>{ adminTab = panelPedido; openAdmin(panelPedido) });
     /* Se limpia de la barra de direcciones: si se queda, recargar o compartir
        el enlace vuelve a abrir el panel, y a un cliente eso le aparece de la
        nada. */

@@ -879,7 +879,7 @@ const paquete = require('./empacar-js').empacarJS();
 
 console.log('Sitio generado:');
 console.log(`  assets/js/catalogo-datos.js   ${catalogo.equipos.length} equipos, ${catalogo.sucursales.length} sucursales`);
-console.log(`  assets/js/sitio.js            ${paquete.archivos} scripts unidos, ${(paquete.despues/1024).toFixed(0)} kB`);
+console.log(`  assets/js/sitio.js + panel.js ${paquete.archivos} scripts unidos, ${(paquete.despues/1024).toFixed(0)} kB`);
 console.log(`  equipos/<slug>/index.html     ${fichas} fichas`);
 console.log(`  maquinaria/<cat>/index.html   ${categorias.length} categorías (${categorias.map(([c, e]) => `${c}: ${e.length}`).join(', ')})`);
 console.log(`  sitemap.xml                   ${urls} direcciones`);

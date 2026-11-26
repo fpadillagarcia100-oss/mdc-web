@@ -84,10 +84,14 @@ if (faltan.length) {
    una dirección nueva y ningún caché puede servir el JavaScript de ayer. */
 const { htmlConBundle } = require('./empacar-js');
 const bundle = path.join(ROOT, 'assets', 'js', 'sitio.js');
+const huella = archivo => require('crypto')
+  .createHash('sha256').update(fs.readFileSync(archivo)).digest('hex').slice(0, 10);
 if (fs.existsSync(bundle)) {
-  const version = require('crypto')
-    .createHash('sha256').update(fs.readFileSync(bundle)).digest('hex').slice(0, 10);
-  const html = htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), version);
+  const version = huella(bundle);
+  const html = htmlConBundle(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), {
+    sitio: `/assets/js/sitio.js?v=${version}`,
+    panel: `/assets/js/panel.js?v=${huella(path.join(ROOT, 'assets', 'js', 'panel.js'))}`,
+  });
   fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8');
   console.log(`  index.html publicado con un solo script (v=${version})`);
 
