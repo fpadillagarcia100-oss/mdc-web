@@ -22,11 +22,7 @@
  */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-
 /* ── Credenciales ── */
-const ROOT = path.join(__dirname, '..');
 require('../tools/entorno').cargarEnv();
 
 const URL_BASE = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
