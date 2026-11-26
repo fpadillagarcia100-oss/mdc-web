@@ -18,11 +18,21 @@ namespace Mdc.Api;
 /// </summary>
 public static class Consola
 {
-    public static bool EsComando(string a) => a is "migrar" or "invitar-admin" or "importar";
+    public static bool EsComando(string a) => a is "migrar" or "invitar-admin" or "importar" or "configurar" or "instalar";
 
     public static async Task<int> Ejecutar(string[] args)
     {
-        var config = Host.CreateApplicationBuilder(args[1..]).Configuration;
+        Console.OutputEncoding = System.Text.Encoding.UTF8;   // acentos, ✓ y flechas en la consola de Windows
+
+        /* Sólo los argumentos "--clave=valor" van a la configuración. Una bandera
+           suelta (--reemplazar, --rehacer) se tragaría el argumento siguiente
+           como si fuera su valor. */
+        var config = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+        {
+            Args = args.Skip(1).Where(a => a.Contains('=')).ToArray(),
+            // appsettings.json está junto al ejecutable, no donde esté parada la terminal.
+            ContentRootPath = AppContext.BaseDirectory,
+        }).Configuration;
         var cadena = config.GetConnectionString("Mdc");
         if (string.IsNullOrEmpty(cadena)) { Console.Error.WriteLine("Falta ConnectionStrings:Mdc"); return 1; }
 
@@ -34,6 +44,16 @@ public static class Consola
                     var n = await Migraciones.AplicarAsync(cadena, Console.WriteLine);
                     Console.WriteLine(n == 0 ? "La base ya estaba al día." : $"Listo: {n} archivo(s) aplicado(s).");
                     return 0;
+
+                case "instalar":
+                {
+                    // Mdc.Api instalar [--Sql:Servidor=.\SQLEXPRESS] [--Sql:Base=MdcMaquinaria]
+                    return await Instalar.Ejecutar(config["Sql:Servidor"] ?? @".\SQLEXPRESS", config["Sql:Base"] ?? "MdcMaquinaria");
+                }
+
+                case "configurar":
+                    // Mdc.Api configurar [--rehacer] --ConnectionStrings:Mdc=… --Fotos:Carpeta=…
+                    return Configurar.Ejecutar(Endpoints.FotosEndpoints.Carpeta(config), cadena, args.Contains("--rehacer"));
 
                 case "importar":
                 {
