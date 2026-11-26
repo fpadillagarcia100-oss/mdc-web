@@ -22,4 +22,60 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
-_Sin entradas todavía._
+## 2026-11-26 · T-00 · Claude · Portada nueva con fotografía real
+
+- **Rama:** `claude/T-00-portada-fotos` (un solo commit sobre `main` en `ef97612`)
+- **Qué cambió:** la portada pasa del estilo "aurora" morado/cian a uno
+  industrial (negro, acero y el amarillo de marca) con fotografía real. Cada
+  uno de los 18 equipos tiene 1 o 2 fotos reales del modelo en tarjetas, ficha,
+  páginas estáticas y categorías, con el aviso "Foto ilustrativa" y una página
+  "Créditos de fotografías". La excavadora 3D del hero se retiró (sigue en git).
+- **Archivos:**
+  - `index.html` — hero con foto (`#heroFoto`, srcset), cifras, marcas,
+    categorías con foto, encabezado del inventario, servicios, "Cómo
+    funciona", llamado final, enlace a créditos en el pie, carga de `portada.js`.
+  - `assets/js/portada.js` (nuevo) — cifras, marcas y equipo destacado a partir
+    del catálogo. Bloque cerrado, sin globales.
+  - `assets/css/styles.css` — la capa "era de la IA" se reemplaza por la capa
+    "DISEÑO INDUSTRIAL · FOTOGRAFÍA REAL" (mismo lugar del archivo). Se
+    conservan las reglas `.maq3d` de los renders de respaldo.
+  - `assets/js/branding.js` — el banner que suba el dueño reemplaza la foto del
+    hero; se quita el cargador del video 3D del hero.
+  - `assets/js/catalog.js` — etiqueta "Foto ilustrativa" en tarjetas.
+  - `assets/js/ui.js` — aviso y enlace a créditos sobre la galería de la ficha.
+  - `assets/js/pages.js` — página `creditos` (dentro de `PAGES`, sin global nueva;
+    enlaces sólo `https://`).
+  - `assets/js/main.js` — las categorías con foto, servicios y pie llevan al
+    catálogo al filtrar (antes sólo los enlaces `<a>`).
+  - `data/catalogo.json` — `imgs`/`img` de los 18 equipos y `creditos_fotos`
+    (autor, licencia, enlace de cada foto).
+  - `assets/img/equipos/` (68 WebP) y `assets/img/obra/` (4 WebP) — fotos de
+    Wikimedia Commons, re-codificadas sin metadatos, en 1400/700 y 1920/960 px.
+  - `tools/build.js` — `creditos` en `CATALOGO`; crédito en las fichas
+    estáticas; aviso en categorías; `imgTarjeta()` con srcset de 700 px.
+  - `tools/exportar-catalogo.js` — `db:export` ya no borra fotos ni créditos si
+    la base no tiene fotos de ese equipo.
+  - `tests/visual.test.js` — fuera los chequeos del video 3D; presupuesto
+    propio para fotos (12 fotos / 700 kB); publicado de 300 a 330 kB.
+  - `tests/capturas/*.png` — referencias nuevas (cambio visual intencional).
+  - Generados: `catalogo-datos.js`, `equipos/`, `maquinaria/`, `sitemap.xml`.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. `npm run test:visual` (Edge)
+  3. `python -m http.server 8000` → http://localhost:8000: hero con foto y
+     destacado; categorías con foto filtran y bajan al catálogo; ficha con
+     galería y "Créditos"; pie → "Créditos de fotografías"; en 375 px el
+     destacado se oculta y el hero baja la foto de 960 px.
+- **Pruebas:** `npm test` en verde (53 unitarias, 10 arquitectura, 218
+  integración, CSP, generado). `npm run test:visual` 61/61.
+- **Dudas / riesgos para el revisor:**
+  - Las fotos son del **modelo**, no de la unidad: revisar que el aviso se
+    entienda en tarjeta, ficha y categoría. CAT 416F2 usa foto de una CAT 420F
+    y Potain MDT 178 la de otra MDT.
+  - Licencias CC BY-SA/CC BY: revisar que cada foto tenga autor, licencia y
+    enlace en `creditos_fotos` y que la página de créditos los muestre.
+  - Peso: el sitio publicado mide 314 kB sin comprimir; las fotos van con
+    presupuesto aparte. Revisar que se justifique subir el tope.
+  - Textos de servicios/proceso: se alinearon con el Centro de ayuda para no
+    prometer nada nuevo; revisar que no haya datos de negocio inventados.
+  - `npm run db:export` contra la base real no se probó (no se tocó la base).

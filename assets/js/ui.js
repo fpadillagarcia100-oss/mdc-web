@@ -120,6 +120,8 @@ function renderGaleria(){
     ? (galeria.reproduciendo ? videoIframeHTML(p, p.video) : videoFacadeHTML(p, fotos[0] || null))
     : `<div class="gal" role="group" aria-roledescription="galería" aria-label="Fotos de ${esc(p.name)}">
       <img class="gal-main" src="${esc(fotos[i])}" alt="${esc(p.name)} — foto ${i+1} de ${total}">
+      ${CATALOGO.creditos && CATALOGO.creditos[fotos[i]] ? `<span class="gal-credito">Foto ilustrativa del modelo ·
+        <button type="button" data-goto="creditos">Créditos</button></span>` : ''}
       ${total>1?`
         <button class="gal-nav prev" type="button" data-gal="-1" aria-label="Foto anterior">‹</button>
         <button class="gal-nav next" type="button" data-gal="1" aria-label="Foto siguiente">›</button>

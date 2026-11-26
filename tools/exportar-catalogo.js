@@ -194,6 +194,22 @@ const limpiar = (o, campos) => {
     }, ['video'])),
   };
 
+  /* Las fotos de catálogo (assets/img/equipos/) y sus créditos viven sólo
+     en data/catalogo.json: la base no las conoce. Sin esto, exportar
+     borraría las 34 fotos y la atribución que exigen sus licencias. La base
+     manda en cuanto tenga fotos propias de un equipo. */
+  let previo = {};
+  try { previo = JSON.parse(fs.readFileSync(DESTINO, 'utf8')) } catch { /* primera vez */ }
+  const fotosPrevias = new Map((previo.equipos || []).map(e => [e.slug, e]));
+  for (const e of salida.equipos) {
+    const antes = fotosPrevias.get(e.slug);
+    if (!e.imgs.length && antes && Array.isArray(antes.imgs) && antes.imgs.length) {
+      e.imgs = antes.imgs;
+      e.img = antes.imgs[0];
+    }
+  }
+  if (previo.creditos_fotos) salida.creditos_fotos = previo.creditos_fotos;
+
   fs.writeFileSync(DESTINO, JSON.stringify(salida, null, 2) + '\n', 'utf8');
   console.log(`✓ data/catalogo.json — ${salida.equipos.length} equipos, ${salida.sucursales.length} sucursales, ` +
     `${preguntas.length} preguntas contestadas`);

@@ -67,7 +67,11 @@ const PRESUPUESTO = {
    vuelva a entrar el panel (55 kB): eso lo debe parar. */
 const PRESUPUESTO_PUBLICADO = {
   peticiones: 5,           // HTML aparte: sitio.js, la hoja, Inter, y holgura para dos
-  transferido: 300 * 1024,
+  /* Era 300. Subió a 330 con la portada nueva (noviembre 2026): las
+     secciones de categorías, servicios y proceso son ~9 kB de HTML y ~6 kB
+     de hoja; medido, 314 kB sin comprimir. Es texto que se lee, no código,
+     y el panel (55 kB) sigue sin caber: si vuelve a entrar, esto lo para. */
+  transferido: 330 * 1024,
 };
 
 /* Lo 3D —la excavadora animada del hero y los renders de los equipos sin
@@ -88,11 +92,27 @@ const PRESUPUESTO_PUBLICADO = {
    · Y que pesa lo que prometió: imagen fija más UN video, y una imagen por
      tipo de máquina. */
 const PRESUPUESTO_DIFERIDO = {
-  hero:     { patron: /\/assets\/3d\/excavadora\./, peticiones: 2, transferido: 440 * 1024 },
-  // Los renders de los equipos sin foto: uno por tipo de máquina, seis tipos.
+  // Los renders de los equipos SIN foto: uno por tipo de máquina, seis tipos.
+  // Con el catálogo fotografiado no se pide ninguno, y está bien: son el
+  // respaldo de lo que el dueño dé de alta sin foto.
   maquinas: { patron: /\/assets\/3d\/maquinas\//, peticiones: 6, transferido: 200 * 1024 },
 };
-const DIFERIDO = /\/assets\/3d\//;
+
+/* Las fotografías reales (assets/img/equipos y assets/img/obra) con su
+   propia regla, igual que lo 3D: son el contenido —la máquina es lo que se
+   vende— y no tiene sentido que compitan por el mismo tope que el código.
+   Lo que sí se vigila: que sean WebP de tamaño justo (srcset) y que no
+   entren más de las que caben en la primera pantalla.
+
+   Medido al fijarlo (1280×900): 8 fotos y 553 kB —el hero de 1920 px, el
+   destacado y las tarjetas que asoman—. El margen es para un equipo más en
+   la primera fila, no para que vuelva una foto sin redimensionar. */
+const PRESUPUESTO_FOTOS = {
+  patron: /\/assets\/img\/(equipos|obra)\//,
+  peticiones: 12,
+  transferido: 700 * 1024,
+};
+const DIFERIDO = /\/assets\/3d\/|\/assets\/img\/(equipos|obra)\//;
 
 const EDGE = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -189,16 +209,25 @@ function camino(fuente) {
     El peso se toma del disco y no de la red: un video se pide por pedazos y
     el navegador no siempre informa el tamaño de cada uno. */
 function revisarDiferido(m, raiz, kb, donde = '') {
-  const temprano = m.diferidos.filter(d => d.inicio < m.carga);
-  check(`Lo 3D se pide después de cargar la página${donde}`, m.diferidos.length > 0 && temprano.length === 0,
+  const tresD = m.diferidos.filter(d => /\/assets\/3d\//.test(d.url));
+  const temprano = tresD.filter(d => d.inicio < m.carga);
+  check(`Lo 3D, si se pide, llega después de cargar la página${donde}`, temprano.length === 0,
     temprano.length ? `pedido ANTES de load: ${temprano.map(d => path.basename(d.url)).join(', ')}`
-                    : `${m.diferidos.length} archivos, todos tras load`);
+                    : `${tresD.length} archivos, todos tras load`);
+  const fotos = [...new Set(m.diferidos.map(d => d.url).filter(u => PRESUPUESTO_FOTOS.patron.test(u)))];
+  const pesoFotos = fotos.reduce((s, u) =>
+    s + fs.statSync(path.join(raiz, decodeURIComponent(new URL(u).pathname))).size, 0);
+  check(`Las fotos reales caben en su presupuesto${donde}`,
+    fotos.length > 0 && fotos.length <= PRESUPUESTO_FOTOS.peticiones && pesoFotos <= PRESUPUESTO_FOTOS.transferido,
+    `${fotos.length} de ${PRESUPUESTO_FOTOS.peticiones} fotos · ${kb(pesoFotos)} de ${kb(PRESUPUESTO_FOTOS.transferido)}`);
+  check(`Ninguna foto se baja en su versión original${donde}`,
+    fotos.every(u => /-w\d+\.webp$/.test(u)), fotos.find(u => !/-w\d+\.webp$/.test(u)) || 'todas WebP redimensionadas');
   for (const [nombre, tope] of Object.entries(PRESUPUESTO_DIFERIDO)) {
     const urls = [...new Set(m.diferidos.map(d => d.url).filter(u => tope.patron.test(u)))];
     const peso = urls.reduce((s, u) =>
       s + fs.statSync(path.join(raiz, decodeURIComponent(new URL(u).pathname))).size, 0);
     check(`Lo 3D (${nombre}) cabe en su propio presupuesto${donde}`,
-      urls.length > 0 && urls.length <= tope.peticiones && peso <= tope.transferido,
+      urls.length <= tope.peticiones && peso <= tope.transferido,
       `${urls.length} de ${tope.peticiones} peticiones · ${kb(peso)} de ${kb(tope.transferido)}`);
   }
 }
@@ -260,26 +289,19 @@ const desbordaX = pagina => pagina.evaluate(() =>
     await pagina.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
     await pagina.waitForTimeout(400);
 
-    /* La excavadora del hero es un video que no para: cada captura la
-       agarraría en otra pose y la comparación fallaría siempre. Se espera a
-       que arranque —eso también se comprueba— y se congela en el cuadro 0,
-       que es el mismo de la imagen fija. */
-    const hero3d = await pagina.waitForFunction(() => {
-      const v = document.querySelector('#heroArt video');
-      return v && v.classList.contains('lista') && v.currentTime > 0.2;
+    /* El hero es una fotografía y el destacado, una máquina real del
+       inventario. Se espera a que las dos estén pintadas: una captura con la
+       foto a medio bajar fallaría al azar. El acercamiento lento de la foto
+       (22 s) se adelanta al final para que la captura sea siempre la misma. */
+    const heroListo = await pagina.waitForFunction(() => {
+      const f = document.getElementById('heroFoto');
+      const d = document.querySelector('#heroArt .destacado-foto img');
+      return f && f.complete && f.naturalWidth > 0 && d && d.complete && d.naturalWidth > 0;
     }, null, { timeout: 15000 }).then(() => true, () => false);
-    check('La excavadora 3D del hero se reproduce', hero3d,
-      hero3d ? 'después de load, en la vitrina' : 'el video no arrancó');
-    await pagina.evaluate(() => new Promise(ok => {
-      const v = document.querySelector('#heroArt video');
-      if (!v) return ok();
-      v.pause();
-      // Y que no vuelva a arrancar: branding.js le da play al reaparecer en
-      // pantalla, y las capturas de después (sucursales, panel) la ven de
-      // fondo, borrosa pero distinta en cada pose.
-      v.play = () => Promise.resolve();
-      v.addEventListener('seeked', () => ok(), { once: true });
-      v.currentTime = 0;
+    check('La foto del hero y el equipo destacado se ven', heroListo,
+      heroListo ? 'fotografía real en los dos' : 'alguna no cargó');
+    await pagina.evaluate(() => document.getAnimations().forEach(a => {
+      if (a.effect && a.effect.target && a.effect.target.id === 'heroFoto') a.finish();
     }));
     await pagina.waitForTimeout(800);
     await capturar(pagina, 'portada', { fullPage: false });
@@ -416,13 +438,13 @@ const desbordaX = pagina => pagina.evaluate(() =>
       viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
     });
     const pm = await movil.newPage();
-    const pedidas3d = [];
-    pm.on('request', r => { if (PRESUPUESTO_DIFERIDO.hero.patron.test(r.url())) pedidas3d.push(r.url()) });
+    const grandes = [];
+    pm.on('request', r => { if (/hero-w1920\.webp/.test(r.url())) grandes.push(r.url()) });
     await pm.goto(base + '/', { waitUntil: 'networkidle' });
     await pm.waitForSelector('.pcard');
     await pm.waitForTimeout(500);
-    check('En el teléfono no se baja la excavadora 3D', pedidas3d.length === 0,
-      pedidas3d.length ? pedidas3d.join(', ') : 'la vitrina está escondida y no pide nada');
+    check('En el teléfono no se baja la foto de escritorio del hero', grandes.length === 0,
+      grandes.length ? grandes.join(', ') : 'srcset eligió la de 960 px');
 
     check('En móvil tampoco se desborda', !(await desbordaX(pm)));
     const anchoTarjeta = (await pm.locator('.pcard').first().boundingBox()).width;
@@ -518,12 +540,11 @@ const desbordaX = pagina => pagina.evaluate(() =>
     check('Y el contenido sigue estando ahí', visibles, 'ninguna tarjeta escondida');
 
     const fija = await pq.evaluate(() => ({
-      imagen: !!document.querySelector('#heroArt .hero-3d img'),
-      video: !!document.querySelector('#heroArt video'),
+      video: !!document.querySelector('video'),
       pedidos: performance.getEntriesByType('resource').filter(r => /\.(webm|mp4)$/.test(r.name)).length,
     }));
-    check('Con menos animación, la excavadora queda en imagen fija', fija.imagen && !fija.video && fija.pedidos === 0,
-      `imagen: ${fija.imagen ? 'sí' : 'no'} · video: ${fija.video || fija.pedidos ? 'SÍ' : 'no'}`);
+    check('Con menos animación no se pide ningún video', !fija.video && fija.pedidos === 0,
+      fija.video || fija.pedidos ? 'SÍ hay video' : 'ninguno');
     await quieto.close();
 
     /* ══ RENDIMIENTO ══ */

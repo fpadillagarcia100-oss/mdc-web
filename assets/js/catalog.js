@@ -182,6 +182,7 @@ function cardHTML(p){
       ${p.imgs.length>1||p.video?`<span class="pcard-fotos" aria-label="${p.imgs.length} fotos${p.video?' y video':''}">${
         p.imgs.length>1?`${ico('camara')}${p.imgs.length}`:''}${p.imgs.length>1&&p.video?' · ':''}${p.video?ico('play'):''}</span>`:''}
       ${badgeHTML(p)}
+      ${p.img && CATALOGO.creditos && CATALOGO.creditos[p.img] ? '<span class="pcard-ilustrativa">Foto ilustrativa</span>' : ''}
       <button class="pcard-fav" type="button" data-fav="${p.id}" aria-pressed="${fav}"
               aria-label="${fav?'Quitar de':'Guardar en'} favoritos: ${esc(p.name)}">${fav?'♥':'♡'}</button>
       <button class="pcard-cmp" type="button" data-cmp="${p.id}" aria-pressed="${state.compare.includes(p.id)}"

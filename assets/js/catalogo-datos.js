@@ -8,7 +8,7 @@
 
 /* Huella de data/catalogo.json al momento de generar. La verifica
    "npm run test:generado" para que nadie publique fichas desactualizadas. */
-const CATALOGO_HUELLA = 'ba9c6d210f83ae2a';
+const CATALOGO_HUELLA = 'ec2a4227aadc5d29';
 
 const CATALOGO = {
   "ajustes": {
@@ -73,8 +73,12 @@ const CATALOGO = {
       ],
       "desc": "Excavadora hidráulica de cadenas con sistema de gestión inteligente. Ideal para obra urbana y movimiento de tierra de mediana escala.",
       "svgKey": "excavadora",
-      "img": null,
-      "hot": true
+      "img": "/assets/img/equipos/excavadora-cat-320-gc-w1400.webp",
+      "hot": true,
+      "imgs": [
+        "/assets/img/equipos/excavadora-cat-320-gc-w1400.webp",
+        "/assets/img/equipos/excavadora-cat-320-gc-2-w1400.webp"
+      ]
     },
     {
       "slug": "excavadora-cat-336",
@@ -97,8 +101,12 @@ const CATALOGO = {
       ],
       "desc": "Máxima potencia para proyectos de gran envergadura. Motor ACERT con tecnología de reducción de emisiones.",
       "svgKey": "excavadora",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/excavadora-cat-336-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/excavadora-cat-336-w1400.webp",
+        "/assets/img/equipos/excavadora-cat-336-2-w1400.webp"
+      ]
     },
     {
       "slug": "excavadora-komatsu-pc290",
@@ -121,8 +129,12 @@ const CATALOGO = {
       ],
       "desc": "Excavadora seminueva en excelentes condiciones. Con certificado de inspección y garantía de 6 meses.",
       "svgKey": "excavadora",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/excavadora-komatsu-pc290-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/excavadora-komatsu-pc290-w1400.webp",
+        "/assets/img/equipos/excavadora-komatsu-pc290-2-w1400.webp"
+      ]
     },
     {
       "slug": "retroexcavadora-jcb-3cx-pro",
@@ -145,8 +157,12 @@ const CATALOGO = {
       ],
       "desc": "La retroexcavadora más vendida en México. Versatilidad total para obra civil, drenaje y construcción.",
       "svgKey": "retro",
-      "img": null,
-      "hot": true
+      "img": "/assets/img/equipos/retroexcavadora-jcb-3cx-pro-w1400.webp",
+      "hot": true,
+      "imgs": [
+        "/assets/img/equipos/retroexcavadora-jcb-3cx-pro-w1400.webp",
+        "/assets/img/equipos/retroexcavadora-jcb-3cx-pro-2-w1400.webp"
+      ]
     },
     {
       "slug": "retroexcavadora-jcb-4cx",
@@ -169,8 +185,12 @@ const CATALOGO = {
       ],
       "desc": "Versión extendida con mayor alcance y potencia. Ideal para obras en zonas rurales y caminos.",
       "svgKey": "retro",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/retroexcavadora-jcb-4cx-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/retroexcavadora-jcb-4cx-w1400.webp",
+        "/assets/img/equipos/retroexcavadora-jcb-4cx-2-w1400.webp"
+      ]
     },
     {
       "slug": "retroexcavadora-cat-416f2",
@@ -193,8 +213,11 @@ const CATALOGO = {
       ],
       "desc": "Unidad verificada y lista para trabajar. Mantenimiento al día con bitácora completa.",
       "svgKey": "retro",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/retroexcavadora-cat-416f2-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/retroexcavadora-cat-416f2-w1400.webp"
+      ]
     },
     {
       "slug": "bulldozer-komatsu-d65px",
@@ -217,8 +240,12 @@ const CATALOGO = {
       ],
       "desc": "Dozer de alta productividad para nivelación de grandes volúmenes. Sistema de tracción hidrostática.",
       "svgKey": "bulldozer",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/bulldozer-komatsu-d65px-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/bulldozer-komatsu-d65px-w1400.webp",
+        "/assets/img/equipos/bulldozer-komatsu-d65px-2-w1400.webp"
+      ]
     },
     {
       "slug": "bulldozer-cat-d6t",
@@ -241,8 +268,12 @@ const CATALOGO = {
       ],
       "desc": "El estándar de la industria. Con sensor de pendiente integrado y sistema CAT LINK para telemetría.",
       "svgKey": "bulldozer",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/bulldozer-cat-d6t-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/bulldozer-cat-d6t-w1400.webp",
+        "/assets/img/equipos/bulldozer-cat-d6t-2-w1400.webp"
+      ]
     },
     {
       "slug": "bulldozer-komatsu-d51i",
@@ -265,8 +296,12 @@ const CATALOGO = {
       ],
       "desc": "Disponible en renta mensual. Incluye operador, seguro y mantenimiento preventivo.",
       "svgKey": "bulldozer",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/bulldozer-komatsu-d51i-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/bulldozer-komatsu-d51i-w1400.webp",
+        "/assets/img/equipos/bulldozer-komatsu-d51i-2-w1400.webp"
+      ]
     },
     {
       "slug": "compactador-dynapac-ca250",
@@ -289,8 +324,12 @@ const CATALOGO = {
       ],
       "desc": "Rodillo tándem vibratorio para asfalto. Sistema SEISMIC para control automático de compactación.",
       "svgKey": "compactador",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/compactador-dynapac-ca250-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/compactador-dynapac-ca250-w1400.webp",
+        "/assets/img/equipos/compactador-dynapac-ca250-2-w1400.webp"
+      ]
     },
     {
       "slug": "compactador-bomag-bw-216",
@@ -313,8 +352,12 @@ const CATALOGO = {
       ],
       "desc": "Rodillo de suelos en buen estado. Inspección técnica reciente, todos los sistemas en óptimas condiciones.",
       "svgKey": "compactador",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/compactador-bomag-bw-216-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/compactador-bomag-bw-216-w1400.webp",
+        "/assets/img/equipos/compactador-bomag-bw-216-2-w1400.webp"
+      ]
     },
     {
       "slug": "compactador-cat-cs533",
@@ -337,8 +380,12 @@ const CATALOGO = {
       ],
       "desc": "Renta mensual con todas las facilidades. Entrega en sitio sin costo en la zona metropolitana de Tuxtla.",
       "svgKey": "compactador",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/compactador-cat-cs533-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/compactador-cat-cs533-w1400.webp",
+        "/assets/img/equipos/compactador-cat-cs533-2-w1400.webp"
+      ]
     },
     {
       "slug": "minicargador-bobcat-s650",
@@ -361,8 +408,12 @@ const CATALOGO = {
       ],
       "desc": "El más ágil para espacios confinados. Sistema de acople rápido compatible con más de 100 aditamentos.",
       "svgKey": "minicargador",
-      "img": null,
-      "hot": true
+      "img": "/assets/img/equipos/minicargador-bobcat-s650-w1400.webp",
+      "hot": true,
+      "imgs": [
+        "/assets/img/equipos/minicargador-bobcat-s650-w1400.webp",
+        "/assets/img/equipos/minicargador-bobcat-s650-2-w1400.webp"
+      ]
     },
     {
       "slug": "minicargador-cat-262d3",
@@ -385,8 +436,11 @@ const CATALOGO = {
       ],
       "desc": "Mayor capacidad de carga con visibilidad total. Sistema CAT SMART ATTACH para cambio rápido.",
       "svgKey": "minicargador",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/minicargador-cat-262d3-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/minicargador-cat-262d3-w1400.webp"
+      ]
     },
     {
       "slug": "minicargador-bobcat-t450",
@@ -409,8 +463,12 @@ const CATALOGO = {
       ],
       "desc": "Versión de cadenas para terreno blando. Renta semanal o mensual disponible.",
       "svgKey": "minicargador",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/minicargador-bobcat-t450-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/minicargador-bobcat-t450-w1400.webp",
+        "/assets/img/equipos/minicargador-bobcat-t450-2-w1400.webp"
+      ]
     },
     {
       "slug": "grua-torre-liebherr-160ec",
@@ -433,8 +491,12 @@ const CATALOGO = {
       ],
       "desc": "Ideal para edificios de hasta 20 niveles. Montaje, operación e instalación eléctrica incluidos.",
       "svgKey": "grua",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/grua-torre-liebherr-160ec-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/grua-torre-liebherr-160ec-w1400.webp",
+        "/assets/img/equipos/grua-torre-liebherr-160ec-2-w1400.webp"
+      ]
     },
     {
       "slug": "grua-torre-potain-mdt-178",
@@ -457,8 +519,12 @@ const CATALOGO = {
       ],
       "desc": "Renta mensual con operador certificado, mantenimiento y seguro de responsabilidad civil.",
       "svgKey": "grua",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/grua-torre-potain-mdt-178-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/grua-torre-potain-mdt-178-w1400.webp",
+        "/assets/img/equipos/grua-torre-potain-mdt-178-2-w1400.webp"
+      ]
     },
     {
       "slug": "retroexcavadora-komatsu-wb97",
@@ -481,10 +547,268 @@ const CATALOGO = {
       ],
       "desc": "Potencia Komatsu con bajo consumo de combustible. Cabina ergonómica con A/C de serie.",
       "svgKey": "retro",
-      "img": null,
-      "hot": false
+      "img": "/assets/img/equipos/retroexcavadora-komatsu-wb97-w1400.webp",
+      "hot": false,
+      "imgs": [
+        "/assets/img/equipos/retroexcavadora-komatsu-wb97-w1400.webp",
+        "/assets/img/equipos/retroexcavadora-komatsu-wb97-2-w1400.webp"
+      ]
     }
-  ]
+  ],
+  "creditos": {
+    "/assets/img/equipos/excavadora-cat-320-gc-w1400.webp": {
+      "titulo": "CAT 320GC - Arlington, MA.jpg",
+      "autor": "Daderot",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:CAT_320GC_-_Arlington,_MA.jpg"
+    },
+    "/assets/img/equipos/excavadora-cat-320-gc-2-w1400.webp": {
+      "titulo": "9075General Aguinaldo Magallanes Nasugbu Road East West Road 38.jpg",
+      "autor": "Judgefloro",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:9075General_Aguinaldo_Magallanes_Nasugbu_Road_East_West_Road_38.jpg"
+    },
+    "/assets/img/equipos/excavadora-cat-336-w1400.webp": {
+      "titulo": "CAT 336 (2).jpg",
+      "autor": "Alexandre Prevot",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:CAT_336_(2).jpg"
+    },
+    "/assets/img/equipos/excavadora-cat-336-2-w1400.webp": {
+      "titulo": "Caterpillar excavators 336 and 320GC, 2025 Changsha International Construction Equipment Exhibition.jpg",
+      "autor": "Huangdan2060",
+      "licencia": "CC BY 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Caterpillar_excavators_336_and_320GC,_2025_Changsha_International_Construction_Equipment_Exhibition.jpg"
+    },
+    "/assets/img/equipos/excavadora-komatsu-pc290-w1400.webp": {
+      "titulo": "PC290excavator.jpg",
+      "autor": "Martin Vavřík",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:PC290excavator.jpg"
+    },
+    "/assets/img/equipos/excavadora-komatsu-pc290-2-w1400.webp": {
+      "titulo": "Komatsu PC290 Raupenbagger, 150913, ako.jpg",
+      "autor": "Ansgar Koreng",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_PC290_Raupenbagger,_150913,_ako.jpg"
+    },
+    "/assets/img/equipos/retroexcavadora-jcb-3cx-pro-w1400.webp": {
+      "titulo": "JCB 3CX Eco - Arlington, MA.jpg",
+      "autor": "Daderot",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:JCB_3CX_Eco_-_Arlington,_MA.jpg"
+    },
+    "/assets/img/equipos/retroexcavadora-jcb-3cx-pro-2-w1400.webp": {
+      "titulo": "JCB 3CX - Gilo Jerusalem 2022-06-05 IZE-003.jpg",
+      "autor": "Dr. Zachi Evenor",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:JCB_3CX_-_Gilo_Jerusalem_2022-06-05_IZE-003.jpg"
+    },
+    "/assets/img/equipos/retroexcavadora-jcb-4cx-w1400.webp": {
+      "titulo": "JCB 4CX, 2018 Szentimreváros.jpg",
+      "autor": "Globetrotter19",
+      "licencia": "CC BY-SA 3.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/3.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:JCB_4CX,_2018_Szentimrev%C3%A1ros.jpg"
+    },
+    "/assets/img/equipos/retroexcavadora-jcb-4cx-2-w1400.webp": {
+      "titulo": "JCB 4CX Sitemaster.jpg",
+      "autor": "Midnight Runner",
+      "licencia": "CC BY-SA 3.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/3.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:JCB_4CX_Sitemaster.jpg"
+    },
+    "/assets/img/equipos/retroexcavadora-cat-416f2-w1400.webp": {
+      "titulo": "CAT 420F IT - Arlington, MA.jpg",
+      "autor": "Daderot",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:CAT_420F_IT_-_Arlington,_MA.jpg"
+    },
+    "/assets/img/equipos/bulldozer-komatsu-d65px-w1400.webp": {
+      "titulo": "Komatsu D65PX 2.jpg",
+      "autor": "Naoag",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_D65PX_2.jpg"
+    },
+    "/assets/img/equipos/bulldozer-komatsu-d65px-2-w1400.webp": {
+      "titulo": "Komatsu D65PX (55001856830).jpg",
+      "autor": "Alexandre Prevot from Nancy, France",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_D65PX_(55001856830).jpg"
+    },
+    "/assets/img/equipos/bulldozer-cat-d6t-w1400.webp": {
+      "titulo": "Caterpillar D6T Mississippi River project.JPG",
+      "autor": "Marcus Qwertyus",
+      "licencia": "CC BY-SA 3.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/3.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Caterpillar_D6T_Mississippi_River_project.JPG"
+    },
+    "/assets/img/equipos/bulldozer-cat-d6t-2-w1400.webp": {
+      "titulo": "Caterpillar D6T LGP.jpg",
+      "autor": "Joost J. Bakker from IJmuiden",
+      "licencia": "CC BY 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Caterpillar_D6T_LGP.jpg"
+    },
+    "/assets/img/equipos/bulldozer-komatsu-d51i-w1400.webp": {
+      "titulo": "Komatsu D51px 4200042.jpg",
+      "autor": "Ermell",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_D51px_4200042.jpg"
+    },
+    "/assets/img/equipos/bulldozer-komatsu-d51i-2-w1400.webp": {
+      "titulo": "Komatsu D51px-20180420-RM-161126.jpg",
+      "autor": "Ermell",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_D51px-20180420-RM-161126.jpg"
+    },
+    "/assets/img/equipos/compactador-dynapac-ca250-w1400.webp": {
+      "titulo": "Dynapac CA250 Vibratory Smooth Drum Roller (15209174998).jpg",
+      "autor": "Bob Adams from George, South Africa",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Dynapac_CA250_Vibratory_Smooth_Drum_Roller_(15209174998).jpg"
+    },
+    "/assets/img/equipos/compactador-dynapac-ca250-2-w1400.webp": {
+      "titulo": "Dynapac CA 252D.JPG",
+      "autor": "Alf van Beem",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Dynapac_CA_252D.JPG"
+    },
+    "/assets/img/equipos/compactador-bomag-bw-216-w1400.webp": {
+      "titulo": "Bomag BW 216 D-3 Road Roller.jpg",
+      "autor": "joost j. bakker from ijmuiden, the netherlands",
+      "licencia": "CC BY 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Bomag_BW_216_D-3_Road_Roller.jpg"
+    },
+    "/assets/img/equipos/compactador-bomag-bw-216-2-w1400.webp": {
+      "titulo": "Bomag BW 216 D (51806218934).jpg",
+      "autor": "Alexandre Prevot from Nancy, France",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Bomag_BW_216_D_(51806218934).jpg"
+    },
+    "/assets/img/equipos/compactador-cat-cs533-w1400.webp": {
+      "titulo": "CatCS56.jpg",
+      "autor": "Shaun Greiner",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:CatCS56.jpg"
+    },
+    "/assets/img/equipos/compactador-cat-cs533-2-w1400.webp": {
+      "titulo": "Caterpillar CS 663E Vibratory soil compactor. Spielvogel 2.jpg",
+      "autor": "Spielvogel",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Caterpillar_CS_663E_Vibratory_soil_compactor._Spielvogel_2.jpg"
+    },
+    "/assets/img/equipos/minicargador-bobcat-s650-w1400.webp": {
+      "titulo": "Bobcat S650 - Massachusetts.jpg",
+      "autor": "Daderot",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Bobcat_S650_-_Massachusetts.jpg"
+    },
+    "/assets/img/equipos/minicargador-bobcat-s650-2-w1400.webp": {
+      "titulo": "Bobcat S650 skid steer loader (15084521732).jpg",
+      "autor": "Bob Adams from George, South Africa",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Bobcat_S650_skid_steer_loader_(15084521732).jpg"
+    },
+    "/assets/img/equipos/minicargador-cat-262d3-w1400.webp": {
+      "titulo": "CAT 262D - Arlington, MA.jpg",
+      "autor": "Daderot",
+      "licencia": "CC0",
+      "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fuente": "https://commons.wikimedia.org/wiki/File:CAT_262D_-_Arlington,_MA.jpg"
+    },
+    "/assets/img/equipos/minicargador-bobcat-t450-w1400.webp": {
+      "titulo": "Bobcat, Agritechnica 2023, Hanover (P1160273-RR).jpg",
+      "autor": "MB-one",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Bobcat,_Agritechnica_2023,_Hanover_(P1160273-RR).jpg"
+    },
+    "/assets/img/equipos/minicargador-bobcat-t450-2-w1400.webp": {
+      "titulo": "Bobcat T650 compact track loader (side view).jpg",
+      "autor": "Dmitry Ivanov.",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Bobcat_T650_compact_track_loader_(side_view).jpg"
+    },
+    "/assets/img/equipos/grua-torre-liebherr-160ec-w1400.webp": {
+      "titulo": "Liebherr 160 EC-B 8 Litronic (52455994001).jpg",
+      "autor": "Alexandre Prevot from Nancy, France",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Liebherr_160_EC-B_8_Litronic_(52455994001).jpg"
+    },
+    "/assets/img/equipos/grua-torre-liebherr-160ec-2-w1400.webp": {
+      "titulo": "Liebherr 160 EC-B 8 Litronic (51227706265).jpg",
+      "autor": "Alexandre Prevot from Nancy, France",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Liebherr_160_EC-B_8_Litronic_(51227706265).jpg"
+    },
+    "/assets/img/equipos/grua-torre-potain-mdt-178-w1400.webp": {
+      "titulo": "Potain MDT 319 (52175219567).jpg",
+      "autor": "Alexandre Prevot from Nancy, France",
+      "licencia": "CC BY-SA 2.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Potain_MDT_319_(52175219567).jpg"
+    },
+    "/assets/img/equipos/grua-torre-potain-mdt-178-2-w1400.webp": {
+      "titulo": "Potain MDT 219 J10 (54926089134).jpg",
+      "autor": "Alexandre Prevot from Nancy, France",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Potain_MDT_219_J10_(54926089134).jpg"
+    },
+    "/assets/img/equipos/retroexcavadora-komatsu-wb97-w1400.webp": {
+      "titulo": "Komatsu WB93R.JPG",
+      "autor": "Xavier Caré / Wikimedia Commons",
+      "licencia": "CC BY-SA 3.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/3.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_WB93R.JPG"
+    },
+    "/assets/img/equipos/retroexcavadora-komatsu-wb97-2-w1400.webp": {
+      "titulo": "Komatsu WB93R back.JPG",
+      "autor": "Xavier Caré / Wikimedia Commons",
+      "licencia": "CC BY-SA 3.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/3.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Komatsu_WB93R_back.JPG"
+    },
+    "/assets/img/obra/hero-w1920.webp": {
+      "titulo": "Caterpillar 330 excavator on a pile of dirt.jpg",
+      "autor": "Matthew T Rader",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Caterpillar_330_excavator_on_a_pile_of_dirt.jpg"
+    },
+    "/assets/img/obra/cta-w1400.webp": {
+      "titulo": "Construction site in the sandy soil of Berlin.jpg",
+      "autor": "Spielvogel",
+      "licencia": "CC BY-SA 4.0",
+      "licencia_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Construction_site_in_the_sandy_soil_of_Berlin.jpg"
+    }
+  }
 };
 
 /* Adónde manda backend.js las solicitudes de cotización.
