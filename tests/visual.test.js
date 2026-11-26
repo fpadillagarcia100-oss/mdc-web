@@ -52,9 +52,22 @@ const TOLERANCIA = 0.005;
    no debía — una fuente, una foto sin optimizar, otro script. */
 const PRESUPUESTO = {
   peticiones: 30,          // el navegador abre esto al cargar la portada
-  transferido: 900 * 1024, // bytes que bajan por la red la primera vez
+  transferido: 550 * 1024, // bytes que bajan por la red la primera vez (eran 900; hoy son 445)
   fcp: 2000,               // ms hasta el primer texto pintado
   dcl: 3000,               // ms hasta que el HTML y sus scripts están listos
+};
+
+/* Y el de lo que de verdad reciben los clientes: dist/, empaquetado,
+   minificado y sin el panel. El de arriba mide el repositorio, con sus 21
+   scripts sueltos, y con 900 kB de margen dejaba pasar casi cualquier cosa.
+
+   Medido al fijarlo: 3 peticiones y 257 kB sin comprimir (el servidor de
+   la prueba no usa gzip; Cloudflare sí, así que por la red viaja bastante
+   menos). Los 43 kB de margen son para que crezca el catálogo, no para que
+   vuelva a entrar el panel (55 kB): eso lo debe parar. */
+const PRESUPUESTO_PUBLICADO = {
+  peticiones: 5,           // HTML aparte: sitio.js, la hoja, Inter, y holgura para dos
+  transferido: 300 * 1024,
 };
 
 const EDGE = [
@@ -452,11 +465,18 @@ const desbordaX = pagina => pagina.evaluate(() =>
           recursos: performance.getEntriesByType('resource').length,
           js: performance.getEntriesByType('resource').filter(r => r.name.endsWith('.js') || r.name.includes('.js?')).length,
           fcp: Math.round(fcp ? fcp.startTime : 0),
+          // Con el HTML: es parte de lo que baja, y lo que más crece con el catálogo.
+          peso: [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')]
+                  .reduce((s, r) => s + (r.encodedBodySize || 0), 0),
         };
       });
       check('Un solo archivo de JavaScript en producción', dm.js === 1,
         `${dm.js} · ${marcas.recursos} peticiones → ${dm.recursos}`);
       check('Y sigue pintando a tiempo', dm.fcp <= PRESUPUESTO.fcp, `${dm.fcp} ms`);
+      check('Lo publicado cabe en su presupuesto',
+        dm.recursos <= PRESUPUESTO_PUBLICADO.peticiones && dm.peso <= PRESUPUESTO_PUBLICADO.transferido,
+        `${dm.recursos} de ${PRESUPUESTO_PUBLICADO.peticiones} peticiones · ` +
+        `${kb(dm.peso)} de ${kb(PRESUPUESTO_PUBLICADO.transferido)}, sin comprimir`);
 
       /* El panel viaja aparte y se baja al entrar. Sólo aquí se puede probar:
          en el repositorio todos los scripts se cargan juntos y conPanel()

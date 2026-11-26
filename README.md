@@ -23,6 +23,18 @@ git add -A && git commit -m "Actualiza catálogo" && git push
 | `equipos/<slug>/index.html` | Una página por equipo, indexable por Google |
 | `sitemap.xml` | Con todas las direcciones reales |
 
+Y empaqueta en `dist/` lo que se publica, que no es igual al repositorio:
+
+| En `dist/` | Por qué |
+|---|---|
+| `sitio.js`: los scripts públicos unidos | Una petición en vez de veinte |
+| `panel.js` aparte | Lo usan quienes administran; se baja al entrar al panel (`conPanel()` en `main.js`) |
+| JS y CSS minificados con esbuild | Si al minificar se perdiera una global, la compilación se detiene |
+| Todo eso en `/assets/v/` con la huella en el nombre | Se guarda un año en el navegador; si cambia, cambia el nombre |
+| Inter desde `assets/fonts/` | Sin conexiones a Google antes de pintar el texto |
+
+En el repositorio todo sigue suelto y legible: es lo que se edita y se depura.
+
 ## Pruebas
 
 | Comando | Qué comprueba |
