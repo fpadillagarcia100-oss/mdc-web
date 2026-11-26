@@ -39,9 +39,17 @@ function cargarEnv(raiz = path.join(__dirname, '..')) {
  * @throws si no es https (o http://localhost, para desarrollo): una API en
  *         http plano mandaría las contraseñas del panel en claro.
  */
+/** El servidor de producción. Es el único que existe; ver docs/SERVIDOR.md. */
+const API_PRODUCCION = 'https://api.mdcmaquinaria.com';
+
 function servidor() {
   cargarEnv();
-  const url = (process.env.API_URL || '').trim().replace(/\/+$/, '');
+  /* En Cloudflare Pages (que marca sus compilaciones con CF_PAGES=1) se usa
+     el de producción si no hay API_URL: así publicar no depende de que
+     alguien haya escrito la variable en el panel, y un despliegue nunca sale
+     sin servidor por un olvido. En tu máquina sigue mandando .env. */
+  const porOmision = process.env.CF_PAGES === '1' ? API_PRODUCCION : '';
+  const url = (process.env.API_URL || porOmision).trim().replace(/\/+$/, '');
   if (!url) return null;
 
   if (!/^https:\/\/[^/]+$/.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url)) {

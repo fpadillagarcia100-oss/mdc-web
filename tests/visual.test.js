@@ -435,10 +435,17 @@ const desbordaX = pagina => pagina.evaluate(() =>
 
        Se fuerza la sesión desde el navegador, contra el servidor LOCAL, sólo
        para poder mirar el panel dibujado. No es un agujero: `isAdmin` en el
-       navegador no autoriza nada — cada guardado lo comprueba el servidor de
-       Supabase, y eso ya lo verifica tests/seguridad.test.js atacando la base
-       real. Aquí sólo se está midiendo la caja de los botones. */
+       navegador no autoriza nada — cada petición del panel la comprueba la API
+       contra la base, y eso ya lo verifican servidor/Mdc.Api.Pruebas. Aquí
+       sólo se está midiendo la caja de los botones.
+
+       Como no hay sesión de verdad, la bandeja se simula vacía: la API la
+       negaría (bien hecho) y el aviso de "tu sesión terminó" saldría en la
+       captura, que no viene a medir eso. */
     await pm.evaluate(() => {
+      remotoPreguntas = async () => [];
+      remotoSolicitudes = async () => [];
+      remotoMetricas = async () => [];
       isAdmin = true;
       document.body.classList.add('is-admin');
       adminTab = 'products';
