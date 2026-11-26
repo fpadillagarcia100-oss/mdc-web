@@ -449,11 +449,13 @@ function fichaHTML(eq, catalogo, iconos) {
      crédito a quien la tomó (lo exigen las licencias CC BY y CC BY-SA). */
   const creditos = catalogo.creditos_fotos || {};
   const seguro = u => /^https:\/\//.test(u || '') ? u : '#';
-  const conCredito = fotos.map(f => creditos[f]).filter(Boolean);
+  // Sin repetir: dos fotos del mismo autor y licencia son un solo crédito.
+  const conCredito = [...new Map(fotos.map(f => creditos[f]).filter(Boolean)
+    .map(c => [`${c.autor}|${c.licencia}|${c.fuente}`, c])).values()];
   const creditoHTML = conCredito.length ? `
       <p class="ficha-credito">Foto${conCredito.length > 1 ? 's' : ''} ilustrativa${conCredito.length > 1 ? 's' : ''} del modelo, no de la unidad en venta:
-        ${conCredito.map(c => `<a href="${esc(seguro(c.fuente))}" rel="noopener nofollow" target="_blank">${esc(c.autor)}</a>, ${
-          c.licencia_url ? `<a href="${esc(seguro(c.licencia_url))}" rel="noopener nofollow license" target="_blank">${esc(c.licencia)}</a>` : esc(c.licencia)}`).join(' · ')}.</p>` : '';
+        ${conCredito.map(c => `${seguro(c.fuente) !== '#' ? `<a href="${esc(c.fuente)}" rel="noopener nofollow" target="_blank">${esc(c.autor)}</a>` : esc(c.autor)}, ${
+          seguro(c.licencia_url) !== '#' ? `<a href="${esc(c.licencia_url)}" rel="noopener nofollow license" target="_blank">${esc(c.licencia)}</a>` : esc(c.licencia)}`).join(' · ')}.</p>` : '';
 
   const descuento = eq.original && eq.original > eq.price
     ? Math.round((1 - eq.price / eq.original) * 100) : 0;

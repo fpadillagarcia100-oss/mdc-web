@@ -91,8 +91,8 @@ const PAGES = {
       <ul class="creditos">${lista.map(([src, c]) => `
         <li><img src="${esc(src.replace('-w1400.', '-w700.').replace('-w1920.', '-w960.'))}" alt="" loading="lazy">
           <span><strong>${esc(c.titulo)}</strong><br>
-          <a href="${esc(seguro(c.fuente))}" target="_blank" rel="noopener nofollow">${esc(c.autor)}</a> ·
-          ${c.licencia_url ? `<a href="${esc(seguro(c.licencia_url))}" target="_blank" rel="noopener nofollow license">${esc(c.licencia)}</a>` : esc(c.licencia)}
+          ${seguro(c.fuente) !== '#' ? `<a href="${esc(c.fuente)}" target="_blank" rel="noopener nofollow">${esc(c.autor)}</a>` : esc(c.autor)} ·
+          ${seguro(c.licencia_url) !== '#' ? `<a href="${esc(c.licencia_url)}" target="_blank" rel="noopener nofollow license">${esc(c.licencia)}</a>` : esc(c.licencia)}
           · vía Wikimedia Commons</span></li>`).join('')}
       </ul>`;
   }}

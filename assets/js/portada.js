@@ -29,13 +29,17 @@
   function cifras(){
     const vivos = products.filter(disponible);
     poner(document.querySelector('[data-kpi="equipos"]'), String(vivos.length));
-    poner(document.querySelector('[data-kpi="marcas"]'), String(new Set(products.map(p => p.brand)).size));
-    const suc = (settings && Array.isArray(settings.branches)) ? settings.branches.length : 0;
+    // Mismo criterio que la fila de marcas: un equipo sin marca no suma una.
+    poner(document.querySelector('[data-kpi="marcas"]'), String(new Set(products.map(p => p.brand).filter(Boolean)).size));
+    const suc = (typeof settings !== 'undefined' && settings && Array.isArray(settings.branches))
+      ? settings.branches.length : 0;
     if(suc) poner(document.querySelector('[data-kpi="sucursales"]'), String(suc));
 
     document.querySelectorAll('[data-cuenta]').forEach(el =>{
       const n = vivos.filter(p => p.cat === el.dataset.cuenta).length;
-      if(n) poner(el, plural(n, 'equipo disponible', 'equipos disponibles'));
+      // También en cero: si el último de la categoría se vende, el número
+      // viejo no se queda prometiendo una máquina que ya no está.
+      poner(el, n ? plural(n, 'equipo disponible', 'equipos disponibles') : 'Sin equipos disponibles por ahora');
     });
   }
 
@@ -66,21 +70,27 @@
     if(!p){ caja.innerHTML = ''; return }
 
     const set = typeof fotoSrcset === 'function' ? fotoSrcset(p.imgs[0]) : '';
-    const precio = p.cond === 'Renta' ? `${fmtCompact(p.price)}<small>al mes</small>`
-      : `${fmtCompact(p.price)}${p.finance ? `<small>${esc(p.finance)} sin intereses</small>` : ''}`;
+    const precio = p.cond === 'Renta' ? `${esc(fmtCompact(p.price))}<small>al mes</small>`
+      : `${esc(fmtCompact(p.price))}${p.finance ? `<small>${esc(p.finance)} sin intereses</small>` : ''}`;
+    // Sin año capturado no se imprime "undefined": se omite el dato.
+    const meta = [p.cond, p.year, p.location].filter(v => v !== undefined && v !== null && v !== '')
+      .map(v => esc(String(v))).join(' · ');
+    // Igual que la tarjeta y la ficha: una foto de catálogo se declara ilustrativa.
+    const ilustrativa = typeof CATALOGO !== 'undefined' && CATALOGO.creditos && CATALOGO.creditos[p.imgs[0]];
     caja.innerHTML = `
       <article class="destacado">
         <div class="destacado-foto">
           <img src="${esc(p.imgs[0])}" alt="${esc(p.name)}" decoding="async"${set ? ` srcset="${esc(set)}" sizes="360px"` : ''}>
           <span class="destacado-tag">Destacado</span>
+          ${ilustrativa ? '<span class="pcard-ilustrativa">Foto ilustrativa</span>' : ''}
         </div>
         <div class="destacado-info">
           <h2>${esc(p.name)}</h2>
-          <p class="destacado-meta">${esc(p.cond)} · ${esc(String(p.year))} · ${esc(p.location)}</p>
+          <p class="destacado-meta">${meta}</p>
           <div class="destacado-fila">
             <p class="destacado-precio">${precio}</p>
             <div class="destacado-btns">
-              <button class="ver" type="button" data-open="${p.id}">Ver ficha</button>
+              <button class="ver" type="button" data-open="${esc(String(p.id))}">Ver ficha</button>
             </div>
           </div>
         </div>

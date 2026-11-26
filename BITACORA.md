@@ -22,6 +22,24 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-26 · T-00 · Claude · Correcciones de la revisión de Gemini
+
+- **Rama:** `claude/T-00-portada-fotos` (segundo commit)
+- **Qué cambió:** se atendieron los 5 puntos obligatorios y los 3 opcionales de
+  `revisiones/T-00.md` (respuesta debajo de cada uno).
+- **Archivos:** `assets/js/portada.js`, `assets/js/pages.js`, `tools/build.js`,
+  `assets/css/styles.css`, `index.html`, `tests/visual.test.js`,
+  `revisiones/T-00.md`, generados por `npm run build`.
+- **Cómo probarlo:** `npm run build && npm test && npm run test:visual`; en la
+  portada, el destacado lleva "Foto ilustrativa" y las marcas ya no parecen botones.
+- **Pruebas:** `npm test` en verde; `npm run test:visual` 61/61.
+- **Dudas / riesgos:** el tope de fotos de la prueba visual subió de 12/700 kB a
+  14/850 kB porque la medición variaba entre corridas (carga diferida de Edge).
+- **Nota de proceso:** la revisión se hizo en la app de chat de Gemini (no en
+  Antigravity), con el diff de código y CSS pegado; Gemini no vio imágenes,
+  generados ni `data/catalogo.json`. Claude guardó su respuesta sin cambios
+  en `revisiones/T-00.md`.
+
 ## 2026-11-26 · T-00 · Claude · Portada nueva con fotografía real
 
 - **Rama:** `claude/T-00-portada-fotos` (un solo commit sobre `main` en `ef97612`)

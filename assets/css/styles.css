@@ -1741,8 +1741,6 @@ footer a:hover,footer button:hover{color:#fff;text-decoration:none}
      (el interruptor general de abajo). */
 
 :root{
-  --acero:#1C1C1A;
-  --acero-2:#2A2A27;
   --amarillo-grad:linear-gradient(135deg,#FFD84A,#F5C400 50%,#F0A800);
 }
 
@@ -1798,7 +1796,7 @@ body{background:var(--bg)}
   letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:var(--r-pill)}
 .destacado-info{padding:16px 18px 18px}
 .destacado-info h2{font-size:18px;font-weight:750;letter-spacing:-.02em;line-height:1.25}
-.destacado-meta{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:4px}
+.destacado-meta{font-size:12.5px;color:rgba(255,255,255,.78);margin-top:4px}
 .destacado-fila{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:14px}
 .destacado-precio{font-size:26px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
 .destacado-precio small{display:block;font-size:12px;font-weight:500;color:#7EE2A0;letter-spacing:0;margin-top:6px}
@@ -1822,9 +1820,9 @@ body{background:var(--bg)}
 .marcas{max-width:1240px;margin:0 auto;padding:44px 20px 0;display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center}
 .marcas-t{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--light);font-weight:650;width:100%;text-align:center}
 .marcas-fila{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px}
-.marca{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);opacity:.38;text-transform:uppercase;
-  transition:opacity .25s;background:none;border:none;cursor:pointer;padding:4px 0;font-family:inherit}
-.marca:hover,.marca:focus-visible{opacity:1}
+/* Texto informativo, no botones: no filtran nada, así que no se ven ni se
+   comportan como algo que se pulsa. */
+.marca{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);opacity:.38;text-transform:uppercase;padding:4px 0}
 
 /* ── Secciones de la portada ── */
 .sec{max-width:1240px;margin:0 auto;padding:88px 20px 0}

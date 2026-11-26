@@ -105,12 +105,15 @@ const PRESUPUESTO_DIFERIDO = {
    entren más de las que caben en la primera pantalla.
 
    Medido al fijarlo (1280×900): 8 fotos y 553 kB —el hero de 1920 px, el
-   destacado y las tarjetas que asoman—. El margen es para un equipo más en
-   la primera fila, no para que vuelva una foto sin redimensionar. */
+   destacado y las categorías que asoman—. Pero no es fijo: Edge decide
+   cuántas imágenes `loading="lazy"` adelanta según cómo estima la conexión
+   en ese momento, y en una corrida con la máquina ocupada pidió 12 y
+   792 kB. El tope cubre ese peor caso medido (no más): una foto sin
+   redimensionar (~1 MB) lo sigue rompiendo. */
 const PRESUPUESTO_FOTOS = {
   patron: /\/assets\/img\/(equipos|obra)\//,
-  peticiones: 12,
-  transferido: 700 * 1024,
+  peticiones: 14,
+  transferido: 850 * 1024,
 };
 const DIFERIDO = /\/assets\/3d\/|\/assets\/img\/(equipos|obra)\//;
 
