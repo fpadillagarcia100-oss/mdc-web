@@ -409,7 +409,7 @@ function renderChips(){
 (function(){
   if(!window.matchMedia) return;               // jsdom: se quedan los dibujos
   if(navigator.connection && navigator.connection.saveData) return;
-  const ruta = clave => `assets/3d/maquinas/${clave}.webp`;
+  const ruta = clave => `/assets/3d/maquinas/${clave}.webp`;
   const estado = {};                           // clave → 'bajando' | 'lista' | 'falla'
 
   const cambiar = ()=>{

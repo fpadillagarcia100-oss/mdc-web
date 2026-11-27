@@ -22,6 +22,41 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-01 · Claude · Rutas absolutas en todo el sitio
+
+- **Rama:** `claude/T-01-rutas`
+- **Qué cambió:** nada visible. `index.html` era la única página que mezclaba
+  rutas relativas (`assets/…` en la hoja de estilos, los 26 scripts y las
+  fotos) con absolutas (`/assets/…` en la fuente, el manifiesto y el ícono).
+  Ahora todo es absoluto, como ya lo eran las fichas, las categorías, el
+  manifiesto, `sw.js` y el `@font-face` de la hoja de estilos.
+- **Archivos:**
+  - `index.html` — 37 rutas `assets/…` → `/assets/…` (`href`, `src` y `srcset`).
+  - `assets/js/catalog.js` — la ruta de los renders 3D de respaldo de las
+    tarjetas, la única relativa que se armaba desde JavaScript.
+  - `tools/empacar-js.js` — `scriptsDelHtml` acepta la ruta con o sin barra y
+    devuelve la del repositorio (sin barra); `htmlConBundle` ubica la primera
+    y la última etiqueta con la misma expresión en lugar de reconstruir el
+    texto de la etiqueta.
+  - `tools/contrato-globales.js` — `ordenDeCarga` acepta las dos formas.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. `npm run test:visual` (arranca el sitio fuente y el publicado en Edge).
+  3. En http://localhost:8000, ninguna petición a `/assets/` debe dar 404.
+  4. `dist/index.html` debe tener un solo `<script src="/assets/v/sitio.….js">`.
+- **Pruebas:** `npm test` en verde (53 unitarias, 10 arquitectura, 218
+  integración, CSP, generado) y `npm run test:visual` 61/61. En el navegador,
+  30 recursos de `/assets/` sin ningún fallo.
+- **Dudas / riesgos:**
+  - Abrir `index.html` con doble clic (`file://`) ya no carga estilos ni
+    scripts. Antes tampoco funcionaba del todo (la fuente, el manifiesto y el
+    trabajador de servicio ya eran absolutos); la forma documentada sigue
+    siendo `python -m http.server`.
+  - El ícono de la pestaña de `index.html` es un SVG en `data:`, no una ruta,
+    y se dejó igual. Las fichas y categorías no declaran `rel="icon"`: el
+    navegador pide `/favicon.ico`, que no existe (404). Queda anotado, fuera
+    de esta tarea.
+
 ## 2026-11-26 · T-00 · Claude · Correcciones de la revisión de Gemini
 
 - **Rama:** `claude/T-00-portada-fotos` (segundo commit)
