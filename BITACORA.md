@@ -22,6 +22,38 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-03 · Claude · El botón de WhatsApp sin `href="#"`
+
+- **Rama:** `claude/T-03-wa-boton`
+- **Qué cambió:** con la cotización vacía, "Enviar por WhatsApp" ya no es un
+  enlace a `#` en pestaña nueva. Además se corrigió un hueco que salió al
+  probarlo: si alguien agregaba equipos y luego vaciaba la cotización, el
+  botón se atenuaba pero **conservaba el enlace de WhatsApp con los equipos
+  anteriores**; un clic central o Ctrl+clic (que no pasan por el aviso
+  "Agrega equipos primero" de `main.js`) lo abría.
+- **Archivos:**
+  - `index.html` — `#waBtn` sin `href`, con `role="link"` y
+    `aria-disabled="true"` de inicio (el estado real antes de que cargue JS).
+  - `assets/js/cart.js` — `renderCart()` quita el `href` al quedar vacía; con
+    equipos lo sigue poniendo como antes.
+  - `tests/smoke.test.js` — 3 pruebas: vacía sin `href`, con equipos apunta a
+    `https://wa.me/<número>?text=`, y al vaciarla se quita el enlace viejo.
+  - `main.js` no se tocó: su aviso al hacer clic con la cotización vacía
+    sigue funcionando igual.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. En http://localhost:8000 (recarga forzada), abrir la cotización vacía:
+     clic en "Enviar por WhatsApp" → aviso "Agrega equipos primero"; clic
+     central → no abre nada.
+  3. Agregar un equipo → el botón abre WhatsApp con el mensaje. Quitarlo →
+     el clic central ya no abre nada.
+- **Pruebas:** `npm test` en verde (221/221 integración, 3 nuevas) y
+  `npm run test:visual` 61/61. Se comprobó que la prueba nueva **falla** con
+  el `cart.js` anterior (conservaba el enlace con los dos equipos).
+- **Dudas / riesgos:** un `<a>` sin `href` no recibe el foco con Tab, igual
+  que `#checkoutBtn` cuando está deshabilitado. Con equipos vuelve a ser un
+  enlace normal y enfocable.
+
 ## 2026-11-26 · T-00 · Claude · Correcciones de la revisión de Gemini
 
 - **Rama:** `claude/T-00-portada-fotos` (segundo commit)

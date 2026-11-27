@@ -942,8 +942,18 @@ const ev = code => window.eval(code);
      prueban por el DOM, como los usaría un cliente, no llamando a las
      funciones por dentro. */
   ev('cart = []; saveCart(); renderCart()');
+  check('Con la cotización vacía, el botón de WhatsApp no lleva a ninguna parte',
+    !$('#waBtn').hasAttribute('href') && $('#waBtn').getAttribute('aria-disabled') === 'true',
+    `href ${$('#waBtn').getAttribute('href')}`);
   ev('addToCart(1); addToCart(2)');
   check('Dos equipos en la cotización', ev('cart.length') === 2);
+  check('Con equipos, el botón abre WhatsApp con el mensaje',
+    /^https:\/\/wa\.me\/\d+\?text=/.test($('#waBtn').getAttribute('href') || '') &&
+    !$('#waBtn').hasAttribute('aria-disabled'));
+  ev('cart = []; saveCart(); renderCart()');
+  check('Y al vaciarla se quita el enlace viejo, no sólo se atenúa',
+    !$('#waBtn').hasAttribute('href'), `href ${$('#waBtn').getAttribute('href')}`);
+  ev('addToCart(1); addToCart(2)');
 
   ev('removeFromCart(1)');
   check('Quitar uno lo saca de la cotización', ev('cart.length') === 1);
