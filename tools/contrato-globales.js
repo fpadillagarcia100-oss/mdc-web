@@ -44,8 +44,8 @@ const ROOT = path.join(__dirname, '..');
 /** Los scripts del sitio, en el orden EXACTO en que los carga el navegador. */
 function ordenDeCarga() {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  return (html.match(/<script\s+src="(assets\/js\/[^"]+)"/g) || [])
-    .map(t => t.match(/src="([^"]+)"/)[1]);
+  // Con o sin la barra inicial; se devuelve la ruta del repositorio, sin ella.
+  return [...html.matchAll(/<script\s+src="\/?(assets\/js\/[^"]+)"/g)].map(m => m[1]);
 }
 
 /**

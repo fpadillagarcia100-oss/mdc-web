@@ -50,13 +50,14 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 
-/** Saca del index.html la lista de scripts, EN SU ORDEN. */
+/* Una etiqueta de script del sitio, con la ruta absoluta (/assets/js/…) o
+   relativa (assets/js/…): las dos llegan al mismo archivo desde la raíz. */
+const RE_SCRIPT = /<script\s+src="\/?(assets\/js\/[^"]+)"[^>]*><\/script>/g;
+
+/** Saca del index.html la lista de scripts, EN SU ORDEN, como rutas del
+    repositorio (sin la barra inicial). */
 function scriptsDelHtml(html) {
-  const orden = [];
-  const re = /<script\s+src="(assets\/js\/[^"]+)"/g;
-  let m;
-  while ((m = re.exec(html))) orden.push(m[1]);
-  return orden;
+  return [...html.matchAll(RE_SCRIPT)].map(m => m[1]);
 }
 
 /** Lo que sólo usa quien administra: viaja aparte, en panel.js. */
@@ -118,17 +119,17 @@ function empacarJS() {
  * `rutas` son las direcciones publicadas de los dos archivos: { sitio, panel }.
  */
 function htmlConBundle(html, rutas) {
-  const scripts = scriptsDelHtml(html);
-  const primero = html.indexOf(`<script src="${scripts[0]}"`);
-  const ultimoTag = `<script src="${scripts[scripts.length - 1]}" defer></script>`;
-  const fin = html.indexOf(ultimoTag) + ultimoTag.length;
-  if (primero < 0 || fin < ultimoTag.length) throw new Error('No pude ubicar el bloque de scripts');
+  const etiquetas = [...html.matchAll(RE_SCRIPT)];
+  if (!etiquetas.length) throw new Error('No pude ubicar el bloque de scripts');
+  const primero = etiquetas[0].index;
+  const ultima = etiquetas[etiquetas.length - 1];
+  const fin = ultima.index + ultima[0].length;
 
   /* Las direcciones llevan el hash del contenido: un despliegue nuevo es una
      dirección nueva, así que ningún caché puede servir el código de ayer. La
      del panel va en data-panel, y main.js la lee cuando alguien entra. */
   return html.slice(0, primero) +
-    `<!-- Los ${scripts.length} scripts de assets/js/ unidos en la compilación; los del panel van\n` +
+    `<!-- Los ${etiquetas.length} scripts de assets/js/ unidos en la compilación; los del panel van\n` +
     `     aparte y se bajan al entrar a él. El original, archivo por archivo, sigue en el\n` +
     `     repositorio: es el que se edita. -->\n` +
     `<script src="${rutas.sitio}" data-panel="${rutas.panel}" defer></script>` +

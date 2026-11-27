@@ -15,7 +15,7 @@
      menos que bloquea la página. Se precarga el subconjunto latino, que es el
      que se usa siempre; la @font-face está en styles.css. -->
 <link rel="preload" href="/assets/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/styles.css">
 
 <!-- ── Vista previa al compartir (WhatsApp, Facebook, LinkedIn) ──
      Dominio registrado: mdcmaquinaria.com (Namecheap, 5 ago 2026).
@@ -83,42 +83,42 @@
 <!-- Sólo el de iOS. El icono de la pestaña sigue siendo el SVG de abajo, que se
      ve nítido en cualquier pantalla; un PNG aquí lo desplazaría. -->
 <link rel="apple-touch-icon" href="/assets/img/icon-180.png">
-<script src="assets/js/icons.js" defer></script>
+<script src="/assets/js/icons.js" defer></script>
 <!-- Generado por "npm run build" desde data/catalogo.json. Debe ir antes de config.js. -->
-<script src="assets/js/catalogo-datos.js" defer></script>
-<script src="assets/js/config.js" defer></script>
+<script src="/assets/js/catalogo-datos.js" defer></script>
+<script src="/assets/js/config.js" defer></script>
 <!-- El catálogo de datos técnicos. Va antes que storage.js, que lo usa para
      limpiar lo que entra, y antes que remoto.js, que lo usa al guardar. -->
-<script src="assets/js/atributos.js" defer></script>
-<script src="assets/js/backend.js" defer></script>
-<script src="assets/js/auth.js" defer></script>
-<script src="assets/js/remoto.js" defer></script>
-<script src="assets/js/utils.js" defer></script>
-<script src="assets/js/security.js" defer></script>
-<script src="assets/js/storage.js" defer></script>
-<script src="assets/js/state.js" defer></script>
-<script src="assets/js/branding.js" defer></script>
-<script src="assets/js/catalog.js" defer></script>
-<script src="assets/js/cart.js" defer></script>
+<script src="/assets/js/atributos.js" defer></script>
+<script src="/assets/js/backend.js" defer></script>
+<script src="/assets/js/auth.js" defer></script>
+<script src="/assets/js/remoto.js" defer></script>
+<script src="/assets/js/utils.js" defer></script>
+<script src="/assets/js/security.js" defer></script>
+<script src="/assets/js/storage.js" defer></script>
+<script src="/assets/js/state.js" defer></script>
+<script src="/assets/js/branding.js" defer></script>
+<script src="/assets/js/catalog.js" defer></script>
+<script src="/assets/js/cart.js" defer></script>
 <!-- Autónomo: también se carga solo en las fichas estáticas de /equipos/. -->
-<script src="assets/js/ficha.js" defer></script>
-<script src="assets/js/ui.js" defer></script>
-<script src="assets/js/pages.js" defer></script>
+<script src="/assets/js/ficha.js" defer></script>
+<script src="/assets/js/ui.js" defer></script>
+<script src="/assets/js/pages.js" defer></script>
 <!-- El panel, en cuatro piezas. Era un archivo de 1,700 líneas: el que nadie
      quería tocar. Se partió por responsabilidad, no por tamaño. -->
-<script src="assets/js/admin.js" defer></script>
-<script src="assets/js/admin-acceso.js" defer></script>
-<script src="assets/js/admin-bandeja.js" defer></script>
-<script src="assets/js/admin-equipos.js" defer></script>
-<script src="assets/js/admin-usuarios.js" defer></script>
-<script src="assets/js/main.js" defer></script>
+<script src="/assets/js/admin.js" defer></script>
+<script src="/assets/js/admin-acceso.js" defer></script>
+<script src="/assets/js/admin-bandeja.js" defer></script>
+<script src="/assets/js/admin-equipos.js" defer></script>
+<script src="/assets/js/admin-usuarios.js" defer></script>
+<script src="/assets/js/main.js" defer></script>
 <!-- Las cifras, las marcas y el equipo destacado de la portada. Sólo lee el
      catálogo y pinta; si falta, la portada se queda con los números de fábrica. -->
-<script src="assets/js/portada.js" defer></script>
+<script src="/assets/js/portada.js" defer></script>
 <!-- Va al final: adorna lo que los demás ya construyeron y no lo necesita
      ninguno de ellos. Si falta, el catálogo funciona igual, sólo más seco. -->
-<script src="assets/js/motion.js" defer></script>
-<script src="assets/js/pwa.js" defer></script>
+<script src="/assets/js/motion.js" defer></script>
+<script src="/assets/js/pwa.js" defer></script>
 </head>
 <body>
 
@@ -186,8 +186,8 @@
      dueño sube su propio banner desde el panel, branding.js la reemplaza. -->
 <div class="hero-banner">
   <div class="hero-foto" aria-hidden="true">
-    <img id="heroFoto" src="assets/img/obra/hero-w1920.webp"
-         srcset="assets/img/obra/hero-w960.webp 960w, assets/img/obra/hero-w1920.webp 1920w"
+    <img id="heroFoto" src="/assets/img/obra/hero-w1920.webp"
+         srcset="/assets/img/obra/hero-w960.webp 960w, /assets/img/obra/hero-w1920.webp 1920w"
          sizes="(max-width:1280px) 100vw, 1240px" alt="" fetchpriority="high" decoding="async">
   </div>
   <div class="hero-inner">
@@ -245,25 +245,25 @@
   </div>
   <div class="cats-foto">
     <a class="cat-foto" href="/maquinaria/excavacion/" data-cat="Excavación">
-      <img src="assets/img/equipos/excavadora-komatsu-pc290-w1400.webp" alt="" loading="lazy" decoding="async"
-           srcset="assets/img/equipos/excavadora-komatsu-pc290-w700.webp 700w, assets/img/equipos/excavadora-komatsu-pc290-w1400.webp 1400w"
+      <img src="/assets/img/equipos/excavadora-komatsu-pc290-w1400.webp" alt="" loading="lazy" decoding="async"
+           srcset="/assets/img/equipos/excavadora-komatsu-pc290-w700.webp 700w, /assets/img/equipos/excavadora-komatsu-pc290-w1400.webp 1400w"
            sizes="(max-width:1080px) 100vw, 620px">
       <div class="cat-foto-txt"><div><h3>Excavación</h3><span data-cuenta="Excavación">Excavadoras de 20 a 36 ton</span></div><i aria-hidden="true">→</i></div>
     </a>
     <a class="cat-foto" href="/maquinaria/carga/" data-cat="Carga">
-      <img src="assets/img/equipos/retroexcavadora-jcb-3cx-pro-w700.webp" alt="" loading="lazy" decoding="async">
+      <img src="/assets/img/equipos/retroexcavadora-jcb-3cx-pro-w700.webp" alt="" loading="lazy" decoding="async">
       <div class="cat-foto-txt"><div><h3>Carga</h3><span data-cuenta="Carga">Retroexcavadoras y minicargadores</span></div><i aria-hidden="true">→</i></div>
     </a>
     <a class="cat-foto" href="/maquinaria/nivelacion/" data-cat="Nivelación">
-      <img src="assets/img/equipos/bulldozer-cat-d6t-w700.webp" alt="" loading="lazy" decoding="async">
+      <img src="/assets/img/equipos/bulldozer-cat-d6t-w700.webp" alt="" loading="lazy" decoding="async">
       <div class="cat-foto-txt"><div><h3>Nivelación</h3><span data-cuenta="Nivelación">Bulldozers</span></div><i aria-hidden="true">→</i></div>
     </a>
     <a class="cat-foto" href="/maquinaria/compactacion/" data-cat="Compactación">
-      <img src="assets/img/equipos/compactador-bomag-bw-216-w700.webp" alt="" loading="lazy" decoding="async">
+      <img src="/assets/img/equipos/compactador-bomag-bw-216-w700.webp" alt="" loading="lazy" decoding="async">
       <div class="cat-foto-txt"><div><h3>Compactación</h3><span data-cuenta="Compactación">Rodillos vibratorios</span></div><i aria-hidden="true">→</i></div>
     </a>
     <a class="cat-foto" href="/maquinaria/elevacion/" data-cat="Elevación">
-      <img src="assets/img/equipos/grua-torre-liebherr-160ec-w700.webp" alt="" loading="lazy" decoding="async">
+      <img src="/assets/img/equipos/grua-torre-liebherr-160ec-w700.webp" alt="" loading="lazy" decoding="async">
       <div class="cat-foto-txt"><div><h3>Elevación</h3><span data-cuenta="Elevación">Grúas torre</span></div><i aria-hidden="true">→</i></div>
     </a>
   </div>
@@ -383,8 +383,8 @@
 <!-- LLAMADO FINAL -->
 <section class="sec" aria-labelledby="ctaT">
   <div class="cta-foto">
-    <img src="assets/img/obra/cta-w1400.webp" alt="" loading="lazy" decoding="async"
-         srcset="assets/img/obra/cta-w700.webp 700w, assets/img/obra/cta-w1400.webp 1400w" sizes="(max-width:1280px) 100vw, 1240px">
+    <img src="/assets/img/obra/cta-w1400.webp" alt="" loading="lazy" decoding="async"
+         srcset="/assets/img/obra/cta-w700.webp 700w, /assets/img/obra/cta-w1400.webp 1400w" sizes="(max-width:1280px) 100vw, 1240px">
     <div>
       <h2 id="ctaT">¿Tienes una obra en puerta?</h2>
       <p>Cuéntanos qué vas a construir y te armamos la propuesta de equipo, plazos y financiamiento.</p>
