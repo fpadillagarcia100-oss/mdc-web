@@ -36,13 +36,13 @@
 <meta name="twitter:card" content="summary_large_image">
 
 <!-- ── Datos estructurados para Google ──
-     Describe la empresa y sus sucursales. Los equipos individuales todavía no
-     se pueden marcar aquí porque viven en el navegador, no en el HTML: eso
-     llega con el backend, y es la mayor ganancia de SEO pendiente. -->
+     Describe la empresa y sus sucursales. Cada equipo y cada categoría se
+     describen en su propia página estática (equipos/, maquinaria/), que genera
+     tools/build.js. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "AutoPartsStore",
+  "@type": "Store",
   "name": "MDC · Maquinaria de Chiapas",
   "description": "Venta y renta de maquinaria pesada para construcción en Chiapas.",
   "url": "https://mdcmaquinaria.com/",
@@ -66,11 +66,11 @@
       "dayOfWeek": "Saturday", "opens": "09:00", "closes": "14:00" }
   ],
   "department": [
-    { "@type": "AutoPartsStore", "name": "Sucursal Tapachula",
+    { "@type": "Store", "name": "Sucursal Tapachula",
       "telephone": "+52-962-123-4567",
       "address": { "@type": "PostalAddress", "streetAddress": "Carretera Costera km 4",
         "addressLocality": "Tapachula", "addressRegion": "Chiapas", "addressCountry": "MX" } },
-    { "@type": "AutoPartsStore", "name": "Sucursal San Cristóbal",
+    { "@type": "Store", "name": "Sucursal San Cristóbal",
       "telephone": "+52-967-123-4567",
       "address": { "@type": "PostalAddress", "streetAddress": "Carretera Panamericana 890",
         "addressLocality": "San Cristóbal de las Casas", "addressRegion": "Chiapas", "addressCountry": "MX" } }

@@ -22,6 +22,43 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-02 · Claude · Google ve una tienda, no una refaccionaria
+
+- **Rama:** `claude/T-02-jsonld`
+- **Qué cambió:** nada visible. Los datos estructurados de la portada (la
+  ficha de la empresa que lee Google) declaraban a MDC y a sus dos sucursales
+  como `AutoPartsStore` (refaccionaria de autos); ahora son `Store`. Los datos
+  de contacto que parecen de relleno quedan marcados con un `TODO` para Paco
+  en `TAREAS.md`, sin inventar reemplazos.
+- **Archivos:**
+  - `index.html` — `@type` de la empresa y de las dos sucursales → `Store`.
+    Se actualizó el comentario de arriba del bloque: ya no dice que los
+    equipos "viven en el navegador", porque cada equipo tiene su página
+    estática.
+  - `TAREAS.md` — el `TODO ❓ PARA PACO` con la lista de datos a confirmar.
+    Primero estaba en un comentario de `index.html`, pero los comentarios HTML
+    se publican (revisión de Gemini); `TAREAS.md` no llega a `dist/`.
+  - `tests/smoke.test.js` — 2 pruebas: los bloques son JSON válido, y la
+    ficha de la empresa (la que tiene `url` del sitio y `department`) y sus
+    sucursales son `Store`. Esta segunda falla con el `index.html` de `main`.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. Opcional: pegar el código de la portada en el validador de datos
+     estructurados de Google (https://validator.schema.org/).
+- **Pruebas:** `npm test` en verde (223/223 integración, 2 nuevas). No se
+  corrió `test:visual`: el cambio está en `<head>` y no se ve.
+- **Dudas / riesgos:**
+  - Mientras Paco no confirme, Google sigue leyendo los teléfonos y calles de
+    relleno como oficiales. Quitarlos del JSON-LD es decisión de Paco.
+  - El teléfono de la matriz no coincide: el JSON-LD dice `961 123 4567` y
+    `data/catalogo.json` (`ajustes.telefono`) dice `312 174 3817`, el mismo
+    del WhatsApp. No se cambió: decide Paco.
+  - Fuera de esta tarea: `data/catalogo.json` repite los mismos teléfonos y
+    direcciones de sucursal, y su `_comentario` todavía dice que la fuente de
+    verdad es Supabase.
+- **❓ PARA PACO:** ¿cuáles son el teléfono, la dirección y el horario reales
+  de cada sucursal, y el correo de ventas?
+
 ## 2026-11-27 · T-03 · Claude · El botón de WhatsApp sin `href="#"`
 
 - **Rama:** `claude/T-03-wa-boton`
