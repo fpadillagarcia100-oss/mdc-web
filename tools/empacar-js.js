@@ -119,7 +119,6 @@ function empacarJS() {
  * `rutas` son las direcciones publicadas de los dos archivos: { sitio, panel }.
  */
 function htmlConBundle(html, rutas) {
-  const scripts = scriptsDelHtml(html);
   const etiquetas = [...html.matchAll(RE_SCRIPT)];
   if (!etiquetas.length) throw new Error('No pude ubicar el bloque de scripts');
   const primero = etiquetas[0].index;
@@ -130,7 +129,7 @@ function htmlConBundle(html, rutas) {
      dirección nueva, así que ningún caché puede servir el código de ayer. La
      del panel va en data-panel, y main.js la lee cuando alguien entra. */
   return html.slice(0, primero) +
-    `<!-- Los ${scripts.length} scripts de assets/js/ unidos en la compilación; los del panel van\n` +
+    `<!-- Los ${etiquetas.length} scripts de assets/js/ unidos en la compilación; los del panel van\n` +
     `     aparte y se bajan al entrar a él. El original, archivo por archivo, sigue en el\n` +
     `     repositorio: es el que se edita. -->\n` +
     `<script src="${rutas.sitio}" data-panel="${rutas.panel}" defer></script>` +
