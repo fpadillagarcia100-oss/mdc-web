@@ -22,6 +22,48 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-07 · Claude · "Avísame" en equipos apartados o vendidos
+
+- **Rama:** `claude/T-07-avisame` (sale de `claude/T-10-tuneo`, no de `main`:
+  usa sus estilos de formulario; integrar T-10 primero).
+- **Qué cambió:** la ficha de un equipo apartado o vendido ofrece un bloque
+  "¿Te interesa este equipo?" para dejar nombre y WhatsApp. La solicitud
+  llega a Cotizaciones del panel marcada "Avísame" y al correo de avisos con
+  el asunto "Avísame — nombre · teléfono". Paco eligió esta variante: avisa
+  una persona de MDC, no un correo automático.
+- **Cómo viaja:** como una solicitud `tipo: 'cotizacion'` de un solo equipo,
+  con `aviso: true` dentro del carrito y el mensaje "AVÍSAME: …". **No toca
+  la base ni el servidor**: la base sólo admite `cotizacion` y `publicacion`,
+  y un tipo nuevo obligaría a reinstalar el servidor antes de publicar.
+- **Archivos:**
+  - `assets/js/ui.js` — el bloque dentro de `openModal` (sin globales nuevas:
+    el contrato está en 280 de 280).
+  - `assets/js/main.js` — el envío de `#avisoForm` en el manejador de
+    `submit` que ya existía. Valida, usa la trampa anti-bot, llama a
+    `registrarSolicitud` y, si no se registra, lo dice y ofrece WhatsApp.
+  - `assets/js/admin-bandeja.js` — la fila dice "Avísame: quiere que le
+    escriban por este equipo".
+  - `functions/api/aviso-solicitud.js` — encabezado y asunto del correo.
+  - `assets/css/styles.css` — bloque "AVÍSAME · T-07".
+  - `tests/smoke.test.js` — 10 pruebas.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. En el panel, marcar un equipo como "Apartado", publicar, abrir su ficha
+     y enviar el bloque. Debe aparecer en Cotizaciones y llegar el correo.
+     En local (`localhost`) la API rechaza por CORS: se ve el mensaje de
+     "no pudimos registrar" con el enlace a WhatsApp, que es lo esperado.
+- **Pruebas:** `npm test` en verde (237/237 integración, 10 nuevas).
+- **Dudas / riesgos:**
+  - **Textos para que Paco los apruebe** (no prometen fecha ni precio):
+    "Este equipo está apartado. Déjanos tu nombre y tu WhatsApp y un asesor te
+    escribe si se libera o llega uno parecido." y "✓ Listo. Un asesor te
+    escribe por WhatsApp cuando haya novedades de este equipo."
+  - Sólo está en la ficha de la portada (la ventana). Las páginas estáticas
+    `equipos/<slug>/` no tienen el formulario: no cargan los scripts del sitio.
+  - El freno de la base (3 solicitudes por teléfono cada 10 minutos) también
+    aplica a los avisos.
+  - No hay forma de darse de baja: es una sola solicitud, no una lista.
+
 ## 2026-11-27 · T-10 · Claude · Tuneo de acabado (móvil, formularios, contraste)
 
 - **Rama:** `claude/T-10-tuneo`

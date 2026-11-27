@@ -379,6 +379,31 @@ function openModal(id){
     ? `<span style="font-size:14px;color:#767676;text-decoration:line-through">${fmtCompact(p.original)}</span>
        <span style="font-size:14px;color:#D32F2F;font-weight:600">−${discPct(p)}%</span>` : '';
 
+  /* Avísame (T-07). Un equipo apartado o vendido es interés que hoy se pierde:
+     quien llega tarde deja nombre y WhatsApp, la solicitud entra a la bandeja
+     del panel y un asesor le escribe. No promete fecha ni precio. Sin slug no
+     hay equipo al cual colgar el aviso. El envío está en main.js. */
+  const agotado = p.disponibilidad === 'vendido' || p.disponibilidad === 'apartado';
+  const avisame = agotado && p.slug ? `
+    <section class="avisame" aria-labelledby="avisameT">
+      <h3 class="avisame-t" id="avisameT">¿Te interesa este equipo?</h3>
+      <p class="avisame-p">${p.disponibilidad === 'vendido'
+        ? 'Este equipo ya se vendió. Déjanos tu nombre y tu WhatsApp y un asesor te escribe si llega uno parecido.'
+        : 'Este equipo está apartado. Déjanos tu nombre y tu WhatsApp y un asesor te escribe si se libera o llega uno parecido.'}</p>
+      <form id="avisoForm" data-slug="${esc(p.slug)}" novalidate>
+        <input class="hp-field" type="text" id="hp_aviso" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="field"><label for="av-name">Tu nombre</label>
+          <input type="text" id="av-name" autocomplete="name" maxlength="120" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <span class="errmsg">Escribe tu nombre.</span></div>
+        <div class="field"><label for="av-phone">Tu WhatsApp <span class="hint">(10 dígitos)</span></label>
+          <input type="text" id="av-phone" inputmode="tel" autocomplete="tel-national" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <span class="errmsg">Necesitamos 10 dígitos.</span></div>
+        <button class="btn-primary" type="submit">Avísame</button>
+        <p class="avisame-nota">Usamos tus datos únicamente para contactarte sobre este equipo.
+          Consulta el <button type="button" class="avisame-enlace" data-goto="privacidad">aviso de privacidad</button>.</p>
+      </form>
+    </section>` : '';
+
   $('#modalInfo').innerHTML = `
     <p class="modal-cat">${esc(p.cat)} · ${esc(p.brand)}</p>
     <h2 class="modal-name" id="modalName">${esc(p.name)}</h2>
@@ -406,7 +431,8 @@ function openModal(id){
       <button class="modal-quote" type="button" data-imprimir>${ico('impresora')}Imprimir ficha</button>
       ${p.slug?`<a class="modal-quote" href="/equipos/${esc(p.slug)}/" style="text-decoration:none">Ficha completa ↗</a>`:''}
       ${isAdmin?`<button class="modal-quote" type="button" data-edit="${p.id}">✎ Editar</button>`:''}
-    </div>`;
+    </div>
+    ${avisame}`;
 
   /* Lo largo va abajo, a todo el ancho. No es sólo para tapar el hueco: una
      tabla técnica de doce renglones metida en una columna de 400 px sale

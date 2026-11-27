@@ -98,6 +98,7 @@ function solicitudFilaHTML(s){
     </td>
     <td class="hide-sm" style="font-size:12px">
       ${s.tipo==='publicacion'?'<em>Quiere vender un equipo</em>':''}
+      ${carrito.some(i => i && i.aviso)?'<em>Avísame: quiere que le escriban por este equipo</em><br>':''}
       ${carrito.length?carrito.map(i=>`${i.cantidad||1}× ${esc(i.nombre||i.slug||'')}`).join('<br>'):''}
       ${s.mensaje?`<div style="color:var(--muted);margin-top:4px">${esc(String(s.mensaje).slice(0,180))}</div>`:''}
     </td>

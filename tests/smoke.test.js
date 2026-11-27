@@ -712,6 +712,70 @@ const ev = code => window.eval(code);
     !JSON.parse(ev('JSON.stringify(globalThis.__pedidos)')).some(u => u.includes('preguntar')));
   ev('closeAll()');
 
+  /* ══ AVÍSAME (T-07) ══
+     Un equipo apartado o vendido ofrece dejar nombre y WhatsApp. La solicitud
+     entra a la bandeja como una cotización de ese equipo, marcada como aviso. */
+  const avisos = () => JSON.parse(ev('JSON.stringify(globalThis.__avisos)'));
+  const aSolicitudes = () => avisos().filter(a => a.url.includes('/api/solicitudes'));
+  ev(`globalThis.__avisos = [];
+      window.fetch = (url, opts) => { globalThis.__avisos.push({url: String(url), body: (opts && opts.body) || ''});
+        return Promise.resolve({ok: !globalThis.__avisoFalla, status: globalThis.__avisoFalla ? 400 : 204, json: () => Promise.resolve({})}) }`);
+
+  ev(`openModal(${equipo.id})`);
+  check('Un equipo disponible no ofrece "Avísame"', $('#avisoForm') === null);
+
+  ev(`products.find(x => x.id === ${equipo.id}).disponibilidad = 'apartado'; closeAll(); openModal(${equipo.id})`);
+  check('Un equipo apartado sí, y dice por qué',
+    $('#avisoForm') !== null && $('.avisame-p').textContent.includes('apartado'));
+
+  // El formulario llega con los datos que el cliente ya dio en esta sesión.
+  check('El aviso recuerda los datos del cliente', $('#av-name').value === 'Ana López');
+  $('#av-name').value = '';
+  $('#av-phone').value = '';
+  submit('#avisoForm');
+  await waitFor(() => true, 'un ciclo del bucle de eventos');
+  check('Un aviso sin nombre ni teléfono no sale del navegador',
+    aSolicitudes().length === 0 && $('#av-name').getAttribute('aria-invalid') === 'true');
+
+  $('#av-name').value = 'Rosa Méndez';
+  $('#av-phone').value = '9611112233';
+  submit('#avisoForm');
+  await waitFor(() => $('.avisame-ok') !== null, 'el acuse del aviso');
+  const cuerpoAviso = aSolicitudes().length ? JSON.parse(aSolicitudes()[0].body) : null;
+  check('El aviso entra como solicitud de ese equipo, marcada como aviso',
+    cuerpoAviso !== null && cuerpoAviso.tipo === 'cotizacion' && cuerpoAviso.telefono === '9611112233' &&
+    cuerpoAviso.carrito.length === 1 && cuerpoAviso.carrito[0].aviso === true &&
+    cuerpoAviso.mensaje.startsWith('AVÍSAME'), cuerpoAviso ? cuerpoAviso.mensaje : 'no salió');
+  check('Se acusa recibo, sin prometer fecha ni precio',
+    $('.avisame-ok').textContent.includes('Listo') && $('#avisoForm button[type="submit"]') === null);
+  check('Y no se cuenta como cotización en las métricas',
+    !avisos().some(a => a.url.includes('/api/contar') && a.body.includes('cotizacion')));
+
+  // El servidor de la oficina puede estar apagado: se dice y se ofrece WhatsApp.
+  ev(`globalThis.__avisoFalla = true;
+      products.find(x => x.id === ${equipo.id}).disponibilidad = 'vendido'; closeAll(); openModal(${equipo.id})`);
+  check('Un equipo vendido también lo ofrece', $('.avisame-p').textContent.includes('se vendió'));
+  $('#av-name').value = 'Rosa Méndez';
+  $('#av-phone').value = '9611112233';
+  submit('#avisoForm');
+  await waitFor(() => $('.avisame-ok') !== null, 'la respuesta del aviso fallido');
+  check('Si el aviso no se registra, lo dice y ofrece WhatsApp',
+    !$('.avisame-ok').textContent.includes('Listo') && $('.avisame-ok a[href*="wa.me"]') !== null);
+
+  // El bot que rellena el campo invisible recibe un "listo" y nada sale.
+  ev(`globalThis.__avisoFalla = false; globalThis.__avisos = []; closeAll(); openModal(${equipo.id})`);
+  $('#hp_aviso').value = 'soy un bot';
+  $('#av-name').value = 'Bot';
+  $('#av-phone').value = '9610000000';
+  submit('#avisoForm');
+  await waitFor(() => $('.avisame-ok') !== null, 'el falso acuse');
+  check('La trampa oculta también protege el aviso', aSolicitudes().length === 0);
+
+  // Todo como estaba para las pruebas que siguen.
+  ev(`products.find(x => x.id === ${equipo.id}).disponibilidad = 'disponible'; closeAll();
+      window.fetch = (url, opts) => { globalThis.__pedidos.push(String(url));
+        return Promise.resolve({ok:true, json:()=>Promise.resolve({})}) }`);
+
   /* ══ EL HUECO BLANCO ══
      Fallo real, visto en el sitio publicado: la ficha abría con un rectángulo
      blanco de unos 700 px bajo la foto. La causa no era de estilo sino de

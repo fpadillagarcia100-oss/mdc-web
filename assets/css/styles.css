@@ -2140,3 +2140,16 @@ footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120
   .wa-float{width:52px;height:52px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
   footer{padding-bottom:84px}
 }
+
+/* ══════════ AVÍSAME · T-07 ══════════
+   El bloque de la ficha de un equipo apartado o vendido. */
+.avisame{margin-top:18px;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--bg)}
+.avisame-t{font-size:16px;font-weight:750;letter-spacing:-.02em;color:var(--ink)}
+.avisame-p{font-size:14px;line-height:1.55;color:var(--muted);margin:6px 0 14px}
+.avisame .field{margin-bottom:12px}
+.avisame .btn-primary{width:100%;min-height:46px;font-size:14px}
+.avisame-nota{font-size:12px;line-height:1.5;color:var(--muted);margin-top:10px}
+.avisame-enlace{background:none;border:none;padding:0;font:inherit;color:var(--blue);text-decoration:underline;cursor:pointer}
+.avisame-ok{font-size:14px;line-height:1.55;color:var(--ink);font-weight:550}
+.avisame-ok a{color:var(--blue)}
+@media print{.avisame{display:none}}

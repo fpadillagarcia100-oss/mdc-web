@@ -85,7 +85,8 @@ function cuerpoCorreo(s) {
   return `<!doctype html>
 <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#1A1A1A">
   <p style="font-size:12px;color:#767676;text-transform:uppercase;letter-spacing:.5px;margin:0 0 4px">
-    ${s.tipo === 'publicacion' ? 'Quieren venderte un equipo' : 'Nueva cotización'}
+    ${s.tipo === 'publicacion' ? 'Quieren venderte un equipo'
+      : carrito.some(i => i && i.aviso) ? 'Avísame: quieren que les escribas por este equipo' : 'Nueva cotización'}
   </p>
   <h1 style="font-size:22px;margin:0 0 4px">${esc(s.nombre)}</h1>
   <p style="margin:0 0 18px;font-size:15px">
@@ -158,8 +159,10 @@ export async function onRequestPost({ request, env }) {
     const s = cuerpo.record || cuerpo;
     if (!s || !s.nombre || !s.telefono) return json(400, { error: 'Solicitud incompleta.' });
 
+    const esAviso = Array.isArray(s.carrito) && s.carrito.some(i => i && i.aviso);
     const asunto = s.tipo === 'publicacion'
       ? `Quieren venderte un equipo — ${s.nombre}`
+      : esAviso ? `Avísame — ${s.nombre} · ${s.telefono}`
       /* El teléfono va en el ASUNTO a propósito: en la lista del correo, sin
          abrir nada, ya se ve a quién hay que marcar. */
       : `Nueva cotización — ${s.nombre} · ${s.telefono}`;
