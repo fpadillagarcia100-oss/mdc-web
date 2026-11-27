@@ -32,3 +32,18 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
   merge por instrucción expresa de Paco).
 - **T-02** — Reasignada de Gemini a Claude el 2026-11-27 por Paco: Gemini no
   tiene acceso a la PC, sólo revisa. Ahora la revisa Gemini.
+- **TODO ❓ PARA PACO · datos de contacto** (salió de T-02). Este archivo no se
+  publica; un comentario en `index.html` sí, por eso la lista va aquí. Parecen
+  de ejemplo y no se inventan reemplazos. Están en el JSON-LD de `index.html`
+  y en `data/catalogo.json` (`sucursales`); al confirmarlos se cambian en los
+  dos lugares:
+  - Teléfono de la matriz: el JSON-LD dice `+52-961-123-4567`, pero
+    `data/catalogo.json` (`ajustes.telefono`) dice `312 174 3817`, el mismo del
+    WhatsApp (lada 312, de Colima). ¿Cuál es el bueno?
+  - Teléfonos de sucursal: `962 123 4567` (Tapachula) y `967 123 4567`
+    (San Cristóbal).
+  - Direcciones: "Blvd. Belisario Domínguez 1250", "Carretera Costera km 4" y
+    "Carretera Panamericana 890".
+  - Correo `ventas@mdcmaquinaria.com` y horarios.
+  - Mientras tanto Google sigue leyendo esos datos como oficiales. Opción: quitar
+    del JSON-LD los teléfonos y calles hasta confirmarlos (decide Paco).
