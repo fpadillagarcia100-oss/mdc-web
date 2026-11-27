@@ -67,12 +67,15 @@ function renderCart(){
     $('#checkoutBtn').disabled = true;
     // Sin href: el enlace de la cotización anterior no se queda vivo para un
     // clic central o Ctrl+clic, que no pasan por el aviso de main.js.
+    // role="link" sólo mientras no hay href; con href el <a> ya lo es.
     $('#waBtn').removeAttribute('href');
+    $('#waBtn').setAttribute('role','link');
     $('#waBtn').setAttribute('aria-disabled','true');
     return;
   }
   $('#checkoutBtn').disabled = false;
   $('#waBtn').removeAttribute('aria-disabled');
+  $('#waBtn').removeAttribute('role');
 
   $('#cartItems').innerHTML = lines.map(item=>`
     <div class="cart-item">

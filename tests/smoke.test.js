@@ -949,10 +949,11 @@ const ev = code => window.eval(code);
   check('Dos equipos en la cotización', ev('cart.length') === 2);
   check('Con equipos, el botón abre WhatsApp con el mensaje',
     /^https:\/\/wa\.me\/\d+\?text=/.test($('#waBtn').getAttribute('href') || '') &&
-    !$('#waBtn').hasAttribute('aria-disabled'));
+    !$('#waBtn').hasAttribute('aria-disabled') && !$('#waBtn').hasAttribute('role'));
   ev('cart = []; saveCart(); renderCart()');
   check('Y al vaciarla se quita el enlace viejo, no sólo se atenúa',
-    !$('#waBtn').hasAttribute('href'), `href ${$('#waBtn').getAttribute('href')}`);
+    !$('#waBtn').hasAttribute('href') && $('#waBtn').getAttribute('aria-disabled') === 'true' &&
+    $('#waBtn').getAttribute('role') === 'link', `href ${$('#waBtn').getAttribute('href')}`);
   ev('addToCart(1); addToCart(2)');
 
   ev('removeFromCart(1)');
