@@ -195,7 +195,9 @@ document.addEventListener('click', e => {
     state.cat = navBtn.dataset.cat;
     state.page = 1;
     render();
-    if(navBtn.tagName === 'A') $('#catalogo').scrollIntoView({block:'start'});
+    // Los chips de arriba ya están junto al catálogo; las categorías con foto,
+    // los servicios y el pie no: a quien pulsa ahí se le lleva al resultado.
+    if(!navBtn.closest('#navCats')) $('#catalogo').scrollIntoView({block:'start'});
     return;
   }
 

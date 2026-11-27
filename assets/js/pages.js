@@ -76,7 +76,26 @@ const PAGES = {
   privacidad:  {title:'Aviso de privacidad',    html:()=>privacidadHTML()},
   cotizar:     {title:'Solicitar cotización',   html:()=>cotizarHTML()},
   comparar:    {title:'⇄ Comparar equipos',        html:()=>compararHTML()},
-  financiamiento:{title:'Financiamiento',       html:()=>financiamientoHTML()}
+  financiamiento:{title:'Financiamiento',       html:()=>financiamientoHTML()},
+  /* Créditos de fotografías. Las fotos de catálogo son de Wikimedia Commons
+     (CC0, CC BY, CC BY-SA); las dos últimas piden nombrar autor y licencia.
+     Sale de data/catalogo.json → creditos_fotos. Va aquí dentro y no como
+     función suelta para no sumar otra global al contrato. */
+  creditos:    {title:'Créditos de fotografías', html:()=>{
+    const lista = Object.entries(CATALOGO.creditos || {});
+    // Sólo https: un dato mal capturado nunca llega a ser un enlace javascript:.
+    const seguro = u => /^https:\/\//.test(u || '') ? u : '#';
+    if(!lista.length) return '<p>Todas las fotografías de este sitio son propias.</p>';
+    return `<p>Las fotografías del catálogo muestran el <strong>modelo</strong> de cada equipo, no la unidad
+        en venta. Para ver la máquina real, pide fotos o video en vivo a tu asesor.</p>
+      <ul class="creditos">${lista.map(([src, c]) => `
+        <li><img src="${esc(src.replace('-w1400.', '-w700.').replace('-w1920.', '-w960.'))}" alt="" loading="lazy">
+          <span><strong>${esc(c.titulo)}</strong><br>
+          ${seguro(c.fuente) !== '#' ? `<a href="${esc(c.fuente)}" target="_blank" rel="noopener nofollow">${esc(c.autor)}</a>` : esc(c.autor)} ·
+          ${seguro(c.licencia_url) !== '#' ? `<a href="${esc(c.licencia_url)}" target="_blank" rel="noopener nofollow license">${esc(c.licencia)}</a>` : esc(c.licencia)}
+          · vía Wikimedia Commons</span></li>`).join('')}
+      </ul>`;
+  }}
 };
 
 /* ── Financiamiento ── */

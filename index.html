@@ -112,6 +112,9 @@
 <script src="assets/js/admin-equipos.js" defer></script>
 <script src="assets/js/admin-usuarios.js" defer></script>
 <script src="assets/js/main.js" defer></script>
+<!-- Las cifras, las marcas y el equipo destacado de la portada. Sólo lee el
+     catálogo y pinta; si falta, la portada se queda con los números de fábrica. -->
+<script src="assets/js/portada.js" defer></script>
 <!-- Va al final: adorna lo que los demás ya construyeron y no lo necesita
      ninguno de ellos. Si falta, el catálogo funciona igual, sólo más seco. -->
 <script src="assets/js/motion.js" defer></script>
@@ -177,7 +180,16 @@
 </nav>
 
 <!-- HERO -->
+<!-- La foto de fondo es real (créditos en data/catalogo.json → creditos_fotos).
+     Va como <img> y no como background de CSS: así el navegador elige el
+     tamaño (srcset) y un teléfono no baja la versión de escritorio. Si el
+     dueño sube su propio banner desde el panel, branding.js la reemplaza. -->
 <div class="hero-banner">
+  <div class="hero-foto" aria-hidden="true">
+    <img id="heroFoto" src="assets/img/obra/hero-w1920.webp"
+         srcset="assets/img/obra/hero-w960.webp 960w, assets/img/obra/hero-w1920.webp 1920w"
+         sizes="(max-width:1280px) 100vw, 1240px" alt="" fetchpriority="high" decoding="async">
+  </div>
   <div class="hero-inner">
     <div class="hero-text">
       <p class="hero-tag" id="heroTag"></p>
@@ -193,7 +205,77 @@
         <div class="badge"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/></svg> <span>18 MSI</span> disponibles</div>
       </div>
     </div>
-    <div class="hero-art" id="heroArt" aria-hidden="true"></div>
+    <!-- Equipo destacado: lo llena portada.js con una máquina real del
+         inventario. Sin JavaScript se queda vacío y no ocupa lugar. -->
+    <aside class="hero-art" id="heroArt" aria-label="Equipo destacado"></aside>
+  </div>
+</div>
+
+<!-- CIFRAS. Salen del catálogo (portada.js), no se escriben a mano: un
+     "18 equipos" que ya no es verdad es peor que no decir nada. -->
+<section class="kpis" aria-label="MDC en cifras">
+  <div class="kpis-inner">
+    <div class="kpi"><strong data-kpi="equipos">18</strong><span>equipos disponibles en inventario</span></div>
+    <div class="kpi"><strong data-kpi="marcas">8</strong><span>marcas líderes en el mundo</span></div>
+    <div class="kpi"><strong data-kpi="sucursales">3</strong><span>sucursales en Chiapas</span></div>
+    <div class="kpi"><strong>18 <em>MSI</em></strong><span>meses sin intereses en equipos nuevos</span></div>
+  </div>
+</section>
+
+<!-- MARCAS. Escritas, no logotipos: los logotipos son marcas registradas de
+     sus dueños y usarlos pide permiso. Son texto informativo, no filtros. -->
+<section class="marcas" aria-labelledby="marcasT">
+  <p class="marcas-t" id="marcasT">Equipos de las marcas que mueven la obra</p>
+  <div class="marcas-fila" id="marcasFila">
+    <span class="marca">CAT</span><span class="marca">Komatsu</span><span class="marca">JCB</span>
+    <span class="marca">Bobcat</span><span class="marca">Liebherr</span><span class="marca">Bomag</span>
+    <span class="marca">Dynapac</span><span class="marca">Potain</span>
+  </div>
+</section>
+
+<!-- CATEGORÍAS CON FOTO. Enlaces de verdad a /maquinaria/<cat>/ (para
+     Google); main.js los intercepta y filtra aquí mismo (data-cat). -->
+<section class="sec" aria-labelledby="catsT">
+  <div class="sec-head">
+    <div>
+      <p class="eyebrow">Explora por tipo</p>
+      <h2 id="catsT">La máquina correcta para cada etapa de tu obra</h2>
+    </div>
+    <a class="sec-link" href="#catalogo">Ver todo el inventario</a>
+  </div>
+  <div class="cats-foto">
+    <a class="cat-foto" href="/maquinaria/excavacion/" data-cat="Excavación">
+      <img src="assets/img/equipos/excavadora-komatsu-pc290-w1400.webp" alt="" loading="lazy" decoding="async"
+           srcset="assets/img/equipos/excavadora-komatsu-pc290-w700.webp 700w, assets/img/equipos/excavadora-komatsu-pc290-w1400.webp 1400w"
+           sizes="(max-width:1080px) 100vw, 620px">
+      <div class="cat-foto-txt"><div><h3>Excavación</h3><span data-cuenta="Excavación">Excavadoras de 20 a 36 ton</span></div><i aria-hidden="true">→</i></div>
+    </a>
+    <a class="cat-foto" href="/maquinaria/carga/" data-cat="Carga">
+      <img src="assets/img/equipos/retroexcavadora-jcb-3cx-pro-w700.webp" alt="" loading="lazy" decoding="async">
+      <div class="cat-foto-txt"><div><h3>Carga</h3><span data-cuenta="Carga">Retroexcavadoras y minicargadores</span></div><i aria-hidden="true">→</i></div>
+    </a>
+    <a class="cat-foto" href="/maquinaria/nivelacion/" data-cat="Nivelación">
+      <img src="assets/img/equipos/bulldozer-cat-d6t-w700.webp" alt="" loading="lazy" decoding="async">
+      <div class="cat-foto-txt"><div><h3>Nivelación</h3><span data-cuenta="Nivelación">Bulldozers</span></div><i aria-hidden="true">→</i></div>
+    </a>
+    <a class="cat-foto" href="/maquinaria/compactacion/" data-cat="Compactación">
+      <img src="assets/img/equipos/compactador-bomag-bw-216-w700.webp" alt="" loading="lazy" decoding="async">
+      <div class="cat-foto-txt"><div><h3>Compactación</h3><span data-cuenta="Compactación">Rodillos vibratorios</span></div><i aria-hidden="true">→</i></div>
+    </a>
+    <a class="cat-foto" href="/maquinaria/elevacion/" data-cat="Elevación">
+      <img src="assets/img/equipos/grua-torre-liebherr-160ec-w700.webp" alt="" loading="lazy" decoding="async">
+      <div class="cat-foto-txt"><div><h3>Elevación</h3><span data-cuenta="Elevación">Grúas torre</span></div><i aria-hidden="true">→</i></div>
+    </a>
+  </div>
+</section>
+
+<div class="sec inv-head">
+  <div class="sec-head">
+    <div>
+      <p class="eyebrow">Inventario disponible</p>
+      <h2>Equipos verificados, listos para trabajar</h2>
+      <p>Nuevos con garantía de fábrica, usados certificados con inspección de más de 100 puntos y equipos en renta.</p>
+    </div>
   </div>
 </div>
 
@@ -243,6 +325,77 @@
   </div>
 </main>
 
+<!-- SERVICIOS -->
+<section class="sec" aria-labelledby="servT">
+  <div class="sec-head">
+    <div>
+      <p class="eyebrow">Una sola empresa para tu obra</p>
+      <h2 id="servT">Compra, renta, financia y recibe en sitio</h2>
+    </div>
+  </div>
+  <div class="servicios">
+    <article class="servicio">
+      <div class="servicio-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></div>
+      <h3>Venta de equipo</h3>
+      <p>Nuevos con 12 meses de garantía de fábrica; usados certificados con 6 meses en tren motriz e hidráulico.</p>
+      <a class="sec-link" href="#catalogo">Ver inventario</a>
+    </article>
+    <article class="servicio">
+      <div class="servicio-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></div>
+      <h3>Renta flexible</h3>
+      <p>Renta mensual con mantenimiento preventivo y seguro incluidos; operador certificado en los equipos marcados.</p>
+      <button class="sec-link" type="button" data-cat="Renta">Ver equipos en renta</button>
+    </article>
+    <article class="servicio">
+      <div class="servicio-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/></svg></div>
+      <h3>Financiamiento</h3>
+      <p>Hasta 18 meses sin intereses, arrendamiento puro y crédito simple. Simula tu pago mensual antes de llamar.</p>
+      <button class="sec-link" type="button" data-goto="financiamiento">Simular pago</button>
+    </article>
+    <article class="servicio">
+      <div class="servicio-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.5 6.5h11v9.5h-11zM13.5 10h4.2l3.3 3.4V16h-7.5"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></div>
+      <h3>Entrega en obra</h3>
+      <p>Envío incluido dentro de Chiapas en los equipos marcados. Fuera del estado cotizamos el traslado.</p>
+      <button class="sec-link" type="button" data-goto="sucursales">Ver sucursales</button>
+    </article>
+  </div>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<section class="proceso-banda" aria-labelledby="procT">
+  <div class="sec">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Cómo funciona</p>
+        <h2 id="procT">De la cotización a tu obra, sin vueltas</h2>
+        <p>Un asesor te acompaña en cada paso, de la primera pregunta a la entrega.</p>
+      </div>
+    </div>
+    <ol class="pasos">
+      <li class="paso"><h3>Elige tu equipo</h3><p>Filtra por tipo, marca, precio u horas de uso y compara hasta tres máquinas lado a lado.</p></li>
+      <li class="paso"><h3>Pide tu cotización</h3><p>Agrégalos a tu cotización y envíala por WhatsApp o correo. Respondemos en menos de 24 horas hábiles.</p></li>
+      <li class="paso"><h3>Inspecciona y decide</h3><p>Revisa la máquina en sucursal con un asesor. Elige contado, MSI, arrendamiento o tu equipo a cuenta.</p></li>
+      <li class="paso"><h3>Recíbela en sitio</h3><p>Te la entregamos a pie de obra con su garantía vigente, lista para trabajar.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- LLAMADO FINAL -->
+<section class="sec" aria-labelledby="ctaT">
+  <div class="cta-foto">
+    <img src="assets/img/obra/cta-w1400.webp" alt="" loading="lazy" decoding="async"
+         srcset="assets/img/obra/cta-w700.webp 700w, assets/img/obra/cta-w1400.webp 1400w" sizes="(max-width:1280px) 100vw, 1240px">
+    <div>
+      <h2 id="ctaT">¿Tienes una obra en puerta?</h2>
+      <p>Cuéntanos qué vas a construir y te armamos la propuesta de equipo, plazos y financiamiento.</p>
+    </div>
+    <div class="cta-btns">
+      <button class="hbtn-lg yel" type="button" data-goto="cotizar">Solicitar cotización</button>
+      <button class="hbtn-lg out" type="button" data-goto="vender">Vender mi equipo</button>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="footer-inner">
     <div class="footer-col">
@@ -264,6 +417,7 @@
         <li><button type="button" data-goto="sucursales">Sucursales</button></li>
         <li><button type="button" data-goto="vender">Vende tu equipo</button></li>
         <li><button type="button" data-goto="privacidad">Aviso de privacidad</button></li>
+        <li><button type="button" data-goto="creditos">Créditos de fotografías</button></li>
       </ul>
     </div>
   </div>

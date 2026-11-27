@@ -1724,154 +1724,275 @@ footer a:hover,footer button:hover{color:#fff;text-decoration:none}
   footer{border-radius:24px 24px 0 0;padding:40px 20px 28px}
 }
 
-/* ── LENGUAJE VISUAL DE LA ERA DE LA IA ──
-   Aurora de luz detrás del hero, texto con gradiente que se mueve despacio,
-   bordes que giran, vidrio esmerilado y brillos al pasar el cursor. Es el
-   idioma visual que hoy asocia la gente con producto nuevo.
+/* ══════════════════════════════════════════════════════════════════════════
+   DISEÑO INDUSTRIAL · FOTOGRAFÍA REAL
+   ══════════════════════════════════════════════════════════════════════════
+   Reemplaza a la capa "era de la IA" (aurora morada y cian, bordes arcoíris
+   que giraban). Se veía de aplicación, no de distribuidor de maquinaria: el
+   que compra una excavadora de tres millones quiere ver la máquina, no luces.
 
-   Ojo con lo que esto NO es: no hay "IA" escrita en ninguna parte. El sitio
-   no usa inteligencia artificial para nada que vea el cliente, y decir que sí
-   sería mentirle. Se ve de esta época; no promete lo que no hace.
-
-   Todo se mueve lento (entre 8 y 18 s) para que se sienta vivo y no distraiga
-   de la máquina. Y quien pidió menos movimiento lo ve todo quieto: el
-   interruptor general de abajo apaga estas animaciones igual que las demás. */
-
-/* Un ángulo animable: sin @property el navegador no sabe interpolar un
-   ángulo dentro de un gradiente y el borde saltaría en vez de girar. */
-@property --giro{syntax:'<angle>';inherits:false;initial-value:0deg}
+   Lo que manda ahora:
+   · Fotografía real de cada modelo (assets/img/equipos/, créditos en
+     data/catalogo.json → creditos_fotos). La foto es el producto.
+   · Negro, acero y el amarillo de marca. Nada más de color: el amarillo
+     señala lo que se pulsa y lo que importa.
+   · Tipografía apretada y grande en titulares; cifras tabulares.
+   · Movimiento lento y con peso. Quien pidió menos movimiento no ve ninguno
+     (el interruptor general de abajo). */
 
 :root{
-  --aurora-1:#F5C400;
-  --aurora-2:#FF8A3D;
-  --aurora-3:#8B5CF6;
-  --aurora-4:#22D3EE;
-  --borde-vivo:conic-gradient(from var(--giro),#F5C400,#FF8A3D,#8B5CF6,#22D3EE,#F5C400);
+  --amarillo-grad:linear-gradient(135deg,#FFD84A,#F5C400 50%,#F0A800);
 }
-@keyframes girar{to{--giro:360deg}}
-@keyframes deriva{
-  0%  {transform:translate3d(0,0,0) scale(1)}
-  33% {transform:translate3d(6%,-8%,0) scale(1.08)}
-  66% {transform:translate3d(-5%,6%,0) scale(.96)}
-  100%{transform:translate3d(0,0,0) scale(1)}
-}
-@keyframes brillo{to{background-position:200% center}}
 
-/* ── La página respira: un halo tenue arriba, detrás de todo ── */
-body{background:
-  radial-gradient(900px 420px at 15% -120px,rgba(139,92,246,.10),transparent 70%),
-  radial-gradient(800px 380px at 90% -80px,rgba(245,196,0,.14),transparent 70%),
-  var(--bg) no-repeat}
+/* ── Fondo: cálido y limpio, sin halos de colores ── */
+body{background:var(--bg)}
 
-/* ── Hero: aurora viva ── */
-.hero-banner{isolation:isolate}
-.hero-banner::before{content:'';position:absolute;inset:-20%;z-index:0;pointer-events:none;filter:blur(60px);opacity:.9;
+/* ── Hero: fotografía de obra a todo lo ancho ── */
+.hero-banner{isolation:isolate;min-height:600px;display:flex;align-items:center;padding:80px 56px;
+  background:#0E0E0D;max-width:1240px}
+.hero-banner::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(26% 34% at 70% 42%,rgba(245,196,0,.55),transparent 70%),
-    radial-gradient(22% 28% at 90% 72%,rgba(255,138,61,.45),transparent 70%),
-    radial-gradient(30% 38% at 52% 88%,rgba(139,92,246,.65),transparent 70%),
-    radial-gradient(24% 30% at 92% 18%,rgba(34,211,238,.45),transparent 70%),
-    radial-gradient(18% 22% at 38% 10%,rgba(139,92,246,.35),transparent 70%);
-  animation:deriva 18s ease-in-out infinite}
-.hero-banner::after{display:block;content:'';position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;
-  background:radial-gradient(120% 80% at 0% 0%,rgba(18,18,17,.85),transparent 60%)}
-.hero-inner{z-index:1}
+    linear-gradient(90deg,rgba(10,10,9,1) 0%,rgba(10,10,9,.96) 30%,rgba(10,10,9,.55) 48%,rgba(10,10,9,.08) 72%,rgba(10,10,9,.1) 100%),
+    linear-gradient(0deg,rgba(10,10,9,.75) 0%,transparent 40%)}
+.hero-banner::after{display:none}
+/* La foto arranca a un tercio: así la máquina queda a la derecha, entre el
+   titular y el destacado, y el texto se apoya en el negro del degradado. */
+.hero-foto{position:absolute;inset:0 0 0 30%;z-index:-2;overflow:hidden;border-radius:0 28px 28px 0}
+.hero-foto img{width:100%;height:100%;object-fit:cover;object-position:35% 40%;display:block}
+.hero-inner{width:100%;z-index:1;align-items:flex-end}
+.hero-text{max-width:640px}
+.hero-tag{background:rgba(245,196,0,.12);box-shadow:inset 0 0 0 1px rgba(245,196,0,.35);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hero-h{font-size:clamp(34px,4.2vw,56px);text-shadow:0 2px 30px rgba(0,0,0,.35)}
+.hero-h span{color:var(--y)}
+.hero-p{color:rgba(255,255,255,.78);font-size:17px}
+.hbtn-lg.yel{background:var(--amarillo-grad);color:var(--ink);
+  box-shadow:0 10px 30px -10px rgba(245,196,0,.7),inset 0 1px 0 rgba(255,255,255,.45)}
+.hbtn-lg.yel:hover{filter:brightness(1.05)}
+.hbtn-lg.out{background:rgba(255,255,255,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.badge{color:rgba(255,255,255,.72)}
+@media (prefers-reduced-motion:no-preference){
+  .hero-foto img{animation:mAcercar 22s ease-out both}
+}
+@keyframes mAcercar{from{transform:scale(1.08)}to{transform:scale(1)}}
 
-/* El renglón amarillo del titular, en gradiente que corre despacio. */
-.hero-h span{background:linear-gradient(90deg,#F5C400 0%,#FFB13D 30%,#FFE27A 50%,#FFB13D 70%,#F5C400 100%);
-  background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:brillo 8s linear infinite}
+/* ── Equipo destacado (portada.js) ──
+   Vive donde antes estaba la vitrina 3D. Una tarjeta de vidrio con una
+   máquina real del inventario: precio, ficha y cotización a un clic. */
+.hero-art{width:360px;aspect-ratio:auto;align-self:flex-end;background:none;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;display:block;border-radius:22px}
+.hero-art::before{display:none}
+.hero-art:empty{display:none}
+@media (prefers-reduced-motion:no-preference){
+  .hero-art{animation:mSubir .8s .3s var(--e-out) both}
+}
+.destacado{background:rgba(14,14,13,.62);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.12);border-radius:22px;overflow:hidden;color:#fff;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
+.destacado-foto{position:relative;aspect-ratio:16/10;overflow:hidden;background:#1A1A18}
+.destacado-foto img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s var(--e-out)}
+.destacado:hover .destacado-foto img{transform:scale(1.04)}
+.destacado-tag{position:absolute;top:12px;left:12px;background:var(--y);color:var(--ink);font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:var(--r-pill)}
+.destacado-info{padding:16px 18px 18px}
+.destacado-info h2{font-size:18px;font-weight:750;letter-spacing:-.02em;line-height:1.25}
+.destacado-meta{font-size:12.5px;color:rgba(255,255,255,.78);margin-top:4px}
+.destacado-fila{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:14px}
+.destacado-precio{font-size:26px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.destacado-precio small{display:block;font-size:12px;font-weight:500;color:#7EE2A0;letter-spacing:0;margin-top:6px}
+.destacado-btns{display:flex;gap:8px}
+.destacado-btns button{border-radius:var(--r-pill);padding:10px 14px;font-size:13px;font-weight:650;cursor:pointer;border:none;white-space:nowrap}
+.destacado-btns .ver{background:#fff;color:var(--ink)}
+.destacado-btns .ver:hover{background:var(--y)}
 
-/* La etiqueta de temporada: vidrio con un borde que gira. */
-.hero-tag{position:relative;background:rgba(18,18,17,.55);box-shadow:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.hero-tag::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
-  background:var(--borde-vivo);animation:girar 6s linear infinite;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+/* ── Cifras bajo el hero ── */
+.kpis{position:relative;z-index:2;max-width:1120px;margin:-48px auto 0;padding:0 20px}
+.kpis-inner{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-radius:22px;
+  box-shadow:0 2px 4px rgba(18,18,17,.04),0 24px 50px -20px rgba(18,18,17,.25)}
+.kpi{padding:24px 28px;display:flex;flex-direction:column;gap:4px;position:relative}
+.kpi + .kpi::before{content:'';position:absolute;left:0;top:24px;bottom:24px;width:1px;background:var(--border)}
+.kpi strong{font-size:clamp(26px,2.6vw,36px);font-weight:800;letter-spacing:-.04em;color:var(--ink);
+  font-variant-numeric:tabular-nums;line-height:1}
+.kpi strong em{font-style:normal;color:var(--yd)}
+.kpi span{font-size:13px;color:var(--muted);line-height:1.4}
 
-/* El botón principal brilla un poco más al acercarse. */
-.hbtn-lg.yel{background:linear-gradient(135deg,#FFD84A,#F5C400 45%,#FFA62B);
-  box-shadow:0 8px 30px -8px rgba(245,196,0,.6),inset 0 1px 0 rgba(255,255,255,.45)}
-.hbtn-lg.yel:hover{background:linear-gradient(135deg,#FFE070,#F5C400 45%,#FF9A1F);
-  box-shadow:0 12px 40px -8px rgba(245,196,0,.75),inset 0 1px 0 rgba(255,255,255,.5)}
-.hbtn-lg.out{background:rgba(255,255,255,.04);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+/* ── Marcas ── */
+.marcas{max-width:1240px;margin:0 auto;padding:44px 20px 0;display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center}
+.marcas-t{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--light);font-weight:650;width:100%;text-align:center}
+.marcas-fila{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px}
+/* Texto informativo, no botones: no filtran nada, así que no se ven ni se
+   comportan como algo que se pulsa. */
+.marca{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);opacity:.38;text-transform:uppercase;padding:4px 0}
 
-/* La máquina, en una vitrina de vidrio con su propio borde vivo. */
-.hero-art{position:relative;background:rgba(255,255,255,.04);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:none}
-.hero-art::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:.7;
-  background:var(--borde-vivo);animation:girar 10s linear infinite;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.hero-art svg{filter:drop-shadow(0 20px 30px rgba(245,196,0,.25))}
+/* ── Secciones de la portada ── */
+.sec{max-width:1240px;margin:0 auto;padding:88px 20px 0}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+.sec-head > div{max-width:640px}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink);margin-bottom:12px}
+.eyebrow::before{content:'';width:28px;height:3px;border-radius:3px;background:var(--y)}
+.sec h2{font-size:clamp(28px,3.4vw,44px);font-weight:800;letter-spacing:-.04em;line-height:1.05;color:var(--ink);text-wrap:balance}
+.sec-head p{font-size:16px;color:var(--muted);line-height:1.6;margin-top:12px}
+.sec-link{display:inline-flex;align-items:center;gap:8px;font-weight:650;font-size:14px;color:var(--ink);text-decoration:none;
+  background:none;border:none;cursor:pointer;padding:10px 0;font-family:inherit}
+.sec-link::after{content:'→';transition:transform .25s var(--e-out)}
+.sec-link:hover::after{transform:translateX(4px)}
 
-/* La excavadora 3D (branding.js). El video trae su propio fondo —la aurora
-   pintada en Blender— y llena la vitrina de borde a borde; el borde vivo
-   (::before) queda encima para que el marco siga siendo el de la web.
-   Imagen fija y video entran fundiéndose: la vitrina vacía de antes de que
-   carguen es la misma de siempre, con su brillo amarillo. */
-.hero-art::before{z-index:1}
-.hero-3d{position:absolute;inset:0;border-radius:inherit;overflow:hidden}
-.hero-3d img,.hero-3d video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  border-radius:inherit;opacity:0;transition:opacity .7s var(--e-out)}
-.hero-3d.lista img,.hero-3d video.lista{opacity:1}
-.hero-3d.plana{display:flex;align-items:center;justify-content:center}
-.hero-3d.plana svg{width:84%}
+/* ── Categorías con foto ── */
+.cats-foto{display:grid;grid-template-columns:1.6fr 1fr 1fr;grid-template-rows:250px 250px;gap:16px}
+.cat-foto{position:relative;display:block;border-radius:22px;overflow:hidden;color:#fff;text-decoration:none;
+  background:#1A1A18;isolation:isolate}
+.cat-foto:first-child{grid-row:span 2}
+.cat-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;
+  transition:transform .9s var(--e-out)}
+.cat-foto::after{content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(0deg,rgba(10,10,9,.85) 0%,rgba(10,10,9,.25) 45%,rgba(10,10,9,0) 70%)}
+.cat-foto:hover img{transform:scale(1.06)}
+.cat-foto-txt{position:absolute;left:22px;right:22px;bottom:20px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.cat-foto h3{font-size:22px;font-weight:800;letter-spacing:-.03em}
+.cat-foto:first-child h3{font-size:30px}
+.cat-foto-txt span{display:block;font-size:13px;color:rgba(255,255,255,.72);margin-top:4px}
+.cat-foto-txt i{flex-shrink:0;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.14);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:18px;transition:background .25s,color .25s,transform .25s var(--e-out)}
+.cat-foto:hover .cat-foto-txt i{background:var(--y);color:var(--ink);transform:translateX(3px)}
 
-/* Los renders 3D de los equipos sin foto (catalog.js). Traen su sombra, así
-   que nada de recuadro: se asientan en el fondo de la tarjeta. En el carrito
-   la regla general recorta (`cover`), y una máquina recortada no se lee. */
+/* ── Encabezado del inventario ── */
+.inv-head{padding-top:88px}
+.inv-head .sec-head{margin-bottom:0}
+.main{padding-top:24px}
+
+/* ── Servicios ── */
+.servicios{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.servicio{background:var(--surface);border-radius:22px;padding:28px 24px;box-shadow:var(--sombra-1);
+  display:flex;flex-direction:column;gap:10px;transition:box-shadow .3s var(--facil),translate .3s var(--facil)}
+.servicio:hover{box-shadow:var(--sombra-2);translate:0 -4px}
+.servicio-ico{width:52px;height:52px;border-radius:14px;background:var(--ink);color:var(--y);display:flex;
+  align-items:center;justify-content:center;margin-bottom:8px}
+.servicio-ico .ico{width:26px;height:26px;stroke-width:1.6}
+.servicio h3{font-size:19px;font-weight:750;letter-spacing:-.02em;color:var(--ink)}
+.servicio p{font-size:14.5px;color:var(--muted);line-height:1.6;flex:1}
+.servicio .sec-link{padding:6px 0 0;align-self:flex-start}
+
+/* ── Cómo funciona: banda oscura ── */
+.proceso-banda{background:var(--ink);color:#fff;margin-top:88px;position:relative;overflow:hidden}
+.proceso-banda::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(-45deg,transparent 0 22px,rgba(245,196,0,.045) 22px 44px)}
+.proceso-banda .sec{padding:80px 20px;position:relative}
+.proceso-banda .eyebrow,.proceso-banda h2{color:#fff}
+.proceso-banda .sec-head p{color:rgba(255,255,255,.62)}
+.pasos{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:paso;list-style:none}
+.paso{counter-increment:paso;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:22px;padding:26px 24px;position:relative}
+.paso::before{content:'0' counter(paso);display:block;font-size:44px;font-weight:800;letter-spacing:-.05em;
+  color:var(--y);line-height:1;margin-bottom:18px;font-variant-numeric:tabular-nums}
+.paso h3{font-size:18px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+.paso p{font-size:14.5px;color:rgba(255,255,255,.62);line-height:1.6}
+
+/* ── Llamado final con foto ── */
+.cta-foto{position:relative;isolation:isolate;overflow:hidden;border-radius:28px;padding:72px 56px;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;background:#0E0E0D}
+.cta-foto > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.cta-foto::after{content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(90deg,rgba(10,10,9,.94) 0%,rgba(10,10,9,.78) 50%,rgba(10,10,9,.6) 100%)}
+.cta-btns .hbtn-lg.out{background:rgba(10,10,9,.45);border-color:rgba(255,255,255,.4)}
+.cta-foto h2{color:#fff;max-width:560px}
+.cta-foto p{color:rgba(255,255,255,.72);font-size:16px;line-height:1.6;margin-top:12px;max-width:520px}
+.cta-btns{display:flex;gap:12px;flex-wrap:wrap}
+.cta-btns .hbtn-lg{display:inline-flex;align-items:center;gap:8px}
+
+/* ── Tarjetas: la foto real manda ──
+   Con fotografía se recorta a la caja (cover): una foto de obra con aire
+   alrededor se lee mejor llena. Los renders 3D y los dibujos de respaldo
+   siguen con contain, que es lo que necesitan para no cortar el brazo. */
+.product-grid:not(.list) .pcard-img{height:auto;aspect-ratio:4/3}
+.pcard-img > img:not(.maq3d){object-fit:cover;padding:0}
+.pcard:hover{box-shadow:0 0 0 1px rgba(245,196,0,.55),0 26px 50px -22px rgba(18,18,17,.4)}
+/* La regla de los dibujos (`.pcard-img svg{height:150px}`) alcanzaba al
+   icono de la cámara del contador de fotos y lo volvía gigante. */
+.pcard-img .pcard-fotos svg{width:1.1em;height:1.1em;transition:none}
+.pcard:hover .pcard-img .pcard-fotos svg{transform:none}
+.pcard-ilustrativa{position:absolute;left:10px;bottom:10px;z-index:2;font-size:10.5px;font-weight:600;
+  color:#fff;background:rgba(14,14,13,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  padding:3px 8px;border-radius:var(--r-pill);letter-spacing:.01em}
+.btn-add{background:var(--amarillo-grad);box-shadow:0 6px 18px -8px rgba(245,196,0,.7)}
+.btn-add:hover{filter:brightness(1.05)}
+
+/* ── Buscador: anillo amarillo al enfocar ── */
+.search-wrap:focus-within{box-shadow:0 0 0 4px rgba(245,196,0,.35),0 10px 40px -12px rgba(0,0,0,.5)}
+.search-btn{background:var(--amarillo-grad)}
+.nav-cat[aria-current="true"]{background:var(--ink);box-shadow:0 6px 18px -6px rgba(18,18,17,.5)}
+
+/* ── Ficha y cotización: vidrio neutro ── */
+.modal-overlay,.page-overlay{background:rgba(14,14,13,.55);backdrop-filter:blur(12px) saturate(1.1);-webkit-backdrop-filter:blur(12px) saturate(1.1)}
+.modal-img{background:linear-gradient(180deg,#F5F4F0,#E7E6E0)}
+.modal-add,.btn-checkout{background:var(--amarillo-grad);box-shadow:0 10px 30px -10px rgba(245,196,0,.7)}
+.gal-credito{position:absolute;left:10px;bottom:10px;z-index:2;font-size:11px;color:#fff;background:rgba(14,14,13,.6);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:4px 10px;border-radius:var(--r-pill)}
+.gal-credito button{background:none;border:none;color:var(--y);font:inherit;cursor:pointer;padding:0;text-decoration:underline}
+
+/* ── Créditos de fotografía ── */
+.creditos{list-style:none;display:grid;gap:10px}
+.creditos li{display:flex;gap:12px;align-items:center;font-size:13px;line-height:1.5;color:var(--muted)}
+.creditos img{width:72px;height:54px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--bg)}
+.creditos strong{color:var(--ink)}
+.creditos a{color:#1565C0}
+.ficha-credito{font-size:12px;color:var(--light);margin-top:8px}
+.ficha-credito a{color:inherit}
+
+/* ── Pie: un brillo cálido abajo ── */
+footer{position:relative;overflow:hidden;isolation:isolate}
+footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120%;z-index:-1;pointer-events:none;filter:blur(70px);opacity:.3;
+  background:radial-gradient(40% 50% at 70% 40%,rgba(245,196,0,.45),transparent 70%)}
+
+/* ── Tamaños de pantalla ── */
+@media(max-width:1080px){
+  /* El destacado no cabe junto al titular; el mismo equipo sale primero en
+     el catálogo. Esta capa le dio display:block y lo había revivido. */
+  .hero-art{display:none}
+  .hero-banner{min-height:520px;padding:56px 32px}
+  .kpis{margin-top:-36px}
+  .servicios,.pasos{grid-template-columns:repeat(2,1fr)}
+  .cats-foto{grid-template-columns:1fr 1fr;grid-template-rows:280px 200px 200px}
+  .cat-foto:first-child{grid-row:auto;grid-column:span 2}
+}
+@media(max-width:700px){
+  .hero-foto{inset:0;border-radius:inherit}
+  .hero-banner{min-height:0;padding:44px 22px 72px}
+  .hero-banner::before{background:linear-gradient(0deg,rgba(10,10,9,.96) 0%,rgba(10,10,9,.78) 55%,rgba(10,10,9,.5) 100%)}
+  .hero-p{font-size:15.5px}
+  .kpis{margin-top:-40px;padding:0 12px}
+  .kpis-inner{grid-template-columns:1fr 1fr}
+  .kpi{padding:18px 18px}
+  .kpi:nth-child(3)::before{display:none}
+  .kpi:nth-child(n+3){border-top:1px solid var(--border)}
+  .marca{font-size:17px}
+  .marcas-fila{gap:8px 24px}
+  .sec{padding-top:64px}
+  .inv-head{padding-top:64px}
+  .cats-foto{grid-template-columns:1fr 1fr;grid-template-rows:220px 170px 170px;gap:10px}
+  .cat-foto h3,.cat-foto:first-child h3{font-size:18px}
+  .cat-foto-txt{left:14px;right:14px;bottom:14px}
+  .cat-foto-txt i{display:none}
+  .servicios,.pasos{grid-template-columns:1fr}
+  .proceso-banda{margin-top:64px}
+  .proceso-banda .sec{padding:56px 20px}
+  .cta-foto{padding:44px 24px;border-radius:24px}
+  .cta-btns .hbtn-lg{flex:1 1 100%;justify-content:center}
+}
+@media print{
+  .kpis,.marcas,.sec,.proceso-banda,.hero-foto{display:none!important}
+}
+
+/* Los renders 3D de los equipos que aún no tienen foto (catalog.js). Traen
+   su sombra, así que nada de recuadro. En el carrito la regla general
+   recorta (`cover`), y una máquina recortada no se lee. */
 .cart-item-img img.maq3d{object-fit:contain;padding:4px}
 .cmp-chip-img img.maq3d,.cmp-th-img img.maq3d{width:100%;height:100%;object-fit:contain}
 @media (prefers-reduced-motion:no-preference){
   .maq3d{animation:mFundir .45s var(--e-out) both}
 }
 @keyframes mFundir{from{opacity:0}}
-
-/* ── Buscador: anillo de luz al enfocar ── */
-.search-wrap{position:relative}
-.search-wrap::before{content:'';position:absolute;inset:-2px;border-radius:inherit;padding:2px;pointer-events:none;opacity:0;
-  background:var(--borde-vivo);animation:girar 4s linear infinite;transition:opacity .3s;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.search-wrap:focus-within::before{opacity:1}
-.search-wrap:focus-within{box-shadow:0 0 0 6px rgba(139,92,246,.12),0 10px 40px -10px rgba(245,196,0,.5)}
-.search-btn{background:linear-gradient(135deg,#FFD84A,#F5C400 50%,#FFA62B)}
-
-/* ── Chip activo de categoría ── */
-.nav-cat[aria-current="true"]{background:linear-gradient(135deg,#1E1E1C,#121211);
-  box-shadow:0 6px 18px -6px rgba(18,18,17,.5),inset 0 1px 0 rgba(255,255,255,.08)}
-
-/* ── Tarjetas: borde de luz al pasar el cursor ── */
-.pcard::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;z-index:4;
-  background:var(--borde-vivo);opacity:0;transition:opacity .35s var(--facil);animation:girar 5s linear infinite;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.pcard:hover::before,.pcard:focus-within::before{opacity:1}
-.pcard:hover{box-shadow:0 24px 50px -16px rgba(139,92,246,.28),0 10px 30px -12px rgba(245,196,0,.35)}
-.pcard-img{background:
-  radial-gradient(80% 70% at 50% 100%,rgba(245,196,0,.14),transparent 70%),
-  linear-gradient(180deg,#F5F4F0,#EAE9E3)}
-.btn-add{background:linear-gradient(135deg,#FFD84A,#F5C400 50%,#FFA62B);box-shadow:0 6px 18px -8px rgba(245,196,0,.7)}
-.btn-add:hover{background:linear-gradient(135deg,#FFE070,#F5C400 50%,#FF9A1F)}
-
-/* ── Ficha y cotización: el mismo vidrio ── */
-.modal-overlay,.page-overlay{background:rgba(18,18,17,.45);backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2)}
-.modal-img{background:
-  radial-gradient(70% 60% at 50% 70%,rgba(245,196,0,.16),transparent 70%),
-  radial-gradient(50% 40% at 80% 20%,rgba(139,92,246,.10),transparent 70%),
-  linear-gradient(180deg,#F5F4F0,#E7E6E0)}
-.modal-add,.btn-checkout{background:linear-gradient(135deg,#FFD84A,#F5C400 50%,#FFA62B);box-shadow:0 10px 30px -10px rgba(245,196,0,.7)}
-.modal-name,.ficha-info h1{background:linear-gradient(180deg,#121211 30%,#4A4A46);-webkit-background-clip:text;background-clip:text;color:transparent}
-
-/* ── Pie: el halo vuelve a asomar abajo ── */
-footer{position:relative;overflow:hidden;isolation:isolate}
-footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120%;z-index:-1;pointer-events:none;filter:blur(70px);opacity:.45;
-  background:radial-gradient(40% 50% at 30% 30%,rgba(139,92,246,.5),transparent 70%),
-             radial-gradient(40% 50% at 75% 40%,rgba(245,196,0,.45),transparent 70%)}
-
-@media(max-width:600px){
-  .hero-banner::before{filter:blur(40px);opacity:.6}
-}
 
 /* ── EL INTERRUPTOR GENERAL ──
    Quien pidió menos animación en su sistema ve la página entera quieta. No se

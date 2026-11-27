@@ -197,7 +197,8 @@ function generarDatos(catalogo) {
 const CATALOGO_HUELLA = '${huellaFuente()}';
 
 const CATALOGO = ${JSON.stringify(
-    { ajustes: catalogo.ajustes, sucursales: catalogo.sucursales, equipos: catalogo.equipos },
+    { ajustes: catalogo.ajustes, sucursales: catalogo.sucursales, equipos: catalogo.equipos,
+      creditos: catalogo.creditos_fotos || {} },
     null, 2)};
 
 /* Adónde manda backend.js las solicitudes de cotización.
@@ -241,6 +242,13 @@ const MAPAS = ${JSON.stringify(mapasDeSucursales(), null, 2)};
  * Los vendidos quedan fuera: no tiene sentido rematar una ficha invitando a
  * ver algo que tampoco está.
  */
+/* Una foto de catálogo en una tarjeta de ~320 px: con su versión de 700 px
+   en srcset, el navegador no baja la de 1400 para pintarla chica. */
+function imgTarjeta(f, alt) {
+  const set = /-w1400\.webp$/.test(f) ? ` srcset="${esc(f.replace('-w1400.webp', '-w700.webp'))} 700w, ${esc(f)} 1400w" sizes="(max-width:700px) 92vw, 360px"` : '';
+  return `<img src="${esc(f)}"${set} alt="${esc(alt)}" loading="lazy" decoding="async">`;
+}
+
 function similaresHTML(eq, catalogo, iconos) {
   const candidatos = catalogo.equipos.filter(o =>
     o.slug !== eq.slug && o.disponibilidad !== 'vendido');
@@ -259,7 +267,7 @@ function similaresHTML(eq, catalogo, iconos) {
       ${elegidos.map(o => `
         <a class="similar" href="${SITIO}/equipos/${o.slug}/">
           <div class="similar-img">${
-            o.img ? `<img src="${esc(o.img)}" alt="${esc(o.name)}" loading="lazy" decoding="async">`
+            o.img ? imgTarjeta(o.img, o.name)
                   : (iconos[o.svgKey] || iconos.excavadora)
           }</div>
           <div class="similar-body">
@@ -437,6 +445,18 @@ function fichaHTML(eq, catalogo, iconos) {
     </div>
   </div>`;
 
+  /* Las fotos de catálogo son del MODELO, no de la unidad: se dice, y se da
+     crédito a quien la tomó (lo exigen las licencias CC BY y CC BY-SA). */
+  const creditos = catalogo.creditos_fotos || {};
+  const seguro = u => /^https:\/\//.test(u || '') ? u : '#';
+  // Sin repetir: dos fotos del mismo autor y licencia son un solo crédito.
+  const conCredito = [...new Map(fotos.map(f => creditos[f]).filter(Boolean)
+    .map(c => [`${c.autor}|${c.licencia}|${c.fuente}`, c])).values()];
+  const creditoHTML = conCredito.length ? `
+      <p class="ficha-credito">Foto${conCredito.length > 1 ? 's' : ''} ilustrativa${conCredito.length > 1 ? 's' : ''} del modelo, no de la unidad en venta:
+        ${conCredito.map(c => `${seguro(c.fuente) !== '#' ? `<a href="${esc(c.fuente)}" rel="noopener nofollow" target="_blank">${esc(c.autor)}</a>` : esc(c.autor)}, ${
+          seguro(c.licencia_url) !== '#' ? `<a href="${esc(c.licencia_url)}" rel="noopener nofollow license" target="_blank">${esc(c.licencia)}</a>` : esc(c.licencia)}`).join(' · ')}.</p>` : '';
+
   const descuento = eq.original && eq.original > eq.price
     ? Math.round((1 - eq.price / eq.original) * 100) : 0;
 
@@ -511,7 +531,7 @@ ${JSON.stringify(datosFAQ, null, 2)}
         <p class="ficha-agotado apartado">Apartada. Escríbenos por si se libera.</p>` : ''}
       <p class="ficha-meta">${ico('pin')}${esc(eq.location)} · Año ${eq.year} ·
         <span class="pcard-seller-tag">${ico('check')}${esc(eq.cond === 'Renta' ? 'En renta' : eq.cond === 'Nuevo' ? 'Nuevo' : 'Usado certificado')}</span>
-      </p>
+      </p>${creditoHTML}
 
       <p class="ficha-precio">
         ${precioCompleto(eq.price)}${esRenta ? '<small> / mes</small>' : ''}
@@ -765,7 +785,7 @@ ${JSON.stringify(guiaFAQ, null, 2)}
     ${equipos.map(e => `
       <a class="similar" href="${SITIO}/equipos/${e.slug}/">
         <div class="similar-img">${
-          e.img ? `<img src="${esc(e.img)}" alt="${esc(e.name)}" loading="lazy" decoding="async">`
+          e.img ? imgTarjeta(e.img, e.name)
                 : (iconos[e.svgKey] || iconos.excavadora)
         }</div>
         <div class="similar-body">
@@ -776,6 +796,8 @@ ${JSON.stringify(guiaFAQ, null, 2)}
         </div>
       </a>`).join('')}
   </div>
+  ${equipos.some(e => e.img && (catalogo.creditos_fotos || {})[e.img]) ? `
+  <p class="ficha-credito">Fotos ilustrativas del modelo, no de la unidad en venta. Créditos y licencias en la ficha de cada equipo.</p>` : ''}
 
 ${guiaHTML}
 
