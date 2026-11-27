@@ -22,6 +22,54 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-10 · Claude · Tuneo de acabado (móvil, formularios, contraste)
+
+- **Rama:** `claude/T-10-tuneo`
+- **Qué cambió:** el sitio se usa mejor en el celular. Los botones son más
+  fáciles de tocar, los formularios ya no hacen zoom en el iPhone y avisan
+  mejor de los errores, el encabezado ocupa la mitad al bajar, varios textos
+  grises se leen mejor y las tarjetas tienen un solo efecto al pasar el
+  cursor. El botón amarillo del encabezado ahora es "Cotización".
+- **Medidas, antes → después (375 px):**
+  - Controles de menos de 40 px: 64 de 95 → 14 (los que quedan: el nombre del
+    equipo, cuya zona de toque es toda la tarjeta; el campo de búsqueda dentro
+    de su caja de 48 px; el enlace de salto y dos de texto).
+  - Encabezado pegado al bajar: 119 px → 67 px.
+  - Campos de formulario: 13 px → 16 px. Tarjeta: 519 px → 475 px de alto.
+  - Contraste: "MSI" 2.3:1, marcas 2.4:1, legal del pie 3.2:1, títulos del
+    pie 3.8:1, gris claro 4.3:1 → todos arriba de 4.5:1.
+- **Archivos:**
+  - `assets/css/styles.css` — una capa nueva al final ("ACABADO · T-10").
+    No se borró ninguna regla anterior.
+  - `index.html` — la clase `primary` pasa de "Publicar equipo" a
+    `#cartToggle`. Mismos IDs y `data-*`.
+  - `assets/js/pages.js`, `assets/js/ui.js` — `autocomplete` en 11 campos de
+    contacto (nombre, teléfono, correo, empresa).
+  - `assets/js/security.js` — `readAndValidate` pone `aria-invalid` y
+    `aria-describedby` en el campo con error y los quita al corregirlo.
+  - `tests/smoke.test.js` — 3 pruebas (autocompletar, error anunciado, botón
+    principal). `tests/capturas/` — referencias aceptadas a propósito.
+- **Cómo probarlo:**
+  1. `npm run build && npm test && npm run test:visual`
+  2. En http://localhost:8000 con el navegador a 375 px: bajar la página (queda
+     una fila con buscador y cotización), abrir "Cotización" con un equipo y
+     enviar el formulario vacío (campos en rojo, aviso arriba con "!", botón
+     de enviar pegado abajo).
+- **Pruebas:** `npm test` en verde (227/227 integración, 3 nuevas) y
+  `npm run test:visual` 61/61 tras aceptar las capturas. Revisadas a ojo
+  `movil-portada` (35.7% de cambio: encabezado y hero) y `movil-panel-equipos`.
+- **Dudas / riesgos:**
+  - **Decisión de negocio:** el botón principal del encabezado pasó de
+    "Publicar equipo" a "Cotización". Paco dijo "todo hazlo" a la propuesta
+    que lo incluía; se revierte moviendo la clase `primary` en `index.html`.
+  - El encabezado móvil usa `display:contents` y `top` negativo en un
+    elemento `sticky`; el aviso sobre formularios usa `:has()`. Navegadores de
+    antes de 2023 verían el encabezado como antes o el aviso abajo, sin romper.
+  - En el celular, "Enviar por correo" queda como ícono de sobre junto al
+    botón de WhatsApp; el texto sigue en el botón para lectores de pantalla.
+  - No se limpiaron las reglas viejas que la capa nueva pisa (la hoja tiene
+    tres capas apiladas): quitarlas es otra tarea, con más riesgo.
+
 ## 2026-11-27 · T-05 · Claude · Auditoría de permisos de SQL Server y la API
 
 - **Rama:** `claude/T-05-auditoria-sql`

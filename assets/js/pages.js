@@ -422,13 +422,13 @@ const venderHTML = () => `
     ${HP}
     <div class="form-grid">
       <div class="field"><label for="v-name">Tu nombre *</label>
-        <input type="text" id="v-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+        <input type="text" id="v-name" autocomplete="name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
         <span class="errmsg">Escribe tu nombre.</span></div>
       <div class="field"><label for="v-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
-        <input type="text" id="v-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+        <input type="text" id="v-phone" autocomplete="tel-national" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
         <span class="errmsg">Necesitamos 10 dígitos.</span></div>
       <div class="field full"><label for="v-email">Correo <span class="hint">(opcional)</span></label>
-        <input type="text" id="v-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+        <input type="text" id="v-email" autocomplete="email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
         <span class="errmsg">Ese correo no parece válido.</span></div>
 
       <div class="field"><label for="v-type">Tipo de equipo</label>
@@ -520,16 +520,16 @@ function cotizarHTML(){
       ${HP}
       <div class="form-grid">
         <div class="field"><label for="c-name">Tu nombre *</label>
-          <input type="text" id="c-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <input type="text" id="c-name" autocomplete="name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
           <span class="errmsg">Escribe tu nombre.</span></div>
         <div class="field"><label for="c-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
-          <input type="text" id="c-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <input type="text" id="c-phone" autocomplete="tel-national" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
           <span class="errmsg">Necesitamos 10 dígitos.</span></div>
         <div class="field"><label for="c-email">Correo <span class="hint">(opcional)</span></label>
-          <input type="text" id="c-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <input type="text" id="c-email" autocomplete="email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
           <span class="errmsg">Ese correo no parece válido.</span></div>
         <div class="field"><label for="c-company">Empresa u obra <span class="hint">(opcional)</span></label>
-          <input type="text" id="c-company" placeholder="Constructora del Sureste"></div>
+          <input type="text" id="c-company" autocomplete="organization" placeholder="Constructora del Sureste"></div>
         <div class="field full"><label for="c-notes">Comentarios</label>
           <textarea id="c-notes" placeholder="Fechas en que lo necesitas, lugar de entrega, forma de pago…"></textarea></div>
         <label class="check full"><input type="checkbox" id="c-save"${account?' checked':''}> Guardar mis datos en este dispositivo para la próxima vez</label>
@@ -600,13 +600,13 @@ function cuentaHTML(){
     <form id="acctForm" novalidate>
       <div class="form-grid">
         <div class="field full"><label for="a-name">Nombre *</label>
-          <input type="text" id="a-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <input type="text" id="a-name" autocomplete="name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
           <span class="errmsg">Escribe tu nombre.</span></div>
         <div class="field"><label for="a-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
-          <input type="text" id="a-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <input type="text" id="a-phone" autocomplete="tel-national" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
           <span class="errmsg">Necesitamos 10 dígitos.</span></div>
         <div class="field"><label for="a-email">Correo <span class="hint">(opcional)</span></label>
-          <input type="text" id="a-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <input type="text" id="a-email" autocomplete="email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
           <span class="errmsg">Ese correo no parece válido.</span></div>
       </div>
       <div class="send-row"><button class="btn-primary" type="submit">Guardar mis datos</button></div>

@@ -2007,3 +2007,136 @@ footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120
   }
   body.js-reveal .pcard{opacity:1;transform:none}
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   ACABADO · T-10 — tacto, formularios, contraste y ritmo en móvil
+   Cada regla responde a una medida tomada en 375 px y 1366 px antes de
+   tocar nada (ver BITACORA, T-10). No cambia IDs, rutas ni lógica.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Contraste: el gris claro daba 4.3:1 sobre blanco; el mínimo es 4.5:1 ── */
+:root{--light:#6B6B66}
+/* "MSI" en amarillo sobre blanco daba 2.3:1. El amarillo pasa a ser el
+   subrayado y la letra queda en tinta. */
+.kpi strong em{color:inherit;padding:0 .06em;
+  background:linear-gradient(transparent 66%,var(--y) 66%,var(--y) 92%,transparent 92%)}
+/* Las marcas eran tinta al 38% (2.4:1). */
+.marca{opacity:1;color:#6B6B66}
+.footer-col h3{color:rgba(255,255,255,.62)}
+.footer-legal{color:rgba(255,255,255,.6);font-size:12px}
+
+/* ── Botón principal del encabezado: cotizar, no publicar ──
+   La insignia era amarilla; sobre un botón amarillo no se veía. */
+.hbtn.primary .cart-badge{background:var(--ink);color:#fff;box-shadow:0 0 0 2px var(--y)}
+
+/* ── Tarjetas: un solo gesto al pasar el cursor ──
+   Había cuatro encimados (elevación, acercamiento, reflejo que cruza la foto
+   y cambio de color en las especificaciones). Quedan la elevación y un
+   acercamiento leve. */
+.pcard-img::after{display:none}
+.pcard:hover .pcard-spec{background:var(--bg);color:var(--text)}
+.pcard:hover .pcard-img img,.pcard:hover .pcard-img svg{transform:scale(1.03)}
+.pcard:hover{translate:0 -3px}
+/* En pantallas táctiles el "hover" se queda pegado tras el toque. */
+@media(hover:none){
+  .pcard:hover{translate:none}
+  .pcard:hover .pcard-img img,.pcard:hover .pcard-img svg{transform:none}
+}
+
+/* ── Formularios ── */
+.field label{font-size:13px;color:var(--text)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(245,196,0,.4)}
+.field.err input,.field.err select,.field.err textarea{border-color:var(--red);box-shadow:0 0 0 3px rgba(211,47,47,.12)}
+.field .errmsg{font-size:12.5px;font-weight:550;line-height:1.4}
+/* El aviso de error salía con la palomita de "todo bien". */
+.toast.error .toast-icon{font-size:0;display:inline-flex}
+.toast.error .toast-icon::before{content:'!';font-size:13px;font-weight:800;line-height:1;width:20px;height:20px;border-radius:50%;
+  background:#fff;color:#7A1B1B;display:inline-flex;align-items:center;justify-content:center}
+
+/* ── Entrada del hero: de 0.7 s a 0.45 s por elemento ── */
+@media (prefers-reduced-motion:no-preference){
+  .hero-tag,.hero-h,.hero-p,.hero-btns,.hero-badges{animation-duration:.45s}
+}
+
+.sec-link{min-height:44px}
+
+/* ── Áreas táctiles: 44 px como mínimo en tableta y celular ──
+   64 de los 95 controles visibles en un celular medían menos de 40 px. */
+@media(max-width:900px){
+  .pcard-fav,.pcard-cmp,.pcard-edit{width:44px;height:44px;font-size:18px}
+  .pcard-fav{top:10px;right:10px}
+  .pcard-cmp{top:62px;right:10px}
+  .pcard-edit{top:62px;right:10px}
+  body.is-admin .pcard-cmp{top:114px}
+  .nav-cat{min-height:44px;padding:0 18px;display:inline-flex;align-items:center}
+  .view-btn{width:44px;height:44px}
+  .sort-sel,.filters-toggle,.pag-btn{min-height:44px}
+  .pag-btn{min-width:44px}
+  .btn-add,.btn-quote{min-height:44px}
+  .page-head .close,.modal-close{width:44px;height:44px}
+  .footer-col ul{gap:0}
+  footer li a,footer li button{display:inline-flex;align-items:center;min-height:44px}
+  .footer-col li:not(:has(a,button)){padding:8px 0}
+  /* La barra superior no crece: el área de toque sí. */
+  .topbar-links button{padding:12px 0;margin:-12px 0}
+}
+
+@media(max-width:700px){
+  /* La portada medía 11,000 px de alto en un celular. */
+  .sec{padding-top:52px}
+  .sec-head{margin-bottom:20px}
+  .proceso-banda{margin-top:56px}
+  .proceso-banda .sec{padding:48px 20px}
+}
+
+@media(max-width:600px){
+  /* ── Encabezado: al bajar queda una sola fila (buscador + cotización) ──
+     Ocupaba 119 px fijos, el 15% de la pantalla. `top` negativo deja que la
+     primera fila (logo, cuenta, publicar) se vaya con la página y la segunda
+     se quede pegada. Sin JavaScript y sin que nada salte. Las cuentas:
+     10 de relleno + 44 de fila + 10 de separación = 64; se dejan 8 de aire. */
+  header{padding:10px 0;top:-56px}
+  .header-inner{row-gap:10px;column-gap:8px}
+  .logo{min-height:44px}
+  /* Los botones pasan a ser hijos directos de la fila para poder mandar
+     el de cotización junto al buscador. */
+  .header-actions{display:contents}
+  .header-actions .hbtn{order:1;min-height:44px;min-width:44px;justify-content:center}
+  .header-actions .hbtn:first-child{margin-left:auto}
+  .search-wrap{order:3;flex:1 1 calc(100% - 56px);min-width:0;height:48px}
+  .header-actions .cart-btn{order:4;width:48px;height:48px;padding:0}
+  /* Un solo amarillo en la fila que se queda: el de cotizar. */
+  .search-btn{width:40px;height:40px;background:rgba(255,255,255,.1);color:#fff}
+  .search-wrap:focus-within .search-btn{background:var(--ink);color:#fff}
+
+  /* Con menos de 16 px el iPhone hace zoom al tocar el campo. Una regla
+     anterior ya lo intentaba, pero perdía por especificidad. */
+  .field input[type=text],.field input[type=number],.field input[type=email],.field input[type=tel],
+  .field input[type=date],.field select,.field textarea,.search-input,.sort-sel{font-size:16px}
+  .field input[type=text],.field input[type=number],.field input[type=email],.field input[type=tel],
+  .field input[type=date],.field select{min-height:48px}
+
+  /* Enviar, siempre a la vista: el formulario de venta tiene diez campos. */
+  .page-body .send-row{position:sticky;bottom:-28px;z-index:2;background:var(--surface);gap:8px;flex-wrap:nowrap;
+    margin:20px -28px 0;padding:12px 28px calc(12px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -12px 18px -14px rgba(18,18,17,.4)}
+  .page-body .send-row .btn-primary,.page-body .send-row .btn-ghost{flex:1 1 0;min-width:0;min-height:46px}
+  /* El de correo queda como ícono: dos botones a lo ancho tapaban medio formulario.
+     El texto sigue en el botón para los lectores de pantalla. */
+  .page-body .send-row .btn-ghost[data-send="mail"]{flex:0 0 52px;padding:0;font-size:0;display:inline-flex;align-items:center;justify-content:center}
+  .page-body .send-row .btn-ghost[data-send="mail"] .ico{width:20px;height:20px;margin:0}
+
+  /* Con un formulario abierto el aviso sale arriba: abajo tapaba los campos. */
+  body:has(.page-overlay.open) .toast{bottom:auto;top:12px;transform:translateX(-50%) translateY(-160px)}
+  body:has(.page-overlay.open) .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* Tarjeta más compacta: medía 519 px de alto, nueve seguidas. */
+  .product-grid:not(.list) .pcard-img{aspect-ratio:16/10;height:auto}
+  .pcard-body{padding:14px 16px 4px}
+  .pcard-price-area{padding:8px 16px 16px}
+  .pcard-actions{margin-top:12px}
+
+  /* El botón de WhatsApp tapaba la paginación y el final del pie. */
+  .wa-float{width:52px;height:52px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  footer{padding-bottom:84px}
+}

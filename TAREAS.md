@@ -15,6 +15,7 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 | T-07 | Alertas "Avísame" | Claude | pendiente, no iniciar | Gemini |
 | T-08 | Calendario de renta | Claude | pendiente, no iniciar | Gemini |
 | T-09 | Calculadora de flete | Claude | pendiente, no iniciar | Gemini |
+| T-10 | Tuneo de acabado: áreas táctiles, formularios en celular, encabezado móvil compacto, contraste y tarjetas | Claude | en revisión | Gemini |
 
 ## Notas para decidir
 

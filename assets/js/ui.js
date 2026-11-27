@@ -248,7 +248,7 @@ function preguntasHTML(p){
       <input class="hp-field" type="text" id="hp_pregunta" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="field">
         <label for="qa-nombre">Tu nombre</label>
-        <input type="text" id="qa-nombre" maxlength="60" placeholder="Juan Pérez"
+        <input type="text" id="qa-nombre" autocomplete="name" maxlength="60" placeholder="Juan Pérez"
                value="${esc(account?.name || '')}">
       </div>
       <div class="field">

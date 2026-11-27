@@ -34,12 +34,22 @@ function readAndValidate(defs){
     if(!el) return;
     const wrap = el.closest('.field');
     if(wrap) wrap.classList.remove('err');
+    el.removeAttribute('aria-invalid');
     const v = el.value.trim();
     let bad = false;
     if(d.required && !v) bad = true;
     else if(v && d.type==='tel' && !PHONE_RE.test(v.replace(/\D/g,''))) bad = true;
     else if(v && d.type==='email' && !EMAIL_RE.test(v)) bad = true;
-    if(bad){ ok = false; if(wrap) wrap.classList.add('err'); if(!firstBad) firstBad = el }
+    if(bad){
+      ok = false;
+      if(wrap) wrap.classList.add('err');
+      /* El rojo no lo ve un lector de pantalla: se le dice que el campo está
+         mal y cuál es el mensaje que lo explica. */
+      el.setAttribute('aria-invalid', 'true');
+      const msg = wrap && wrap.querySelector('.errmsg');
+      if(msg){ msg.id = msg.id || d.id + '-err'; el.setAttribute('aria-describedby', msg.id) }
+      if(!firstBad) firstBad = el;
+    }
     out[d.id] = v;
   });
   if(!ok){ showToast('Revisa los campos marcados en rojo', true); if(firstBad) firstBad.focus() }

@@ -203,6 +203,21 @@ const ev = code => window.eval(code);
 
   $('#checkoutBtn').click();
   check('Checkout abre el formulario de cotización', $('#quoteForm') !== null);
+
+  /* El formulario en un celular: el teléfono ofrece los datos guardados y un
+     error se anuncia también a quien no ve el borde rojo. */
+  check('Los campos de contacto piden autocompletar',
+    $('#c-name').autocomplete === 'name' && $('#c-phone').autocomplete === 'tel-national' &&
+    $('#c-email').autocomplete === 'email' && $('#c-company').autocomplete === 'organization');
+  submit('#quoteForm');   // vacío: no pasa la validación
+  const idMsg = $('#c-name').getAttribute('aria-describedby');
+  const msgNombre = idMsg ? $('#' + idMsg) : null;
+  check('Un campo inválido se marca para lectores de pantalla, con su mensaje',
+    $('#c-name').getAttribute('aria-invalid') === 'true' && msgNombre !== null &&
+    msgNombre.classList.contains('errmsg') && $('#toast').classList.contains('error'));
+  check('El botón principal del encabezado es el de cotización',
+    $('#cartToggle').classList.contains('primary') && !$('header [data-goto="vender"]').classList.contains('primary'));
+
   $('#c-name').value = 'Ana López';
   $('#c-phone').value = '9619876543';
   $('#c-save').checked = true;
