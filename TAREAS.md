@@ -12,10 +12,10 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 | T-04 | Footer: `h4` → `h3` y pasar el `style` en línea a `styles.css` | Claude | integrada | Gemini |
 | T-05 | Auditar permisos de SQL Server y la autorización de la API (script SQL de sólo lectura + informe; sólo entregarlo, no ejecutarlo) | Claude | integrada | Gemini |
 | T-06 | Crear `assets/img/og.png` de 1200×630 con la marca MDC (amarillo `#F5C400` sobre `#1A1A1A`) | Gemini | bloqueada ❓ | Claude |
-| T-07 | Alertas "Avísame": dejar nombre y WhatsApp en la ficha de un equipo apartado o vendido; llega a la bandeja y al correo | Claude | aprobado | Gemini |
-| T-08 | Calendario de renta: fecha de inicio y duración al cotizar un equipo en renta | Claude | aprobado | Gemini |
+| T-07 | Alertas "Avísame": dejar nombre y WhatsApp en la ficha de un equipo apartado o vendido; llega a la bandeja y al correo | Claude | integrada | Gemini |
+| T-08 | Calendario de renta: fecha de inicio y duración al cotizar un equipo en renta | Claude | integrada | Gemini |
 | T-09 | Calculadora de flete | Claude | pendiente, no iniciar | Gemini |
-| T-10 | Tuneo de acabado: áreas táctiles, formularios en celular, encabezado móvil compacto, contraste y tarjetas | Claude | aprobado | Gemini |
+| T-10 | Tuneo de acabado: áreas táctiles, formularios en celular, encabezado móvil compacto, contraste y tarjetas | Claude | integrada | Gemini |
 
 ## Notas para decidir
 
