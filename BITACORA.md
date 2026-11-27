@@ -22,6 +22,126 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-08 · Claude · Fechas de renta al cotizar
+
+- **Rama:** `claude/T-08-renta` (sale de `claude/T-07-avisame`; integrar en
+  orden T-10 → T-07 → T-08).
+- **Qué cambió:** al cotizar algún equipo en renta, el formulario pregunta
+  "¿Cuándo empieza la renta?" (fecha, no deja elegir días pasados) y "¿Por
+  cuánto tiempo?" (de "menos de un mes" a "más de 24 meses"). Las dos son
+  opcionales. La respuesta llega en el mensaje de WhatsApp, en la bandeja y
+  en el correo como "Renta: inicio 15/03/2027 · duración: 3 meses". Paco
+  eligió esta variante: sin calendario de reservas en el panel.
+- **Archivos:**
+  - `assets/js/pages.js` — los dos campos en `cotizarHTML` (sólo si hay
+    renta) y su lectura en `quotePayload`: valida la fecha, antepone la línea
+    al mensaje y guarda `renta_inicio` / `renta_plazo` en el renglón del
+    equipo en renta. Sin globales nuevas.
+  - `assets/css/styles.css` — estilo del campo de fecha ("RENTA · T-08").
+  - `tests/smoke.test.js` — 7 pruebas.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. Agregar un equipo en renta a la cotización y abrir "Solicitar
+     cotización": aparecen los dos campos. Con sólo equipos de compra, no.
+- **Pruebas:** `npm test` en verde (244/244 integración, 7 nuevas).
+- **Dudas / riesgos:**
+  - No calcula el total de la renta por los meses elegidos: sería presentar
+    una cifra como oferta. El asesor confirma precio y disponibilidad.
+  - Una sola fecha y un solo plazo para toda la cotización, aunque lleve
+    varios equipos en renta.
+  - No sabe si el equipo está ocupado en esas fechas: eso sería el calendario
+    de reservas que Paco descartó por ahora.
+
+## 2026-11-27 · T-07 · Claude · "Avísame" en equipos apartados o vendidos
+
+- **Rama:** `claude/T-07-avisame` (sale de `claude/T-10-tuneo`, no de `main`:
+  usa sus estilos de formulario; integrar T-10 primero).
+- **Qué cambió:** la ficha de un equipo apartado o vendido ofrece un bloque
+  "¿Te interesa este equipo?" para dejar nombre y WhatsApp. La solicitud
+  llega a Cotizaciones del panel marcada "Avísame" y al correo de avisos con
+  el asunto "Avísame — nombre · teléfono". Paco eligió esta variante: avisa
+  una persona de MDC, no un correo automático.
+- **Cómo viaja:** como una solicitud `tipo: 'cotizacion'` de un solo equipo,
+  con `aviso: true` dentro del carrito y el mensaje "AVÍSAME: …". **No toca
+  la base ni el servidor**: la base sólo admite `cotizacion` y `publicacion`,
+  y un tipo nuevo obligaría a reinstalar el servidor antes de publicar.
+- **Archivos:**
+  - `assets/js/ui.js` — el bloque dentro de `openModal` (sin globales nuevas:
+    el contrato está en 280 de 280).
+  - `assets/js/main.js` — el envío de `#avisoForm` en el manejador de
+    `submit` que ya existía. Valida, usa la trampa anti-bot, llama a
+    `registrarSolicitud` y, si no se registra, lo dice y ofrece WhatsApp.
+  - `assets/js/admin-bandeja.js` — la fila dice "Avísame: quiere que le
+    escriban por este equipo".
+  - `functions/api/aviso-solicitud.js` — encabezado y asunto del correo.
+  - `assets/css/styles.css` — bloque "AVÍSAME · T-07".
+  - `tests/smoke.test.js` — 10 pruebas.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. En el panel, marcar un equipo como "Apartado", publicar, abrir su ficha
+     y enviar el bloque. Debe aparecer en Cotizaciones y llegar el correo.
+     En local (`localhost`) la API rechaza por CORS: se ve el mensaje de
+     "no pudimos registrar" con el enlace a WhatsApp, que es lo esperado.
+- **Pruebas:** `npm test` en verde (237/237 integración, 10 nuevas).
+- **Dudas / riesgos:**
+  - **Textos para que Paco los apruebe** (no prometen fecha ni precio):
+    "Este equipo está apartado. Déjanos tu nombre y tu WhatsApp y un asesor te
+    escribe si se libera o llega uno parecido." y "✓ Listo. Un asesor te
+    escribe por WhatsApp cuando haya novedades de este equipo."
+  - Sólo está en la ficha de la portada (la ventana). Las páginas estáticas
+    `equipos/<slug>/` no tienen el formulario: no cargan los scripts del sitio.
+  - El freno de la base (3 solicitudes por teléfono cada 10 minutos) también
+    aplica a los avisos.
+  - No hay forma de darse de baja: es una sola solicitud, no una lista.
+
+## 2026-11-27 · T-10 · Claude · Tuneo de acabado (móvil, formularios, contraste)
+
+- **Rama:** `claude/T-10-tuneo`
+- **Qué cambió:** el sitio se usa mejor en el celular. Los botones son más
+  fáciles de tocar, los formularios ya no hacen zoom en el iPhone y avisan
+  mejor de los errores, el encabezado ocupa la mitad al bajar, varios textos
+  grises se leen mejor y las tarjetas tienen un solo efecto al pasar el
+  cursor. El botón amarillo del encabezado ahora es "Cotización".
+- **Medidas, antes → después (375 px):**
+  - Controles de menos de 40 px: 64 de 95 → 14 (los que quedan: el nombre del
+    equipo, cuya zona de toque es toda la tarjeta; el campo de búsqueda dentro
+    de su caja de 48 px; el enlace de salto y dos de texto).
+  - Encabezado pegado al bajar: 119 px → 67 px.
+  - Campos de formulario: 13 px → 16 px. Tarjeta: 519 px → 475 px de alto.
+  - Contraste: "MSI" 2.3:1, marcas 2.4:1, legal del pie 3.2:1, títulos del
+    pie 3.8:1, gris claro 4.3:1 → todos arriba de 4.5:1.
+- **Archivos:**
+  - `assets/css/styles.css` — una capa nueva al final ("ACABADO · T-10").
+    No se borró ninguna regla anterior.
+  - `index.html` — la clase `primary` pasa de "Publicar equipo" a
+    `#cartToggle`. Mismos IDs y `data-*`.
+  - `assets/js/pages.js`, `assets/js/ui.js` — `autocomplete` en 11 campos de
+    contacto (nombre, teléfono, correo, empresa).
+  - `assets/js/security.js` — `readAndValidate` pone `aria-invalid` y
+    `aria-describedby` en el campo con error y los quita al corregirlo.
+  - `tests/smoke.test.js` — 3 pruebas (autocompletar, error anunciado, botón
+    principal). `tests/capturas/` — referencias aceptadas a propósito.
+- **Cómo probarlo:**
+  1. `npm run build && npm test && npm run test:visual`
+  2. En http://localhost:8000 con el navegador a 375 px: bajar la página (queda
+     una fila con buscador y cotización), abrir "Cotización" con un equipo y
+     enviar el formulario vacío (campos en rojo, aviso arriba con "!", botón
+     de enviar pegado abajo).
+- **Pruebas:** `npm test` en verde (227/227 integración, 3 nuevas) y
+  `npm run test:visual` 61/61 tras aceptar las capturas. Revisadas a ojo
+  `movil-portada` (35.7% de cambio: encabezado y hero) y `movil-panel-equipos`.
+- **Dudas / riesgos:**
+  - **Decisión de negocio:** el botón principal del encabezado pasó de
+    "Publicar equipo" a "Cotización". Paco dijo "todo hazlo" a la propuesta
+    que lo incluía; se revierte moviendo la clase `primary` en `index.html`.
+  - El encabezado móvil usa `display:contents` y `top` negativo en un
+    elemento `sticky`; el aviso sobre formularios usa `:has()`. Navegadores de
+    antes de 2023 verían el encabezado como antes o el aviso abajo, sin romper.
+  - En el celular, "Enviar por correo" queda como ícono de sobre junto al
+    botón de WhatsApp; el texto sigue en el botón para lectores de pantalla.
+  - No se limpiaron las reglas viejas que la capa nueva pisa (la hoja tiene
+    tres capas apiladas): quitarlas es otra tarea, con más riesgo.
+
 ## 2026-11-27 · T-05 · Claude · Auditoría de permisos de SQL Server y la API
 
 - **Rama:** `claude/T-05-auditoria-sql`

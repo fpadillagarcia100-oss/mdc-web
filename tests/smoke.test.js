@@ -203,6 +203,21 @@ const ev = code => window.eval(code);
 
   $('#checkoutBtn').click();
   check('Checkout abre el formulario de cotización', $('#quoteForm') !== null);
+
+  /* El formulario en un celular: el teléfono ofrece los datos guardados y un
+     error se anuncia también a quien no ve el borde rojo. */
+  check('Los campos de contacto piden autocompletar',
+    $('#c-name').autocomplete === 'name' && $('#c-phone').autocomplete === 'tel-national' &&
+    $('#c-email').autocomplete === 'email' && $('#c-company').autocomplete === 'organization');
+  submit('#quoteForm');   // vacío: no pasa la validación
+  const idMsg = $('#c-name').getAttribute('aria-describedby');
+  const msgNombre = idMsg ? $('#' + idMsg) : null;
+  check('Un campo inválido se marca para lectores de pantalla, con su mensaje',
+    $('#c-name').getAttribute('aria-invalid') === 'true' && msgNombre !== null &&
+    msgNombre.classList.contains('errmsg') && $('#toast').classList.contains('error'));
+  check('El botón principal del encabezado es el de cotización',
+    $('#cartToggle').classList.contains('primary') && !$('header [data-goto="vender"]').classList.contains('primary'));
+
   $('#c-name').value = 'Ana López';
   $('#c-phone').value = '9619876543';
   $('#c-save').checked = true;
@@ -696,6 +711,126 @@ const ev = code => window.eval(code);
   check('La trampa oculta detiene al bot sin decírselo',
     !JSON.parse(ev('JSON.stringify(globalThis.__pedidos)')).some(u => u.includes('preguntar')));
   ev('closeAll()');
+
+  /* ══ AVÍSAME (T-07) ══
+     Un equipo apartado o vendido ofrece dejar nombre y WhatsApp. La solicitud
+     entra a la bandeja como una cotización de ese equipo, marcada como aviso. */
+  const avisos = () => JSON.parse(ev('JSON.stringify(globalThis.__avisos)'));
+  const aSolicitudes = () => avisos().filter(a => a.url.includes('/api/solicitudes'));
+  ev(`globalThis.__avisos = [];
+      window.fetch = (url, opts) => { globalThis.__avisos.push({url: String(url), body: (opts && opts.body) || ''});
+        return Promise.resolve({ok: !globalThis.__avisoFalla, status: globalThis.__avisoFalla ? 400 : 204, json: () => Promise.resolve({})}) }`);
+
+  ev(`openModal(${equipo.id})`);
+  check('Un equipo disponible no ofrece "Avísame"', $('#avisoForm') === null);
+
+  ev(`products.find(x => x.id === ${equipo.id}).disponibilidad = 'apartado'; closeAll(); openModal(${equipo.id})`);
+  check('Un equipo apartado sí, y dice por qué',
+    $('#avisoForm') !== null && $('.avisame-p').textContent.includes('apartado'));
+
+  // El formulario llega con los datos que el cliente ya dio en esta sesión.
+  check('El aviso recuerda los datos del cliente', $('#av-name').value === 'Ana López');
+  $('#av-name').value = '';
+  $('#av-phone').value = '';
+  submit('#avisoForm');
+  await waitFor(() => true, 'un ciclo del bucle de eventos');
+  check('Un aviso sin nombre ni teléfono no sale del navegador',
+    aSolicitudes().length === 0 && $('#av-name').getAttribute('aria-invalid') === 'true');
+
+  $('#av-name').value = 'Rosa Méndez';
+  $('#av-phone').value = '9611112233';
+  submit('#avisoForm');
+  await waitFor(() => $('.avisame-ok') !== null, 'el acuse del aviso');
+  const cuerpoAviso = aSolicitudes().length ? JSON.parse(aSolicitudes()[0].body) : null;
+  check('El aviso entra como solicitud de ese equipo, marcada como aviso',
+    cuerpoAviso !== null && cuerpoAviso.tipo === 'cotizacion' && cuerpoAviso.telefono === '9611112233' &&
+    cuerpoAviso.carrito.length === 1 && cuerpoAviso.carrito[0].aviso === true &&
+    cuerpoAviso.mensaje.startsWith('AVÍSAME'), cuerpoAviso ? cuerpoAviso.mensaje : 'no salió');
+  check('Se acusa recibo, sin prometer fecha ni precio',
+    $('.avisame-ok').textContent.includes('Listo') && $('#avisoForm button[type="submit"]') === null);
+  check('Y no se cuenta como cotización en las métricas',
+    !avisos().some(a => a.url.includes('/api/contar') && a.body.includes('cotizacion')));
+
+  // El servidor de la oficina puede estar apagado: se dice y se ofrece WhatsApp.
+  ev(`globalThis.__avisoFalla = true;
+      products.find(x => x.id === ${equipo.id}).disponibilidad = 'vendido'; closeAll(); openModal(${equipo.id})`);
+  check('Un equipo vendido también lo ofrece', $('.avisame-p').textContent.includes('se vendió'));
+  $('#av-name').value = 'Rosa Méndez';
+  $('#av-phone').value = '9611112233';
+  submit('#avisoForm');
+  await waitFor(() => $('.avisame-ok') !== null, 'la respuesta del aviso fallido');
+  check('Si el aviso no se registra, lo dice y ofrece WhatsApp',
+    !$('.avisame-ok').textContent.includes('Listo') && $('.avisame-ok a[href*="wa.me"]') !== null);
+
+  // El bot que rellena el campo invisible recibe un "listo" y nada sale.
+  ev(`globalThis.__avisoFalla = false; globalThis.__avisos = []; closeAll(); openModal(${equipo.id})`);
+  $('#hp_aviso').value = 'soy un bot';
+  $('#av-name').value = 'Bot';
+  $('#av-phone').value = '9610000000';
+  submit('#avisoForm');
+  await waitFor(() => $('.avisame-ok') !== null, 'el falso acuse');
+  check('La trampa oculta también protege el aviso', aSolicitudes().length === 0);
+
+  // Todo como estaba para las pruebas que siguen.
+  ev(`products.find(x => x.id === ${equipo.id}).disponibilidad = 'disponible'; closeAll();
+      window.fetch = (url, opts) => { globalThis.__pedidos.push(String(url));
+        return Promise.resolve({ok:true, json:()=>Promise.resolve({})}) }`);
+
+  /* ══ FECHAS DE RENTA (T-08) ══
+     Al cotizar un equipo en renta se puede decir cuándo empieza y por cuánto
+     tiempo. Opcional, y sólo cuando hay algo en renta. */
+  const idRenta = ev("(products.find(p => p.cond === 'Renta') || {}).id");
+  const idCompra = ev("(products.find(p => p.cond !== 'Renta') || {}).id");
+  ev(`cart = [{id:${idCompra}, qty:1}]; saveCart(); renderCart(); openPage('cotizar')`);
+  check('Una cotización de compra no pregunta por fechas de renta',
+    $('#quoteForm') !== null && $('#c-renta-inicio') === null);
+
+  ev(`cart = [{id:${idRenta}, qty:1}, {id:${idCompra}, qty:1}]; saveCart(); renderCart(); openPage('cotizar')`);
+  check('Una con equipos en renta sí, y no ofrece días pasados',
+    $('#c-renta-inicio') !== null && /^\d{4}-\d{2}-\d{2}$/.test($('#c-renta-inicio').min) &&
+    $('#c-renta-meses').options.length > 5);
+
+  $('#c-name').value = 'Ana López';
+  $('#c-phone').value = '9619876543';
+  const sinFechas = JSON.parse(ev('JSON.stringify(quotePayload().datos)'));
+  check('Las fechas son opcionales: sin ellas la cotización sale igual',
+    sinFechas.mensaje === '' && !('renta_inicio' in sinFechas.carrito[0]));
+
+  $('#c-renta-inicio').value = '2020-01-01';
+  submit('#quoteForm');
+  check('Una fecha de inicio pasada no se envía y se marca',
+    !(abierto && decodeURIComponent(abierto).includes('01/01/2020')) && $('#c-renta-inicio').getAttribute('aria-invalid') === 'true' &&
+    $('#c-renta-inicio').closest('.field').classList.contains('err'));
+  check('Y el error de la fecha se anuncia con su mensaje',
+    $('#c-renta-inicio').getAttribute('aria-describedby') === 'c-renta-inicio-err' &&
+    $('#c-renta-inicio-err').classList.contains('errmsg'));
+
+  $('#c-renta-inicio').value = '2099-03-15';
+  $('#c-renta-meses').value = '3';
+  $('#c-notes').value = 'Entrega en Tuxtla';
+  const conFechas = JSON.parse(ev('JSON.stringify(quotePayload().datos)'));
+  check('Al corregir la fecha se quitan las marcas de error',
+    !$('#c-renta-inicio').hasAttribute('aria-invalid') && !$('#c-renta-inicio').hasAttribute('aria-describedby') &&
+    !$('#c-name').hasAttribute('aria-describedby'));
+  const lineaRenta = conFechas.carrito.find(i => i.renta), lineaCompra = conFechas.carrito.find(i => !i.renta);
+  check('Las fechas llegan a la bandeja, antes que los comentarios',
+    conFechas.mensaje === 'Renta: inicio 15/03/2099 · duración: 3 meses\nEntrega en Tuxtla', conFechas.mensaje);
+  check('Y quedan en el renglón del equipo en renta, no en el de compra',
+    lineaRenta.renta_inicio === '2099-03-15' && lineaRenta.renta_plazo === '3' && !('renta_inicio' in lineaCompra));
+
+  submit('#quoteForm');
+  submit('#quoteForm');   // por si el primero lo consumió el filtro anti-bot
+  check('Y al mensaje de WhatsApp',
+    abierto !== null && decodeURIComponent(abierto).includes('Renta: inicio 15/03/2099 · duración: 3 meses'));
+  ev('closeAll(); cart = []; saveCart(); renderCart()');
+
+  // Un equipo en renta sin precio publicado sigue siendo una renta.
+  const precioRenta = ev(`products.find(p => p.id === ${idRenta}).price`);
+  ev(`products.find(p => p.id === ${idRenta}).price = 0;
+      cart = [{id:${idRenta}, qty:1}]; saveCart(); renderCart(); openPage('cotizar')`);
+  check('Una renta sin precio publicado también pregunta las fechas', $('#c-renta-inicio') !== null);
+  ev(`products.find(p => p.id === ${idRenta}).price = ${precioRenta};
+      closeAll(); cart = []; saveCart(); renderCart()`);
 
   /* ══ EL HUECO BLANCO ══
      Fallo real, visto en el sitio publicado: la ficha abría con un rectángulo

@@ -310,12 +310,56 @@ function submitCurrentForm(channel){
 
 document.addEventListener('submit', async e => {
   const id = e.target.id;
-  if(!['sellForm','quoteForm','acctForm','qaForm'].includes(id)) return;
+  if(!['sellForm','quoteForm','acctForm','qaForm','avisoForm'].includes(id)) return;
   e.preventDefault();
 
   if(id==='sellForm' || id==='quoteForm'){ submitCurrentForm('wa'); return }
 
   if(id==='qaForm'){ await enviarPregunta(e.target); return }
+
+  /* Avísame (T-07): interés por un equipo apartado o vendido.
+
+     Viaja como una solicitud de cotización de UN equipo, marcada con
+     `aviso: true` dentro del carrito. Así entra a la bandeja y al correo de
+     avisos que ya existen, sin tocar la base ni el servidor: la base sólo
+     admite los tipos 'cotizacion' y 'publicacion', y cambiar eso obligaría
+     a reinstalar el servidor antes de publicar el sitio.
+
+     No se cuenta como cotización en las métricas: no lo es. */
+  if(id==='avisoForm'){
+    const form = e.target;
+    const v = readAndValidate([
+      {id:'av-name', required:true},
+      {id:'av-phone', required:true, type:'tel'}
+    ]);
+    if(!v) return;
+    const hecho = html => { form.innerHTML = html };
+    const listo = '<p class="avisame-ok">✓ Listo. Un asesor te escribe por WhatsApp cuando haya novedades de este equipo.</p>';
+    // Campo invisible relleno: es un bot. Se finge éxito para no darle pistas.
+    if($('#hp_aviso') && $('#hp_aviso').value){ hecho(listo); return }
+
+    const p = products.find(x => x.slug === form.dataset.slug);
+    if(!p) return;
+    const btn = form.querySelector('button[type="submit"]');
+    if(btn){ btn.disabled = true; btn.textContent = 'Enviando…' }
+    const motivo = p.disponibilidad === 'vendido' ? 'vendido' : 'apartado';
+    const ok = await registrarSolicitud({
+      tipo: 'cotizacion',
+      nombre: v['av-name'],
+      telefono: v['av-phone'],
+      mensaje: `AVÍSAME: le interesa ${p.name} (${motivo}). Pide que le escriban si se libera o llega uno parecido.`,
+      carrito: [{ slug: p.slug, nombre: p.name, cantidad: 1, precio: p.price, renta: p.cond === 'Renta', aviso: true }],
+    });
+    if(ok){ hecho(listo); return }
+
+    /* No se registró (sin señal, o el servidor de la oficina apagado). Se dice
+       la verdad y se ofrece el camino que sí funciona: WhatsApp. */
+    const texto = `Hola ${settings.brandMain}${settings.brandAccent}, me interesa ${p.name} (${motivo}). ` +
+      `¿Me avisan si se libera o llega uno parecido? Soy ${v['av-name']}.`;
+    hecho(`<p class="avisame-ok">No pudimos registrar tu solicitud en este momento.
+      <a href="${esc(waLink(texto))}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te apuntamos.</p>`);
+    return;
+  }
 
   if(id==='acctForm'){
     const v = readAndValidate([

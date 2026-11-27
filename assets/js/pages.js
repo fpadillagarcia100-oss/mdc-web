@@ -422,13 +422,13 @@ const venderHTML = () => `
     ${HP}
     <div class="form-grid">
       <div class="field"><label for="v-name">Tu nombre *</label>
-        <input type="text" id="v-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+        <input type="text" id="v-name" autocomplete="name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
         <span class="errmsg">Escribe tu nombre.</span></div>
       <div class="field"><label for="v-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
-        <input type="text" id="v-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+        <input type="text" id="v-phone" autocomplete="tel-national" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
         <span class="errmsg">Necesitamos 10 dígitos.</span></div>
       <div class="field full"><label for="v-email">Correo <span class="hint">(opcional)</span></label>
-        <input type="text" id="v-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+        <input type="text" id="v-email" autocomplete="email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
         <span class="errmsg">Ese correo no parece válido.</span></div>
 
       <div class="field"><label for="v-type">Tipo de equipo</label>
@@ -510,6 +510,21 @@ function cotizarHTML(){
   const buy = lines.filter(i=>i.cond!=='Renta').reduce((s,i)=>s+i.price*i.qty,0);
   const rent = lines.filter(i=>i.cond==='Renta').reduce((s,i)=>s+i.price*i.qty,0);
   const total = `${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}`;
+
+  /* Fechas de renta (T-08). Sólo aparecen si se cotiza algún equipo en renta.
+     Son opcionales: una cotización sin fechas sigue siendo un cliente, y
+     obligarlas sería perderlo. La disponibilidad la confirma un asesor; aquí
+     no se promete nada. `min` es hoy, en la hora del cliente. */
+  const d = new Date();
+  const hoy = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const plazos = [['','Aún no lo sé'],['corta','Menos de un mes'],
+    ...[1,2,3,4,5,6,9,12,18,24].map(n => [String(n), n === 1 ? '1 mes' : `${n} meses`]),['mas','Más de 24 meses']];
+  const renta = lines.some(i => i.cond === 'Renta') ? `
+        <div class="field"><label for="c-renta-inicio">¿Cuándo empieza la renta? <span class="hint">(opcional)</span></label>
+          <input type="date" id="c-renta-inicio" min="${hoy}">
+          <span class="errmsg" id="c-renta-inicio-err">Elige una fecha de hoy en adelante.</span></div>
+        <div class="field"><label for="c-renta-meses">¿Por cuánto tiempo? <span class="hint">(opcional)</span></label>
+          <select id="c-renta-meses">${plazos.map(([v, txt]) => `<option value="${v}">${txt}</option>`).join('')}</select></div>` : '';
   return `
     <p class="page-intro">Confirma tus datos y te enviamos la cotización formal con precios vigentes, tiempos de entrega y opciones de financiamiento.</p>
     <ul class="cart-recap">
@@ -520,16 +535,16 @@ function cotizarHTML(){
       ${HP}
       <div class="form-grid">
         <div class="field"><label for="c-name">Tu nombre *</label>
-          <input type="text" id="c-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <input type="text" id="c-name" autocomplete="name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
           <span class="errmsg">Escribe tu nombre.</span></div>
         <div class="field"><label for="c-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
-          <input type="text" id="c-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <input type="text" id="c-phone" autocomplete="tel-national" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
           <span class="errmsg">Necesitamos 10 dígitos.</span></div>
         <div class="field"><label for="c-email">Correo <span class="hint">(opcional)</span></label>
-          <input type="text" id="c-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <input type="text" id="c-email" autocomplete="email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
           <span class="errmsg">Ese correo no parece válido.</span></div>
         <div class="field"><label for="c-company">Empresa u obra <span class="hint">(opcional)</span></label>
-          <input type="text" id="c-company" placeholder="Constructora del Sureste"></div>
+          <input type="text" id="c-company" autocomplete="organization" placeholder="Constructora del Sureste"></div>${renta}
         <div class="field full"><label for="c-notes">Comentarios</label>
           <textarea id="c-notes" placeholder="Fechas en que lo necesitas, lugar de entrega, forma de pago…"></textarea></div>
         <label class="check full"><input type="checkbox" id="c-save"${account?' checked':''}> Guardar mis datos en este dispositivo para la próxima vez</label>
@@ -549,7 +564,38 @@ function quotePayload(){
     {id:'c-phone', required:true, type:'tel'},
     {id:'c-email', type:'email'}
   ]);
+
+  /* Fechas de renta (T-08). El campo de fecha ya impide elegir un día pasado
+     con `min`, pero se puede escribir a mano: se revisa aquí también. Las
+     fechas AAAA-MM-DD se comparan bien como texto. */
+  const elInicio = $('#c-renta-inicio'), elPlazo = $('#c-renta-meses');
+  const inicio = elInicio ? elInicio.value : '';
+  const plazo = elPlazo ? elPlazo.value : '';
+  if(elInicio){
+    /* Donde no hay selector de fecha el campo es texto libre: un 30 de febrero
+       tiene la forma correcta y no existe. Se arma la fecha y se compara. */
+    const existe = f => {
+      const [a, m, dia] = f.split('-').map(Number), x = new Date(a, m - 1, dia);
+      return x.getFullYear() === a && x.getMonth() === m - 1 && x.getDate() === dia;
+    };
+    const mal = inicio !== '' && (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !existe(inicio) || inicio < elInicio.min);
+    elInicio.closest('.field').classList.toggle('err', mal);
+    if(mal){
+      elInicio.setAttribute('aria-invalid', 'true');
+      elInicio.setAttribute('aria-describedby', 'c-renta-inicio-err');
+      // Si los datos de contacto también fallaron, el aviso y el foco ya son de ellos.
+      if(v){ showToast('Revisa los campos marcados en rojo', true); elInicio.focus() }
+      return null;
+    }
+    elInicio.removeAttribute('aria-invalid');
+    elInicio.removeAttribute('aria-describedby');
+  }
   if(!v) return null;
+
+  const partesRenta = [];
+  if(inicio){ const [a, m, dia] = inicio.split('-'); partesRenta.push(`inicio ${dia}/${m}/${a}`) }
+  if(plazo) partesRenta.push(`duración: ${elPlazo.selectedOptions[0].textContent.toLowerCase()}`);
+  const rentaTxt = partesRenta.length ? 'Renta: ' + partesRenta.join(' · ') : '';
 
   if($('#c-save').checked){
     account = {name:v['c-name'], phone:v['c-phone'], email:v['c-email']};
@@ -566,7 +612,8 @@ function quotePayload(){
     telefono: v['c-phone'],
     correo: v['c-email'] || null,
     empresa: company || null,
-    mensaje: notes.slice(0, 4000),
+    // La línea de la renta va primero: en la bandeja sólo se ven los primeros 180 caracteres.
+    mensaje: [rentaTxt, notes].filter(Boolean).join('\n').slice(0, 4000),
     /* Sólo lo indispensable de cada equipo. La base topa el carrito en 16 KB
        —lo puso la migración de endurecimiento— y mandar el objeto completo,
        con descripción y especificaciones, lo rebasaría con pocos renglones.
@@ -575,6 +622,8 @@ function quotePayload(){
     carrito: lines.map(i => ({
       slug: i.slug, nombre: i.name, cantidad: i.qty,
       precio: i.price, renta: i.cond === 'Renta',
+      ...(i.cond === 'Renta' && inicio ? { renta_inicio: inicio } : {}),
+      ...(i.cond === 'Renta' && plazo ? { renta_plazo: plazo } : {}),
     })),
   };
 
@@ -582,7 +631,7 @@ function quotePayload(){
 
 ${lines.map(i=>`• ${i.qty}× ${i.name} — ${fmtFull(i.price)}${i.cond==='Renta'?'/mes':''}`).join('\n')}
 
-Total estimado: ${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}
+Total estimado: ${buy?fmtFull(buy):''}${buy&&rent?' + ':''}${rent?fmtFull(rent)+'/mes':''}${rentaTxt ? '\n' + rentaTxt : ''}
 
 Mis datos:
 ${v['c-name']}${company ? ' · '+company : ''}
@@ -600,13 +649,13 @@ function cuentaHTML(){
     <form id="acctForm" novalidate>
       <div class="form-grid">
         <div class="field full"><label for="a-name">Nombre *</label>
-          <input type="text" id="a-name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+          <input type="text" id="a-name" autocomplete="name" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
           <span class="errmsg">Escribe tu nombre.</span></div>
         <div class="field"><label for="a-phone">Teléfono * <span class="hint">(10 dígitos)</span></label>
-          <input type="text" id="a-phone" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
+          <input type="text" id="a-phone" autocomplete="tel-national" inputmode="tel" value="${esc(account?.phone||'')}" placeholder="9611234567">
           <span class="errmsg">Necesitamos 10 dígitos.</span></div>
         <div class="field"><label for="a-email">Correo <span class="hint">(opcional)</span></label>
-          <input type="text" id="a-email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
+          <input type="text" id="a-email" autocomplete="email" inputmode="email" value="${esc(account?.email||'')}" placeholder="tucorreo@ejemplo.com">
           <span class="errmsg">Ese correo no parece válido.</span></div>
       </div>
       <div class="send-row"><button class="btn-primary" type="submit">Guardar mis datos</button></div>
