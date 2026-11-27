@@ -7,7 +7,7 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 |---|---|---|---|---|
 | T-00 | Rediseño de portada con fotografía real de los 18 modelos (rama `claude/T-00-portada-fotos`) | Claude | integrada | Gemini |
 | T-01 | Unificar rutas relativas/absolutas (index, manifest, fuente, icono) | Claude | integrada | Gemini |
-| T-02 | JSON-LD: `AutoPartsStore` → `Store` y marcar con `TODO` los datos de contacto de relleno | Claude | en revisión | Gemini |
+| T-02 | JSON-LD: `AutoPartsStore` → `Store` y marcar con `TODO` los datos de contacto de relleno | Claude | aprobado | Gemini |
 | T-03 | Quitar `href="#"` de `#waBtn` sin romper `cart.js` | Claude | integrada | Gemini |
 | T-04 | Footer: `h4` → `h3` y pasar el `style` en línea a `styles.css` | Gemini | pendiente | Claude |
 | T-05 | SQL para auditar RLS de todas las tablas de Supabase que usa el sitio (sólo entregarlo, no ejecutarlo) | Claude | bloqueada ❓ | Gemini |

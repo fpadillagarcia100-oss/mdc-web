@@ -836,7 +836,8 @@ const ev = code => window.eval(code);
   // Sólo la ficha de la empresa: otros esquemas (WebSite, BreadcrumbList…)
   // pueden sumarse a la portada sin que esta prueba les exija ser tienda.
   const negocio = bloquesLD.find(j => j && j.url === 'https://mdcmaquinaria.com/' && j.department);
-  const tipos = negocio ? [negocio['@type'], ...negocio.department.map(d => d['@type'])] : [];
+  // department puede ser un objeto si algún día queda una sola sucursal.
+  const tipos = negocio ? [negocio['@type'], ...[].concat(negocio.department).map(d => d['@type'])] : [];
   check('Y la ficha de la empresa describe una tienda, no una refaccionaria de autos',
     tipos.length > 0 && tipos.every(t => t === 'Store'),
     negocio ? tipos.join(', ') : 'no se encontró la ficha de la empresa');
