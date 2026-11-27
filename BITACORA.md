@@ -22,6 +22,36 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-08 · Claude · Fechas de renta al cotizar
+
+- **Rama:** `claude/T-08-renta` (sale de `claude/T-07-avisame`; integrar en
+  orden T-10 → T-07 → T-08).
+- **Qué cambió:** al cotizar algún equipo en renta, el formulario pregunta
+  "¿Cuándo empieza la renta?" (fecha, no deja elegir días pasados) y "¿Por
+  cuánto tiempo?" (de "menos de un mes" a "más de 24 meses"). Las dos son
+  opcionales. La respuesta llega en el mensaje de WhatsApp, en la bandeja y
+  en el correo como "Renta: inicio 15/03/2027 · duración: 3 meses". Paco
+  eligió esta variante: sin calendario de reservas en el panel.
+- **Archivos:**
+  - `assets/js/pages.js` — los dos campos en `cotizarHTML` (sólo si hay
+    renta) y su lectura en `quotePayload`: valida la fecha, antepone la línea
+    al mensaje y guarda `renta_inicio` / `renta_plazo` en el renglón del
+    equipo en renta. Sin globales nuevas.
+  - `assets/css/styles.css` — estilo del campo de fecha ("RENTA · T-08").
+  - `tests/smoke.test.js` — 7 pruebas.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. Agregar un equipo en renta a la cotización y abrir "Solicitar
+     cotización": aparecen los dos campos. Con sólo equipos de compra, no.
+- **Pruebas:** `npm test` en verde (244/244 integración, 7 nuevas).
+- **Dudas / riesgos:**
+  - No calcula el total de la renta por los meses elegidos: sería presentar
+    una cifra como oferta. El asesor confirma precio y disponibilidad.
+  - Una sola fecha y un solo plazo para toda la cotización, aunque lleve
+    varios equipos en renta.
+  - No sabe si el equipo está ocupado en esas fechas: eso sería el calendario
+    de reservas que Paco descartó por ahora.
+
 ## 2026-11-27 · T-07 · Claude · "Avísame" en equipos apartados o vendidos
 
 - **Rama:** `claude/T-07-avisame` (sale de `claude/T-10-tuneo`, no de `main`:

@@ -2153,3 +2153,9 @@ footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120
 .avisame-ok{font-size:14px;line-height:1.55;color:var(--ink);font-weight:550}
 .avisame-ok a{color:var(--blue)}
 @media print{.avisame{display:none}}
+
+/* ══════════ RENTA · T-08 ══════════
+   El campo de fecha no entraba en la regla de los campos de texto. */
+.field input[type=date]{border:1px solid var(--border2);border-radius:12px;padding:9px 11px;font-size:13px;outline:none;
+  color:var(--text);background:var(--white);width:100%;font-family:inherit;min-height:40px}
+@media(max-width:600px){ .field input[type=date]{font-size:16px;min-height:48px} }

@@ -776,6 +776,48 @@ const ev = code => window.eval(code);
       window.fetch = (url, opts) => { globalThis.__pedidos.push(String(url));
         return Promise.resolve({ok:true, json:()=>Promise.resolve({})}) }`);
 
+  /* ══ FECHAS DE RENTA (T-08) ══
+     Al cotizar un equipo en renta se puede decir cuándo empieza y por cuánto
+     tiempo. Opcional, y sólo cuando hay algo en renta. */
+  const idRenta = ev("(products.find(p => p.cond === 'Renta') || {}).id");
+  const idCompra = ev("(products.find(p => p.cond !== 'Renta') || {}).id");
+  ev(`cart = [{id:${idCompra}, qty:1}]; saveCart(); renderCart(); openPage('cotizar')`);
+  check('Una cotización de compra no pregunta por fechas de renta',
+    $('#quoteForm') !== null && $('#c-renta-inicio') === null);
+
+  ev(`cart = [{id:${idRenta}, qty:1}, {id:${idCompra}, qty:1}]; saveCart(); renderCart(); openPage('cotizar')`);
+  check('Una con equipos en renta sí, y no ofrece días pasados',
+    $('#c-renta-inicio') !== null && /^\d{4}-\d{2}-\d{2}$/.test($('#c-renta-inicio').min) &&
+    $('#c-renta-meses').options.length > 5);
+
+  $('#c-name').value = 'Ana López';
+  $('#c-phone').value = '9619876543';
+  const sinFechas = JSON.parse(ev('JSON.stringify(quotePayload().datos)'));
+  check('Las fechas son opcionales: sin ellas la cotización sale igual',
+    sinFechas.mensaje === '' && !('renta_inicio' in sinFechas.carrito[0]));
+
+  $('#c-renta-inicio').value = '2020-01-01';
+  submit('#quoteForm');
+  check('Una fecha de inicio pasada no se envía y se marca',
+    !(abierto && decodeURIComponent(abierto).includes('01/01/2020')) && $('#c-renta-inicio').getAttribute('aria-invalid') === 'true' &&
+    $('#c-renta-inicio').closest('.field').classList.contains('err'));
+
+  $('#c-renta-inicio').value = '2099-03-15';
+  $('#c-renta-meses').value = '3';
+  $('#c-notes').value = 'Entrega en Tuxtla';
+  const conFechas = JSON.parse(ev('JSON.stringify(quotePayload().datos)'));
+  const lineaRenta = conFechas.carrito.find(i => i.renta), lineaCompra = conFechas.carrito.find(i => !i.renta);
+  check('Las fechas llegan a la bandeja, antes que los comentarios',
+    conFechas.mensaje === 'Renta: inicio 15/03/2099 · duración: 3 meses\nEntrega en Tuxtla', conFechas.mensaje);
+  check('Y quedan en el renglón del equipo en renta, no en el de compra',
+    lineaRenta.renta_inicio === '2099-03-15' && lineaRenta.renta_plazo === '3' && !('renta_inicio' in lineaCompra));
+
+  submit('#quoteForm');
+  submit('#quoteForm');   // por si el primero lo consumió el filtro anti-bot
+  check('Y al mensaje de WhatsApp',
+    abierto !== null && decodeURIComponent(abierto).includes('Renta: inicio 15/03/2099 · duración: 3 meses'));
+  ev('closeAll(); cart = []; saveCart(); renderCart()');
+
   /* ══ EL HUECO BLANCO ══
      Fallo real, visto en el sitio publicado: la ficha abría con un rectángulo
      blanco de unos 700 px bajo la foto. La causa no era de estilo sino de
