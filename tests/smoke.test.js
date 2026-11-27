@@ -825,6 +825,17 @@ const ev = code => window.eval(code);
     ev('state.cat') === pieCats[0].dataset.cat, ev('state.cat'));
   ev('clearFilters()');
 
+  /* La ficha de la empresa para Google (JSON-LD de la portada). Un error de
+     sintaxis la invalida entera sin avisar, y el tipo decide en qué
+     búsquedas aparece: MDC no es una refaccionaria. */
+  const negocio = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map(m => { try { return JSON.parse(m[1]); } catch { return null; } });
+  check('Los datos para Google de la portada son JSON válido',
+    negocio.length > 0 && negocio.every(Boolean), `${negocio.filter(Boolean).length}/${negocio.length}`);
+  const tipos = negocio.filter(Boolean).flatMap(j => [j['@type'], ...(j.department || []).map(d => d['@type'])]);
+  check('Y describen una tienda, no una refaccionaria de autos',
+    tipos.length > 0 && tipos.every(t => t === 'Store'), tipos.join(', '));
+
   const mapa = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
   check('Las categorías están en el sitemap y pesan más que una ficha',
     cats.every(c => mapa.includes(`/maquinaria/${c}/`)) && mapa.includes('<priority>0.9</priority>'),

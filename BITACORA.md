@@ -22,6 +22,40 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-02 · Claude · Google ve una tienda, no una refaccionaria
+
+- **Rama:** `claude/T-02-jsonld`
+- **Qué cambió:** nada visible. Los datos estructurados de la portada (la
+  ficha de la empresa que lee Google) declaraban a MDC y a sus dos sucursales
+  como `AutoPartsStore` (refaccionaria de autos); ahora son `Store`. Los datos
+  de contacto que parecen de relleno quedan marcados con un `TODO` para Paco,
+  sin inventar reemplazos.
+- **Archivos:**
+  - `index.html` — `@type` de la empresa y de las dos sucursales →
+    `Store`. El `TODO` va en el comentario HTML de arriba del bloque, porque
+    el JSON no admite comentarios y un valor "TODO" se publicaría como dato.
+    Se actualizó también ese comentario: ya no dice que los equipos "viven en
+    el navegador", porque cada equipo tiene su página estática.
+  - `tests/smoke.test.js` — 2 pruebas: el bloque es JSON válido y todos los
+    tipos son `Store`. La segunda falla con el `index.html` anterior.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. Opcional: pegar el código de la portada en el validador de datos
+     estructurados de Google (https://validator.schema.org/).
+- **Pruebas:** `npm test` en verde (223/223 integración, 2 nuevas). No se
+  corrió `test:visual`: el cambio está en `<head>` y no se ve.
+- **Dudas / riesgos:**
+  - Los comentarios HTML se publican: quien vea el código fuente de la portada
+    leerá el `TODO`. Desaparece al confirmar los datos.
+  - El teléfono de la matriz no coincide: el JSON-LD dice `961 123 4567` y
+    `data/catalogo.json` (`ajustes.telefono`) dice `312 174 3817`, el mismo
+    del WhatsApp. No se cambió: decide Paco.
+  - Fuera de esta tarea: `data/catalogo.json` repite los mismos teléfonos y
+    direcciones de sucursal, y su `_comentario` todavía dice que la fuente de
+    verdad es Supabase.
+- **❓ PARA PACO:** ¿cuáles son el teléfono, la dirección y el horario reales
+  de cada sucursal, y el correo de ventas?
+
 ## 2026-11-27 · T-03 · Claude · El botón de WhatsApp sin `href="#"`
 
 - **Rama:** `claude/T-03-wa-boton`
