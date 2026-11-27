@@ -22,6 +22,37 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-04 · Claude · Pie de página con `h3` y sin estilos en línea
+
+- **Rama:** `claude/T-04-footer`
+- **Qué cambió:** nada visible (las 61 capturas dan 0.00% de diferencia).
+  Los títulos del pie de página pasan de `h4` a `h3`: colgaban de un `h2` y
+  se saltaban un nivel, lo que confunde a los lectores de pantalla. El
+  `style="max-width:300px;line-height:1.6"` del párrafo de la empresa pasó a
+  la clase `.footer-about` de `styles.css`.
+- **Archivos:**
+  - `index.html` — los 4 títulos del pie a `h3`; el párrafo usa
+    `class="footer-about"`.
+  - `tools/build.js` — lo mismo en el pie de las fichas y de las categorías,
+    para que todo el sitio quede igual.
+  - `assets/css/styles.css` — `.footer-col h4` → `.footer-col h3` (en las dos
+    capas que lo estilizan) y la regla nueva `.footer-about`.
+  - `equipos/*/index.html`, `maquinaria/*/index.html` — regenerados por
+    `npm run build` (sólo cambia el pie).
+  - `tests/smoke.test.js` — 1 prueba: el pie de la portada y el de una
+    categoría usan `h3`, ningún `h4` y ningún `style=`.
+- **Cómo probarlo:**
+  1. `npm run build && npm test`
+  2. `npm run test:visual`: ninguna captura debe cambiar.
+  3. En http://localhost:8000 (recarga forzada), el pie se ve igual que antes.
+- **Pruebas:** `npm test` en verde (224/224 integración, 1 nueva) y
+  `npm run test:visual` 61/61 sin cambios de píxeles. En el navegador, los
+  títulos del pie miden 12 px, en mayúsculas y con peso 650 (igual que antes),
+  y el párrafo conserva `max-width:300px` sin atributo `style`.
+- **Dudas / riesgos:** ninguno conocido. La hoja reinicia los márgenes de
+  todo (`*{margin:0}`) y fija el tamaño de esos títulos, así que el cambio de
+  etiqueta no altera el aspecto.
+
 ## 2026-11-27 · T-02 · Claude · Google ve una tienda, no una refaccionaria
 
 - **Rama:** `claude/T-02-jsonld`

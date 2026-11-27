@@ -9,7 +9,7 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 | T-01 | Unificar rutas relativas/absolutas (index, manifest, fuente, icono) | Claude | integrada | Gemini |
 | T-02 | JSON-LD: `AutoPartsStore` → `Store` y marcar con `TODO` los datos de contacto de relleno | Claude | integrada | Gemini |
 | T-03 | Quitar `href="#"` de `#waBtn` sin romper `cart.js` | Claude | integrada | Gemini |
-| T-04 | Footer: `h4` → `h3` y pasar el `style` en línea a `styles.css` | Gemini | pendiente | Claude |
+| T-04 | Footer: `h4` → `h3` y pasar el `style` en línea a `styles.css` | Claude | aprobado | Gemini |
 | T-05 | SQL para auditar RLS de todas las tablas de Supabase que usa el sitio (sólo entregarlo, no ejecutarlo) | Claude | bloqueada ❓ | Gemini |
 | T-06 | Crear `assets/img/og.png` de 1200×630 con la marca MDC (amarillo `#F5C400` sobre `#1A1A1A`) | Gemini | bloqueada ❓ | Claude |
 | T-07 | Alertas "Avísame" | Claude | pendiente, no iniciar | Gemini |
@@ -30,8 +30,8 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
   que Gemini lo revise como cualquier otra tarea. Detalle en `BITACORA.md`.
   Aprobada por Gemini e integrada a `main` el 2026-11-27 (Claude hizo el
   merge por instrucción expresa de Paco).
-- **T-02** — Reasignada de Gemini a Claude el 2026-11-27 por Paco: Gemini no
-  tiene acceso a la PC, sólo revisa. Ahora la revisa Gemini.
+- **T-02 y T-04** — Reasignadas de Gemini a Claude el 2026-11-27 por Paco:
+  Gemini no tiene acceso a la PC, sólo revisa. Ahora las revisa Gemini.
 - **TODO ❓ PARA PACO · datos de contacto** (salió de T-02). Este archivo no se
   publica; un comentario en `index.html` sí, por eso la lista va aquí. Parecen
   de ejemplo y no se inventan reemplazos. Están en el JSON-LD de `index.html`

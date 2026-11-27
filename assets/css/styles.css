@@ -621,8 +621,9 @@ footer{background:var(--dark);color:#aaa;margin-top:40px;padding:32px 20px;font-
 .footer-inner{max-width:1280px;margin:0 auto;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
 footer a{color:#aaa;text-decoration:none}
 footer a:hover{color:var(--y);text-decoration:underline}
-.footer-col h4{color:#fff;font-size:13px;margin-bottom:10px}
+.footer-col h3{color:#fff;font-size:13px;margin-bottom:10px}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.footer-about{max-width:300px;line-height:1.6}
 .footer-legal{max-width:1280px;margin:24px auto 0;padding-top:16px;border-top:1px solid #333;font-size:11px;color:#777}
 
 /* ══ PÁGINAS (Ayuda, Sucursales, Vender, Cuenta, Privacidad) ══ */
@@ -1659,7 +1660,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);margin-top:64px;padding
   border-radius:28px 28px 0 0}
 footer a,footer button{color:rgba(255,255,255,.6)}
 footer a:hover,footer button:hover{color:#fff;text-decoration:none}
-.footer-col h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:650;margin-bottom:14px}
+.footer-col h3{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:650;margin-bottom:14px}
 .footer-col ul{gap:10px}
 .footer-legal{border-top-color:rgba(255,255,255,.08);color:rgba(255,255,255,.35);padding-top:20px;margin-top:40px}
 
