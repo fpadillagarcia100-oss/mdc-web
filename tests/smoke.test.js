@@ -824,9 +824,14 @@ const ev = code => window.eval(code);
   const pieDe = h => (h.match(/<footer>[\s\S]*?<\/footer>/) || [''])[0];
   const piePortada = pieDe(html);
   const pieCategoria = cats.length ? pieDe(fs.readFileSync(path.join(dirCats, cats[0], 'index.html'), 'utf8')) : '';
+  // Las fichas salen de otra plantilla de tools/build.js: se revisa una también.
+  const dirFichas = path.join(ROOT, 'equipos');
+  const fichas = fs.existsSync(dirFichas) ? fs.readdirSync(dirFichas) : [];
+  const pieFicha = fichas.length ? pieDe(fs.readFileSync(path.join(dirFichas, fichas[0], 'index.html'), 'utf8')) : '';
+  const pies = { portada: piePortada, categoría: pieCategoria, ficha: pieFicha };
   check('El pie de página usa títulos h3 y no trae estilos en línea',
-    [piePortada, pieCategoria].every(p => p && /<h3[ >]/.test(p) && !/<h4[ >]/.test(p) && !/\sstyle=/.test(p)),
-    `portada ${piePortada ? 'ok' : 'sin pie'} · categoría ${pieCategoria ? 'ok' : 'sin pie'}`);
+    Object.values(pies).every(p => p && /<h3[ >]/.test(p) && !/<h4[ >]/.test(p) && !/\sstyle=/.test(p)),
+    Object.entries(pies).map(([k, p]) => `${k} ${p ? 'ok' : 'sin pie'}`).join(' · '));
 
   // Pinchar desde el catálogo filtra en vez de recargar: es más rápido y no
   // pierde el carrito. El enlace sigue ahí para Google y para "abrir en nueva".
