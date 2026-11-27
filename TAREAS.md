@@ -10,7 +10,7 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 | T-02 | JSON-LD: `AutoPartsStore` → `Store` y marcar con `TODO` los datos de contacto de relleno | Claude | integrada | Gemini |
 | T-03 | Quitar `href="#"` de `#waBtn` sin romper `cart.js` | Claude | integrada | Gemini |
 | T-04 | Footer: `h4` → `h3` y pasar el `style` en línea a `styles.css` | Claude | integrada | Gemini |
-| T-05 | SQL para auditar RLS de todas las tablas de Supabase que usa el sitio (sólo entregarlo, no ejecutarlo) | Claude | bloqueada ❓ | Gemini |
+| T-05 | Auditar permisos de SQL Server y la autorización de la API (script SQL de sólo lectura + informe; sólo entregarlo, no ejecutarlo) | Claude | aprobado | Gemini |
 | T-06 | Crear `assets/img/og.png` de 1200×630 con la marca MDC (amarillo `#F5C400` sobre `#1A1A1A`) | Gemini | bloqueada ❓ | Claude |
 | T-07 | Alertas "Avísame" | Claude | pendiente, no iniciar | Gemini |
 | T-08 | Calendario de renta | Claude | pendiente, no iniciar | Gemini |
@@ -18,11 +18,10 @@ Estados: `pendiente` · `pendiente, no iniciar` · `en progreso` · `en revisió
 
 ## Notas para decidir
 
-- **T-05 ❓ PARA PACO** — El sitio **ya no usa Supabase**: desde el commit
-  `8c9e41f` todo pasa por `servidor/Mdc.Api` sobre SQL Server, y SQL Server no
-  tiene RLS. Opciones: (a) auditar en su lugar los permisos del usuario de SQL
-  Server y las reglas de autorización de cada endpoint de la API; (b) auditar
-  Supabase igual, por si el proyecto viejo sigue vivo con datos; (c) cancelar.
+- **T-05** — Redefinida el 2026-11-27: Paco eligió la opción (a), "sólo
+  quiero SQL Server". El sitio ya no usa Supabase (commit `8c9e41f`), así que
+  en lugar de RLS se auditan los permisos de SQL Server y las reglas de
+  autorización de cada ruta de `servidor/Mdc.Api`. Supabase queda fuera.
 - **T-06 ❓ PARA PACO** — `assets/img/og.png` **ya existe** en 1200×630 y se
   regenera con `npm run og` desde `tools/og-image.html`. ¿Se rediseña (y con
   qué cambios) o se cancela?

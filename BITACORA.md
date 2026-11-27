@@ -22,6 +22,42 @@ PLANTILLA — copia esto arriba de la última entrada:
 - **❓ PARA PACO:** (sólo si hace falta una decisión; si no, borra esta línea)
 -->
 
+## 2026-11-27 · T-05 · Claude · Auditoría de permisos de SQL Server y la API
+
+- **Rama:** `claude/T-05-auditoria-sql`
+- **Qué cambió:** nada del sitio ni del servidor. Se entregan dos archivos
+  nuevos para que Paco los use: un script SQL de sólo lectura y un informe con
+  9 hallazgos, el mapa de quién puede llamar cada ruta de la API y lo que ya
+  está bien.
+- **Archivos:**
+  - `servidor/auditoria/auditoria-permisos.sql` — sólo `SELECT` (más una
+    tabla temporal y un `EXECUTE AS USER … REVERT` para medir los permisos
+    reales de `NT SERVICE\MdcApi`). Revisa el servidor (sa, modo de
+    autenticación, sysadmin, logins SQL), la superficie (xp_cmdshell, CLR,
+    TCP, servicios), la base (dueño, TRUSTWORTHY, respaldos), los permisos de
+    la API y las cuentas del panel. No muestra contraseñas, hashes ni tokens.
+    Va fuera de `servidor/sql/` a propósito: `Migraciones.cs` aplica todo
+    `.sql` de esa carpeta al instalar.
+  - `servidor/auditoria/INFORME.md` — hallazgos por riesgo, con archivo:línea
+    y propuesta. Ninguna propuesta se aplicó: todas son cambios al servidor
+    que la tarea no pide.
+- **Cómo probarlo:**
+  1. Leer `servidor/auditoria/INFORME.md`.
+  2. En la PC de la oficina, terminal como administrador:
+     `sqlcmd -S .\SQLEXPRESS -E -f 65001 -i servidor\auditoria\auditoria-permisos.sql -W -s "|" -o "$env:USERPROFILE\Desktop\auditoria.txt"`
+- **Pruebas:** el script **no se ejecutó contra la base**, como pide la
+  tarea. Su sintaxis se validó con `SET PARSEONLY ON` (SQL Server lo analiza
+  sin correr consultas ni leer datos): 0 errores. `PARSEONLY` no comprueba
+  nombres de columnas; esos se revisaron contra las vistas del sistema.
+- **Dudas / riesgos:**
+  - Hallazgos medios: la API puede borrar la bitácora (`db_datawriter`), la
+    bitácora no registra cambios de cuentas ni roles, el panel no tiene
+    segundo factor y no se pudo confirmar que haya respaldos.
+- **Corrida:** Paco autorizó correr el script el 2026-11-27. Los resultados
+  quedaron en su Escritorio, **no en el repositorio, porque es público**.
+- **❓ PARA PACO:** ¿cuáles de las propuestas del informe y de la corrida se
+  vuelven tareas?
+
 ## 2026-11-27 · T-04 · Claude · Pie de página con `h3` y sin estilos en línea
 
 - **Rama:** `claude/T-04-footer`
