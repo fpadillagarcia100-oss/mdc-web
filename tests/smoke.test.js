@@ -801,11 +801,17 @@ const ev = code => window.eval(code);
   check('Una fecha de inicio pasada no se envía y se marca',
     !(abierto && decodeURIComponent(abierto).includes('01/01/2020')) && $('#c-renta-inicio').getAttribute('aria-invalid') === 'true' &&
     $('#c-renta-inicio').closest('.field').classList.contains('err'));
+  check('Y el error de la fecha se anuncia con su mensaje',
+    $('#c-renta-inicio').getAttribute('aria-describedby') === 'c-renta-inicio-err' &&
+    $('#c-renta-inicio-err').classList.contains('errmsg'));
 
   $('#c-renta-inicio').value = '2099-03-15';
   $('#c-renta-meses').value = '3';
   $('#c-notes').value = 'Entrega en Tuxtla';
   const conFechas = JSON.parse(ev('JSON.stringify(quotePayload().datos)'));
+  check('Al corregir la fecha se quitan las marcas de error',
+    !$('#c-renta-inicio').hasAttribute('aria-invalid') && !$('#c-renta-inicio').hasAttribute('aria-describedby') &&
+    !$('#c-name').hasAttribute('aria-describedby'));
   const lineaRenta = conFechas.carrito.find(i => i.renta), lineaCompra = conFechas.carrito.find(i => !i.renta);
   check('Las fechas llegan a la bandeja, antes que los comentarios',
     conFechas.mensaje === 'Renta: inicio 15/03/2099 · duración: 3 meses\nEntrega en Tuxtla', conFechas.mensaje);
@@ -817,6 +823,14 @@ const ev = code => window.eval(code);
   check('Y al mensaje de WhatsApp',
     abierto !== null && decodeURIComponent(abierto).includes('Renta: inicio 15/03/2099 · duración: 3 meses'));
   ev('closeAll(); cart = []; saveCart(); renderCart()');
+
+  // Un equipo en renta sin precio publicado sigue siendo una renta.
+  const precioRenta = ev(`products.find(p => p.id === ${idRenta}).price`);
+  ev(`products.find(p => p.id === ${idRenta}).price = 0;
+      cart = [{id:${idRenta}, qty:1}]; saveCart(); renderCart(); openPage('cotizar')`);
+  check('Una renta sin precio publicado también pregunta las fechas', $('#c-renta-inicio') !== null);
+  ev(`products.find(p => p.id === ${idRenta}).price = ${precioRenta};
+      closeAll(); cart = []; saveCart(); renderCart()`);
 
   /* ══ EL HUECO BLANCO ══
      Fallo real, visto en el sitio publicado: la ficha abría con un rectángulo

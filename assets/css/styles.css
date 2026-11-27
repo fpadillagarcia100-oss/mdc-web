@@ -2126,9 +2126,10 @@ footer::before{content:'';position:absolute;inset:auto -10% -60% -10%;height:120
   .page-body .send-row .btn-ghost[data-send="mail"]{flex:0 0 52px;padding:0;font-size:0;display:inline-flex;align-items:center;justify-content:center}
   .page-body .send-row .btn-ghost[data-send="mail"] .ico{width:20px;height:20px;margin:0}
 
-  /* Con un formulario abierto el aviso sale arriba: abajo tapaba los campos. */
-  body:has(.page-overlay.open) .toast{bottom:auto;top:12px;transform:translateX(-50%) translateY(-160px)}
-  body:has(.page-overlay.open) .toast.show{transform:translateX(-50%) translateY(0)}
+  /* Con un formulario abierto el aviso sale arriba: abajo tapaba los campos.
+     La ficha cuenta: ahí viven las preguntas y el "Avísame". */
+  body:has(.page-overlay.open,#modalOverlay.open) .toast{bottom:auto;top:12px;transform:translateX(-50%) translateY(-160px)}
+  body:has(.page-overlay.open,#modalOverlay.open) .toast.show{transform:translateX(-50%) translateY(0)}
 
   /* Tarjeta más compacta: medía 519 px de alto, nueve seguidas. */
   .product-grid:not(.list) .pcard-img{aspect-ratio:16/10;height:auto}

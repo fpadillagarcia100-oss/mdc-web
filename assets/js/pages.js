@@ -519,10 +519,10 @@ function cotizarHTML(){
   const hoy = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const plazos = [['','Aún no lo sé'],['corta','Menos de un mes'],
     ...[1,2,3,4,5,6,9,12,18,24].map(n => [String(n), n === 1 ? '1 mes' : `${n} meses`]),['mas','Más de 24 meses']];
-  const renta = rent ? `
+  const renta = lines.some(i => i.cond === 'Renta') ? `
         <div class="field"><label for="c-renta-inicio">¿Cuándo empieza la renta? <span class="hint">(opcional)</span></label>
           <input type="date" id="c-renta-inicio" min="${hoy}">
-          <span class="errmsg">La fecha no puede ser anterior a hoy.</span></div>
+          <span class="errmsg" id="c-renta-inicio-err">Elige una fecha de hoy en adelante.</span></div>
         <div class="field"><label for="c-renta-meses">¿Por cuánto tiempo? <span class="hint">(opcional)</span></label>
           <select id="c-renta-meses">${plazos.map(([v, txt]) => `<option value="${v}">${txt}</option>`).join('')}</select></div>` : '';
   return `
@@ -572,15 +572,23 @@ function quotePayload(){
   const inicio = elInicio ? elInicio.value : '';
   const plazo = elPlazo ? elPlazo.value : '';
   if(elInicio){
-    const mal = inicio !== '' && (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || inicio < elInicio.min);
+    /* Donde no hay selector de fecha el campo es texto libre: un 30 de febrero
+       tiene la forma correcta y no existe. Se arma la fecha y se compara. */
+    const existe = f => {
+      const [a, m, dia] = f.split('-').map(Number), x = new Date(a, m - 1, dia);
+      return x.getFullYear() === a && x.getMonth() === m - 1 && x.getDate() === dia;
+    };
+    const mal = inicio !== '' && (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !existe(inicio) || inicio < elInicio.min);
     elInicio.closest('.field').classList.toggle('err', mal);
     if(mal){
       elInicio.setAttribute('aria-invalid', 'true');
+      elInicio.setAttribute('aria-describedby', 'c-renta-inicio-err');
       // Si los datos de contacto también fallaron, el aviso y el foco ya son de ellos.
       if(v){ showToast('Revisa los campos marcados en rojo', true); elInicio.focus() }
       return null;
     }
     elInicio.removeAttribute('aria-invalid');
+    elInicio.removeAttribute('aria-describedby');
   }
   if(!v) return null;
 

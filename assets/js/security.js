@@ -35,6 +35,7 @@ function readAndValidate(defs){
     const wrap = el.closest('.field');
     if(wrap) wrap.classList.remove('err');
     el.removeAttribute('aria-invalid');
+    el.removeAttribute('aria-describedby');
     const v = el.value.trim();
     let bad = false;
     if(d.required && !v) bad = true;

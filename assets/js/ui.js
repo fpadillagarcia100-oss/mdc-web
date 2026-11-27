@@ -392,11 +392,11 @@ function openModal(id){
         : 'Este equipo está apartado. Déjanos tu nombre y tu WhatsApp y un asesor te escribe si se libera o llega uno parecido.'}</p>
       <form id="avisoForm" data-slug="${esc(p.slug)}" novalidate>
         <input class="hp-field" type="text" id="hp_aviso" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <div class="field"><label for="av-name">Tu nombre</label>
-          <input type="text" id="av-name" autocomplete="name" maxlength="120" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
+        <div class="field"><label for="av-name">Tu nombre *</label>
+          <input type="text" id="av-name" aria-required="true" autocomplete="name" maxlength="120" value="${esc(account?.name||'')}" placeholder="Juan Pérez">
           <span class="errmsg">Escribe tu nombre.</span></div>
-        <div class="field"><label for="av-phone">Tu WhatsApp <span class="hint">(10 dígitos)</span></label>
-          <input type="text" id="av-phone" inputmode="tel" autocomplete="tel-national" value="${esc(account?.phone||'')}" placeholder="9611234567">
+        <div class="field"><label for="av-phone">Tu WhatsApp * <span class="hint">(10 dígitos)</span></label>
+          <input type="text" id="av-phone" aria-required="true" inputmode="tel" autocomplete="tel-national" value="${esc(account?.phone||'')}" placeholder="9611234567">
           <span class="errmsg">Necesitamos 10 dígitos.</span></div>
         <button class="btn-primary" type="submit">Avísame</button>
         <p class="avisame-nota">Usamos tus datos únicamente para contactarte sobre este equipo.
