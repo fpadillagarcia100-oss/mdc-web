@@ -818,6 +818,16 @@ const ev = code => window.eval(code);
     pieCats.every(a => cats.includes(a.getAttribute('href').split('/')[2])),
     'si no, el pie llevaría a un 404');
 
+  /* El pie de la portada y el de las páginas generadas: títulos h3 (un h4
+     colgando de un h2 se salta un nivel para los lectores de pantalla) y sin
+     style="" en línea, que vive en styles.css. */
+  const pieDe = h => (h.match(/<footer>[\s\S]*?<\/footer>/) || [''])[0];
+  const piePortada = pieDe(html);
+  const pieCategoria = cats.length ? pieDe(fs.readFileSync(path.join(dirCats, cats[0], 'index.html'), 'utf8')) : '';
+  check('El pie de página usa títulos h3 y no trae estilos en línea',
+    [piePortada, pieCategoria].every(p => p && /<h3[ >]/.test(p) && !/<h4[ >]/.test(p) && !/\sstyle=/.test(p)),
+    `portada ${piePortada ? 'ok' : 'sin pie'} · categoría ${pieCategoria ? 'ok' : 'sin pie'}`);
+
   // Pinchar desde el catálogo filtra en vez de recargar: es más rápido y no
   // pierde el carrito. El enlace sigue ahí para Google y para "abrir en nueva".
   pieCats[0].click();

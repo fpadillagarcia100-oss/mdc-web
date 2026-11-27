@@ -586,11 +586,11 @@ ${JSON.stringify(datosFAQ, null, 2)}
 <footer>
   <div class="footer-inner">
     <div class="footer-col">
-      <h4>${esc(marca)} · ${esc(a.marca_completa)}</h4>
-      <p style="max-width:300px;line-height:1.6">${esc(a.pie_descripcion)}</p>
+      <h3>${esc(marca)} · ${esc(a.marca_completa)}</h3>
+      <p class="footer-about">${esc(a.pie_descripcion)}</p>
     </div>
     <div class="footer-col">
-      <h4>Contacto</h4>
+      <h3>Contacto</h3>
       <ul>
         <li><a href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">${esc(a.telefono)}</a></li>
         <li><a href="mailto:${esc(a.correo)}">${esc(a.correo)}</a></li>
@@ -815,11 +815,11 @@ ${guiaHTML}
 <footer>
   <div class="footer-inner">
     <div class="footer-col">
-      <h4>${esc(marca)} · ${esc(a.marca_completa)}</h4>
-      <p style="max-width:300px;line-height:1.6">${esc(a.pie_descripcion)}</p>
+      <h3>${esc(marca)} · ${esc(a.marca_completa)}</h3>
+      <p class="footer-about">${esc(a.pie_descripcion)}</p>
     </div>
     <div class="footer-col">
-      <h4>Contacto</h4>
+      <h3>Contacto</h3>
       <ul>
         <li><a href="tel:${esc(String(a.telefono).replace(/\s/g, ''))}">${esc(a.telefono)}</a></li>
         <li>${esc(a.direccion)}</li>
